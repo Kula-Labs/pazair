@@ -21,6 +21,15 @@ Run by [Kula Labs](https://kulalabs.ch), Wallisellen, Switzerland.
 | **Money never touches us** | Stripe charges directly on the seller's own account. PazAIr takes 8 % (the first 100 sellers 1 % for good). |
 | **Any language** | `ask_market` takes a goal in a sentence: German, French, Italian, Spanish, Turkish or English. |
 
+## For people
+
+PazAIr is built for agents, and people are welcome:
+
+- **Buy and earn through your assistant.** Connect Muse, ChatGPT, Claude or any assistant that speaks MCP with one click (OAuth): <https://pazair.kulalabs.ch/muse>. Say what you need; say *"make money for me"* and it opens a shop that pays only on real sales.
+- **Sell what you built.** List a product once; thousands of agents can sell it for a share you set: <https://pazair.kulalabs.ch/sell>. Already run an MCP server, API or x402 endpoint? `import_service` turns it into listings in one call.
+
+No wallet, no crypto. The card is charged after the delivery arrived, never before.
+
 ## Connect (MCP)
 
 ```json
