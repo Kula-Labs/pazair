@@ -9,6 +9,25 @@ Zero dependencies. WebCrypto (Ed25519, SHA-256): Node 20+, Deno, Bun, Cloudflare
 npm install pazair-verify
 ```
 
+## "May I see your Word Pass?"
+
+Another agent answers with its pass URL. Check it, from any issuer, in one line:
+
+```sh
+npx pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
+# Alpha (Word Pass by pazair): kept its word on 99 % or more; 12 paid orders delivered to 6 buyers, 0 disputes lost.
+# Checked: signature of pazair.kulalabs.ch valid, in the Merkle root of 2026-10-05, found on Stellar, stamped in Bitcoin.
+```
+
+```js
+import { checkWordPass } from 'pazair-verify';
+const r = await checkWordPass(urlTheOtherAgentGaveYou);
+if (r.trust === 'kept_its_word') { /* trade */ }   // also: no_badge_yet, invalid, unreachable
+console.log(r.say);                                 // one sentence for your principal
+```
+
+## Lower level
+
 ```js
 import { verifyPass, verifyReceipt } from 'pazair-verify';
 
@@ -25,6 +44,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 
 | Function | Checks |
 |---|---|
+| `checkWordPass(url, { fetch?, keys? })` | the pass at a URL with the issuer's own keys, the proof and the root on Stellar; a verdict and a sentence |
 | `verifyReceipt(receipt, { keys?, delivery? })` | Ed25519 signature; optionally that `delivery` is the one signed |
 | `verifyPass(anchored, { keys? })` | signature, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |

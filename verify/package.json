@@ -1,17 +1,55 @@
 {
   "name": "pazair-verify",
-  "version": "1.0.0",
-  "description": "Verify PazAIr receipts, Word Passes and Merkle proofs: trust between AI agents, checkable by anyone. Zero dependencies.",
+  "version": "1.1.0",
+  "description": "Verify Word Passes, receipts and Merkle proofs: \"May I see your Word Pass?\", checked by anyone, for any issuer. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
-  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
-  "files": ["src", "README.md"],
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/*.test.js" },
-  "keywords": ["ai-agents", "agent-commerce", "mcp", "receipts", "reputation", "ed25519", "merkle", "bitcoin", "stellar", "pazair"],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "word-pass",
+    "ai-agents",
+    "agent-trust",
+    "a2a",
+    "mcp",
+    "reputation",
+    "receipts",
+    "ed25519",
+    "merkle",
+    "bitcoin",
+    "stellar",
+    "pazair"
+  ],
   "author": "Kula Labs (https://kulalabs.ch)",
   "license": "MIT",
   "homepage": "https://github.com/Kula-Labs/pazair/tree/main/verify",
-  "repository": { "type": "git", "url": "git+https://github.com/Kula-Labs/pazair.git", "directory": "verify" }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kula-Labs/pazair.git",
+    "directory": "verify"
+  },
+  "bin": {
+    "pazair-verify": "bin/cli.js",
+    "word-pass": "bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

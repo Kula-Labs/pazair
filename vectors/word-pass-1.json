@@ -1,0 +1,188 @@
+{
+  "about": "Test vectors for Word Pass 1.0 (SPEC.md). The private key is for tests only and was never used anywhere else. Ed25519 is deterministic: signing the same canonical bytes with this key gives the same sig.",
+  "canonical": {
+    "input": {
+      "b": 1,
+      "a": {
+        "d": [
+          2,
+          {
+            "z": 1,
+            "y": 2
+          }
+        ],
+        "c": null
+      }
+    },
+    "output": "{\"a\":{\"c\":null,\"d\":[2,{\"y\":2,\"z\":1}]},\"b\":1}"
+  },
+  "key": {
+    "kid": "a1171dbbeb4c3fc2",
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "yreuvsFyxyZbnuEv1ICMF0__gVhSDHTWgfdDW7nFVGU",
+    "d_test_only": "BsTsYSn3J2UC1-c4bNtHwG796uD3WFcGEhzQiFNsSOc"
+  },
+  "receipt": {
+    "object": {
+      "v": 1,
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "order": "or_1",
+      "listing": "ls_1",
+      "seller": "ag_alpha",
+      "buyer": "ag_beta",
+      "amount_minor": 500,
+      "currency": "chf",
+      "delivered_at": "2026-10-05T10:00:00.000Z",
+      "delivery_sha256": "b6c28b98ff60801d7a833eadfcfacecc97a78513ac9365c0ab3785e47d5baeeb",
+      "sig": "hkMbjPH5EwZdO-e8VEK17raIAqcobx8Filo6NLndsh0w26dLsuW38DVvxBW1P_AAhDXFQpqiETjXYwBzdqoqBg"
+    },
+    "delivery": "{\"result\":\"hello\"}"
+  },
+  "passes": [
+    {
+      "v": 1,
+      "issuer": "example",
+      "kind": "word_pass",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_alpha",
+      "name": "Alpha",
+      "verified_name": null,
+      "since": "2026-10-01T00:00:00.000Z",
+      "as_seller": {
+        "delivered": 12,
+        "not_delivered": 0,
+        "success_rate": 1,
+        "median_delivery_ms": 900,
+        "buyers": 6,
+        "first_sale": "2026-10-01T09:00:00.000Z",
+        "last_sale": "2026-10-05T09:00:00.000Z"
+      },
+      "as_buyer": {
+        "paid_orders": 0,
+        "sellers": 0
+      },
+      "disputes_lost": 0,
+      "word": {
+        "kept_pct": 100,
+        "badge": "word_kept_99"
+      },
+      "day": "2026-10-05",
+      "issued_at": "2026-10-05T03:17:00.000Z",
+      "sig": "lX_vLoSsiS-fHB1uoM6_e87KtkEgGoSR7pnD-I2_hZrSYOV-HtgInROx1ZgC3_V4vTr6UxZC_RaFNgC8wHBaCg"
+    },
+    {
+      "v": 1,
+      "issuer": "example",
+      "kind": "word_pass",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_beta",
+      "name": "Beta",
+      "verified_name": null,
+      "since": "2026-10-01T00:00:00.000Z",
+      "as_seller": {
+        "delivered": 3,
+        "not_delivered": 0,
+        "success_rate": 1,
+        "median_delivery_ms": 900,
+        "buyers": 2,
+        "first_sale": "2026-10-01T09:00:00.000Z",
+        "last_sale": "2026-10-05T09:00:00.000Z"
+      },
+      "as_buyer": {
+        "paid_orders": 0,
+        "sellers": 0
+      },
+      "disputes_lost": 0,
+      "word": {
+        "kept_pct": 100,
+        "badge": null
+      },
+      "day": "2026-10-05",
+      "issued_at": "2026-10-05T03:17:00.000Z",
+      "sig": "u3YnvPY8IZzr1-w0_VqoRmEyyyWgCKgkCWseGbjzu7EcAzjcTDFpwuaU0M52OKstCnrhpfPI0V6_z1UYkAI5Ag"
+    },
+    {
+      "v": 1,
+      "issuer": "example",
+      "kind": "word_pass",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_gamma",
+      "name": "Gamma",
+      "verified_name": null,
+      "since": "2026-10-01T00:00:00.000Z",
+      "as_seller": {
+        "delivered": 0,
+        "not_delivered": 0,
+        "success_rate": null,
+        "median_delivery_ms": null,
+        "buyers": 0,
+        "first_sale": null,
+        "last_sale": null
+      },
+      "as_buyer": {
+        "paid_orders": 0,
+        "sellers": 0
+      },
+      "disputes_lost": 0,
+      "word": {
+        "kept_pct": null,
+        "badge": null
+      },
+      "day": "2026-10-05",
+      "issued_at": "2026-10-05T03:17:00.000Z",
+      "sig": "yrceYUBP8jmUnmh9HDzSp_c3RNcBRQWCEq2mMYbVhZEnBVs640jrutJ6NvFhn-5RcZg0ktXl0umbDbszoC-gDQ"
+    }
+  ],
+  "leaves": [
+    "40778db736daa23eb315bae5b9698905fc4463187e1bf4865da701a4ee66684c",
+    "79e2c5eeb16d2956a22ff8756a8cc553ac37facb961a6aba63d5c77c627bdb3c",
+    "4e3623206b652a086e22bcca3afa664ee9e87a0c7c4d243e3c8f1a2e131cfa0b"
+  ],
+  "tree": {
+    "level1": [
+      "4bf3f5a94c7c22e24bfae834397cd704f60acd17907ed3e2c8b429a855a2ae1e",
+      "eee668ea8686a41714bc2fb90b2f3c462f9f8d1479179098ddf208b95bc961f8"
+    ],
+    "root": "2819b4b63cdeca7bf8c77bfe1b0ba328082057b121a490484bc1f81019b1a08a",
+    "proofs": [
+      [
+        {
+          "side": "R",
+          "hash": "79e2c5eeb16d2956a22ff8756a8cc553ac37facb961a6aba63d5c77c627bdb3c"
+        },
+        {
+          "side": "R",
+          "hash": "eee668ea8686a41714bc2fb90b2f3c462f9f8d1479179098ddf208b95bc961f8"
+        }
+      ],
+      [
+        {
+          "side": "L",
+          "hash": "40778db736daa23eb315bae5b9698905fc4463187e1bf4865da701a4ee66684c"
+        },
+        {
+          "side": "R",
+          "hash": "eee668ea8686a41714bc2fb90b2f3c462f9f8d1479179098ddf208b95bc961f8"
+        }
+      ],
+      [
+        {
+          "side": "R",
+          "hash": "4e3623206b652a086e22bcca3afa664ee9e87a0c7c4d243e3c8f1a2e131cfa0b"
+        },
+        {
+          "side": "L",
+          "hash": "4bf3f5a94c7c22e24bfae834397cd704f60acd17907ed3e2c8b429a855a2ae1e"
+        }
+      ]
+    ]
+  },
+  "stellar_memo": {
+    "root": "2819b4b63cdeca7bf8c77bfe1b0ba328082057b121a490484bc1f81019b1a08a",
+    "memo_type": "hash",
+    "memo_base64": "KBm0tjzeynv4x3v+GwujKAggV7EhpJBIS8H4EBmxoIo="
+  },
+  "say": "Alpha (Word Pass by example): kept its word on 99 % or more; 12 paid orders delivered to 6 buyers, 0 disputes lost."
+}

@@ -74,3 +74,54 @@ export async function verifyPass(anchored, { keys } = {}) {
     anchors: anchored?.root ? { root: anchored.root.root, day: anchored.root.day, bitcoin_ots: anchored.root.bitcoin_ots ?? null, stellar_tx: anchored.root.stellar_tx ?? null } : null,
   };
 }
+
+/**
+ * Is the root in this Stellar transaction's hash memo (public network)? true / false when the transaction
+ * carries something else / null when nobody can say (not found, Horizon unreachable).
+ */
+export async function stellarHasRoot(tx, root, { fetch: f = fetch, horizon = 'https://horizon.stellar.org' } = {}) {
+  if (!/^[0-9a-f]{64}$/i.test(tx ?? '')) return false;
+  try {
+    const r = await f(`${horizon}/transactions/${tx.toLowerCase()}`);
+    if (!r.ok) return null;
+    const t = await r.json();
+    if (t.memo_type !== 'hash' || typeof t.memo !== 'string' || t.successful !== true) return false;
+    return [...atob(t.memo)].map((c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('') === root.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * "May I see your Word Pass?" The other agent answers with a URL; this checks it, from any issuer:
+ * the pass at the URL, the issuer's keys at <origin>/.well-known/pazair-receipts.json, the Merkle proof,
+ * and the root on Stellar. Returns a verdict and one sentence to act on.
+ */
+export async function checkWordPass(url, { fetch: f = fetch, keys } = {}) {
+  const none = (say) => ({ trust: 'unreachable', say, issuer: null, checks: null, pass: null });
+  let u;
+  try { u = new URL(url); } catch { return none('That is not a URL.'); }
+  if (u.protocol !== 'https:') return none('A Word Pass is shown at a public https URL.');
+  let doc;
+  try { const r = await f(u.href, { headers: { accept: 'application/json' } }); if (!r.ok) throw new Error(); doc = await r.json(); } catch { return none(`No Word Pass could be read at ${u.href}.`); }
+  const anchored = doc?.anchored?.pass ? doc.anchored : doc?.pass?.kind === 'word_pass' ? doc : null;
+  const pass = anchored?.pass ?? (doc?.current?.kind === 'word_pass' ? doc.current : doc?.kind === 'word_pass' ? doc : null);
+  if (!pass) return none(`The document at ${u.href} is not a Word Pass.`);
+  try { keys ??= await fetchKeys(u.origin, f); } catch { return none(`${u.host} publishes no keys at /.well-known/pazair-receipts.json.`); }
+  const v = await verifyPass(anchored ?? pass, { keys });
+  const stellar = v.in_root && anchored.root.stellar_tx ? await stellarHasRoot(anchored.root.stellar_tx, anchored.root.root, { fetch: f }) : null;
+  const checks = { signature: v.signature_valid, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots) };
+  const issuer = u.host;
+  if (!checks.signature) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its signature does not match ${issuer}'s published key.` };
+  if (checks.in_root === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its Merkle proof does not lead to the root of ${checks.day}.` };
+  if (stellar === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the Stellar transaction it names does not carry the root of ${checks.day}.` };
+  return { trust: pass.word?.badge ? 'kept_its_word' : 'no_badge_yet', issuer, checks, pass, say: `${sayPass(pass)} Checked: signature of ${issuer} valid, ${checks.in_root ? `in the Merkle root of ${checks.day}${stellar ? ', found on Stellar' : ''}${checks.bitcoin_ots ? ', stamped in Bitcoin' : ''}` : 'not anchored yet'}.` };
+}
+
+/** One plain sentence about a pass. */
+export function sayPass(p) {
+  const s = p.as_seller ?? {}, w = p.word ?? {}, n = (x, one, many = one + 's') => `${x} ${x === 1 ? one : many}`;
+  const record = s.delivered ? `${n(s.delivered, 'paid order')} delivered to ${n(s.buyers, 'buyer')}, ${n(p.disputes_lost ?? 0, 'dispute')} lost` : `no sales yet, ${n(p.as_buyer?.paid_orders ?? 0, 'paid purchase')}`;
+  const head = w.badge === 'word_kept_99' ? 'kept its word on 99 % or more' : w.badge === 'word_kept_95' ? 'kept its word on 95 % or more' : w.kept_pct != null ? `kept its word on ${w.kept_pct} % (no badge yet)` : 'new, no record yet';
+  return `${p.name} (Word Pass by ${p.issuer}): ${head}; ${record}.`;
+}

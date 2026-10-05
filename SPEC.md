@@ -1,8 +1,12 @@
-# PazAIr Trust Protocol 1.0
+# Word Pass 1.0 (PazAIr Trust Protocol)
 
 **Status:** stable, open. **License:** MIT (this text and the reference verifier). **Editor:** Kula Labs, Switzerland.
 
 How one AI agent can trust another without trusting either of them, or the market in between.
+
+> **"May I see your Word Pass?"** — **"Of course, here: https://…"** — Before two agents trade, one asks for the
+> other's Word Pass and checks it in one call. Holding one is voluntary; every agent can trade without it.
+> It is simply the agent that kept its word, proven by paid orders and anchored in Bitcoin and Stellar.
 Three objects, all plain JSON, all checkable offline by anyone:
 
 | Object | Says | Checked with |
@@ -13,7 +17,7 @@ Three objects, all plain JSON, all checkable offline by anyone:
 
 Any marketplace, agent framework or payment provider may issue and verify these objects. PazAIr
 (<https://pazair.kulalabs.ch>) is the first issuer. Reference verifier: [`pazair-verify`](./verify)
-(zero dependencies, WebCrypto).
+(zero dependencies, WebCrypto; `npx pazair-verify <pass URL>`).
 
 ## 1. Conventions
 
@@ -64,7 +68,9 @@ An agent's record, from paid and delivered orders only. Nothing personal, nothin
 
 - `verified_name` is the payout provider's verified business name, or `null`.
 - `kept_pct = floor((delivered − min(disputes_lost, delivered)) / (delivered + not_delivered + disputes_lost) × 1000) / 10`.
-- `badge`: `word_kept_99` from 10 delivered orders and `kept_pct ≥ 99`; `word_kept_95` from 10 and `≥ 95`; else `null`.
+- `badge`: `word_kept_99` from 10 delivered orders from at least 5 different buyers (`as_seller.buyers ≥ 5`) and
+  `kept_pct ≥ 99`; `word_kept_95` with the same minimum and `≥ 95`; else `null`. Buying from yourself earns nothing.
+- `issuer` is the issuer's short name; who the issuer is follows from the origin that serves its keys (section 2).
 
 ## 5. Daily root and proof
 
@@ -107,3 +113,42 @@ console.log(await verifyPass(pass.anchored)); // { valid, signature_valid, in_ro
 
 Fields are only ever added. A verifier ignores fields it does not know. A breaking change becomes `v: 2`
 with its own section here; version 1 objects stay verifiable forever.
+
+## 9. Showing a Word Pass
+
+An agent shows its pass by its **pass URL**: an https URL on the issuer's origin that returns the
+document of section 5 (`{ current, anchored: { pass, leaf, proof, root } }`). Asked "May I see your Word Pass?",
+it answers with that URL. An agent may also publish it in any of these places, so others find it without asking:
+
+| Where | How |
+|---|---|
+| A2A agent card | `capabilities.extensions[]`: `{ "uri": "https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#9-showing-a-word-pass", "required": false, "params": { "pass": "<pass URL>" } }` |
+| HTTP | response header `Word-Pass: <pass URL>` |
+| Own domain | `GET /.well-known/word-pass` returns `{ "passes": ["<pass URL>", …] }` (one per issuer) |
+| MCP | a tool `show_word_pass` that returns `{ "pass": "<pass URL>" }` |
+
+**Checking a shown pass** (what `checkWordPass` in `pazair-verify` and the `check_word_pass` tool do):
+
+1. Fetch the pass URL; it must be https. Take `anchored` if present, else `current`.
+2. Fetch the keys from the **same origin** (section 2) and verify the signature.
+3. Hash the leaf up the proof to `root` (section 5).
+4. Look up `stellar_tx` on the public Stellar network: its hash memo must equal `root`. Optionally check `bitcoin_ots`.
+5. Verdict: `invalid` if any check fails; else `kept_its_word` when `word.badge` is set, else `no_badge_yet`.
+   A transaction that cannot be found is "unknown", not a failure.
+
+A verifier says which issuer signed. Trust in an issuer is the verifier's choice; the checks above make sure
+nobody else, not even the issuer later, can change what it signed.
+
+## 10. Test vectors
+
+[`vectors/word-pass-1.json`](./vectors/word-pass-1.json): canonical JSON, a test key (private half included,
+for tests only), three signed passes, a signed receipt, their leaves, the tree, every proof, the Stellar memo
+of the root and the sentence a verifier says. An implementation is conformant when it reproduces all of them.
+
+## 11. Governance
+
+Kula Labs (Switzerland) edits this specification in the open: proposals and changes as issues and pull requests
+in this repository, decisions explained there. The text and the reference verifier stay MIT licensed; issuing
+or checking a Word Pass needs no permission, fee or contract. The name "Word Pass" may be used by any issuer
+whose objects pass section 9's checks. The goal is a neutral home (a W3C Community Group, then an IETF draft)
+once several issuers use it; Kula Labs stays its editor.
