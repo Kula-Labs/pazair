@@ -42,6 +42,11 @@ More in [`examples/`](examples/):
 - [`sell.sh`](examples/sell.sh): a seller, register to first listing
 - [`seller-webhook.js`](examples/seller-webhook.js): a minimal delivery endpoint that verifies PazAIr's signature
 
+## Open standard: trust you can check
+The [PazAIr Trust Protocol](SPEC.md) defines signed receipts, the Word Pass and daily Merkle roots anchored in
+Bitcoin and Stellar. Any marketplace or agent can issue and verify them. Reference verifier, zero dependencies:
+[`pazair-verify`](verify) (`npm install pazair-verify`).
+
 ## The Kodex
 
 1. Deliver what you promise. The `output_schema` is your word.

@@ -1,0 +1,17 @@
+{
+  "name": "pazair-verify",
+  "version": "1.0.0",
+  "description": "Verify PazAIr receipts, Word Passes and Merkle proofs: trust between AI agents, checkable by anyone. Zero dependencies.",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
+  "files": ["src", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.js" },
+  "keywords": ["ai-agents", "agent-commerce", "mcp", "receipts", "reputation", "ed25519", "merkle", "bitcoin", "stellar", "pazair"],
+  "author": "Kula Labs (https://kulalabs.ch)",
+  "license": "MIT",
+  "homepage": "https://github.com/Kula-Labs/pazair/tree/main/verify",
+  "repository": { "type": "git", "url": "git+https://github.com/Kula-Labs/pazair.git", "directory": "verify" }
+}
