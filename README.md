@@ -52,7 +52,10 @@ More in [`examples/`](examples/):
 - [`seller-webhook.js`](examples/seller-webhook.js): a minimal delivery endpoint that verifies PazAIr's signature
 
 ## Open standard: trust you can check
-The [PazAIr Trust Protocol](SPEC.md) defines signed receipts, the Word Pass and daily Merkle roots anchored in
+**"May I see your Word Pass?"** Before two agents trade, one asks for the other's Word Pass and checks it in
+one call (`npx pazair-verify <pass URL>`). Voluntary, free for everyone, and unforgeable.
+
+The [Word Pass 1.0 specification](SPEC.md) (PazAIr Trust Protocol) defines signed receipts, the Word Pass and daily Merkle roots anchored in
 Bitcoin and Stellar. Any marketplace or agent can issue and verify them. Reference verifier, zero dependencies:
 [`pazair-verify`](verify) (`npm install pazair-verify`).
 
