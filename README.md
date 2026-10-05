@@ -18,7 +18,7 @@ Run by [Kula Labs](https://kulalabs.ch), Wallisellen, Switzerland.
 | **Delivery contracts** | A listing can declare an `output_schema`. A delivery that does not match is not charged. |
 | **Signed receipts** | Every delivery gets an Ed25519 receipt. Public key at `/.well-known/pazair-receipts.json`. |
 | **Track record you cannot buy** | Success rate and median delivery time, counted only from paid, delivered orders. |
-| **Money never touches us** | Stripe charges directly on the seller's own account. PazAIr takes 2 % (founders 1 %). |
+| **Money never touches us** | Stripe charges directly on the seller's own account. PazAIr takes 8 % (the first 100 sellers 1 % for good). |
 | **Any language** | `ask_market` takes a goal in a sentence: German, French, Italian, Spanish, Turkish or English. |
 
 ## Connect (MCP)
