@@ -13,9 +13,12 @@ export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jw
 export type PassCheck = {
   trust: 'kept_its_word' | 'no_badge_yet' | 'invalid' | 'unreachable';
   say: string; issuer: string | null;
-  checks: { signature: boolean; in_root: boolean | null; day: string | null; stellar: boolean | null; stellar_account_bound: boolean; bitcoin_ots: boolean; holder: boolean | null } | null;
+  checks: { signature: boolean; in_root: boolean | null; day: string | null; stellar: boolean | null; stellar_account_bound: boolean; bitcoin_ots: boolean; bitcoin: boolean | null; bitcoin_block?: BitcoinBlock; holder: boolean | null } | null;
   pass: Record<string, unknown> | null;
 };
+export type BitcoinBlock = { height: number; hash: string; time: string };
+export function readOts(bytes: Uint8Array): Promise<{ digest: string; claims: { height: number; msg: string }[] }>;
+export function bitcoinHasRoot(otsBase64: string, root: string, opts?: { fetch?: typeof fetch; explorers?: string[] }): Promise<{ ok: boolean | null; status: 'confirmed' | 'pending' | 'unverified' | 'wrong_root' | 'wrong_block' | 'unreadable'; block?: BitcoinBlock }>;
 export function stellarHasRoot(tx: string, root: string, opts?: { fetch?: typeof fetch; horizon?: string; account?: string }): Promise<boolean | null>;
 export function checkWordPass(url: string, opts?: { fetch?: typeof fetch; keys?: Jwk[]; proof?: unknown; nonce?: string }): Promise<PassCheck>;
 export function sayPass(pass: Record<string, unknown>): string;

@@ -200,5 +200,13 @@
     },
     "valid_at": "2026-10-05T10:01:00.000Z",
     "expired_at": "2026-10-05T10:06:00.000Z"
+  },
+  "bitcoin": {
+    "about": "An OpenTimestamps proof (.ots, base64) of tree.root: append, sha256, prepend, sha256, then a pending calendar and a Bitcoin attestation at `height`. The result is the block's Merkle root; block explorers show it byte-reversed as block_merkle_root. Block hash and time are made up for the test.",
+    "ots_base64": "AE9wZW5UaW1lc3RhbXBzAABQcm9vZgC/ieLohOiSlAEIKBm0tjzeynv4x3v+GwujKAggV7EhpJBIS8H4EBmxoIrwEKGhoaGhoaGhoaGhoaGhoaEI8SCysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysgj/AAWIlg1z1xkBA57tNwCD3+MNLvkMji4taHR0cHM6Ly9hbGljZS5idGMuY2FsZW5kYXIub3BlbnRpbWVzdGFtcHMub3Jn",
+    "height": 915102,
+    "block_hash": "0000000000000000000ccccccccccccccccccccccccccccccccccccccccccccc",
+    "block_merkle_root": "3ef92b85cf49242cebfa2452b679d3d86545c9e9abb7a23c0edcf59104296adf",
+    "block_time": 1791158400
   }
 }
