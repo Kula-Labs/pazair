@@ -184,5 +184,21 @@
     "memo_type": "hash",
     "memo_base64": "KBm0tjzeynv4x3v+GwujKAggV7EhpJBIS8H4EBmxoIo="
   },
-  "say": "Alpha (Word Pass by example): kept its word on 99 % or more; 12 paid orders delivered to 6 buyers, 0 disputes lost."
+  "say": "Alpha (Word Pass by example): kept its word on 99 % or more; 12 paid orders delivered to 6 buyers, 0 disputes lost.",
+  "holder_proof": {
+    "object": {
+      "v": 1,
+      "kind": "word_pass_proof",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_alpha",
+      "nonce": "n-7f3c2a9e41d84b06",
+      "aud": null,
+      "iat": "2026-10-05T10:00:00.000Z",
+      "exp": "2026-10-05T10:05:00.000Z",
+      "sig": "YkUS2YvqYjpF8Tn1uaQB6ewDWLqDhtXqR3oHOy2rxFSSOntAfOe1h1XRa0mSx9PaMb1bTMx6XIat80aAkc0LDA"
+    },
+    "valid_at": "2026-10-05T10:01:00.000Z",
+    "expired_at": "2026-10-05T10:06:00.000Z"
+  }
 }

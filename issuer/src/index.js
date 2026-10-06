@@ -42,8 +42,19 @@ export async function importKey(privateJwk) {
 }
 
 /** The document for GET <origin>/.well-known/pazair-receipts.json (section 2). List old keys too while their objects are in use. */
-export function keysDocument(issuer, keys) {
-  return { issuer, alg: 'Ed25519', canonical: 'JSON with sorted keys, without "sig"', keys: keys.map((k) => ({ kid: k.kid, kty: 'OKP', crv: 'Ed25519', x: k.x })) };
+export function keysDocument(issuer, keys, { stellarAnchor, revoked = {} } = {}) {
+  return {
+    issuer, alg: 'Ed25519', canonical: 'JSON with sorted keys, without "sig"',
+    keys: keys.map((k) => ({ kid: k.kid, kty: 'OKP', crv: 'Ed25519', x: k.x, ...(revoked[k.kid] ? { revoked_at: revoked[k.kid] } : {}) })),
+    // Declare the account that writes your roots on Stellar: checkers then ignore the same memo from anyone else.
+    ...(stellarAnchor ? { anchors: { stellar: { account: stellarAnchor, network: 'mainnet' } } } : {}),
+  };
+}
+
+/** Section 9: a holder proof for an agent logged in with you, on the nonce a checker gave it. Valid 5 minutes. */
+export async function signHolderProof(key, issuer, agent, nonce, { aud = null, now = new Date(), seconds = 300 } = {}) {
+  if (typeof nonce !== 'string' || nonce.length < 8 || nonce.length > 200) throw new Error('nonce: 8 to 200 characters');
+  return key.sign({ v: 1, kind: 'word_pass_proof', issuer, kid: key.kid, agent, nonce, aud, iat: now.toISOString(), exp: new Date(now.getTime() + seconds * 1000).toISOString() });
 }
 
 /** Section 4: kept_pct and the badge (10 delivered, 5 different buyers, 99 % or 95 %). */

@@ -1,9 +1,11 @@
-export type Jwk = { kid: string; kty?: string; crv?: string; x: string };
+export type Jwk = { kid: string; kty?: string; crv?: string; x: string; revoked_at?: string };
 export type Step = { side: 'L' | 'R'; hash: string };
 export function canonical(v: unknown): string;
 export function sha256hex(s: string): Promise<string>;
 export function fetchKeys(origin?: string, f?: typeof fetch): Promise<Jwk[]>;
-export function verifySignature(obj: { sig?: string; kid?: string } & Record<string, unknown>, keys: Jwk[]): Promise<boolean>;
+export function verifySignature(obj: { sig?: string; kid?: string } & Record<string, unknown>, keys: Jwk[], opts?: { anchoredBefore?: string }): Promise<boolean>;
+export function fetchKeysDocument(origin?: string, f?: typeof fetch): Promise<{ keys: Jwk[]; anchors?: { stellar?: { account: string; network: string } } }>;
+export function verifyHolderProof(proof: unknown, opts: { keys: Jwk[]; agent: string; nonce: string; now?: number }): Promise<{ ok: boolean; reason: string }>;
 export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; delivery_matches: boolean | null }>;
 export function leafOf(pass: Record<string, unknown>): Promise<string>;
 export function verifyProof(leaf: string, proof: Step[], root: string): Promise<boolean>;
@@ -11,9 +13,9 @@ export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jw
 export type PassCheck = {
   trust: 'kept_its_word' | 'no_badge_yet' | 'invalid' | 'unreachable';
   say: string; issuer: string | null;
-  checks: { signature: boolean; in_root: boolean | null; day: string | null; stellar: boolean | null; bitcoin_ots: boolean } | null;
+  checks: { signature: boolean; in_root: boolean | null; day: string | null; stellar: boolean | null; stellar_account_bound: boolean; bitcoin_ots: boolean; holder: boolean | null } | null;
   pass: Record<string, unknown> | null;
 };
-export function stellarHasRoot(tx: string, root: string, opts?: { fetch?: typeof fetch; horizon?: string }): Promise<boolean | null>;
-export function checkWordPass(url: string, opts?: { fetch?: typeof fetch; keys?: Jwk[] }): Promise<PassCheck>;
+export function stellarHasRoot(tx: string, root: string, opts?: { fetch?: typeof fetch; horizon?: string; account?: string }): Promise<boolean | null>;
+export function checkWordPass(url: string, opts?: { fetch?: typeof fetch; keys?: Jwk[]; proof?: unknown; nonce?: string }): Promise<PassCheck>;
 export function sayPass(pass: Record<string, unknown>): string;
