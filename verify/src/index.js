@@ -103,6 +103,91 @@ export async function stellarHasRoot(tx, root, { fetch: f = fetch, horizon = 'ht
   }
 }
 
+const OTS_MAGIC = '004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e89294';
+const TAG_BITCOIN = '0588960d73d71901';
+const hexOf = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+const cat = (a, b) => { const o = new Uint8Array(a.length + b.length); o.set(a); o.set(b, a.length); return o; };
+
+/**
+ * Read an OpenTimestamps proof (.ots bytes) and walk it from its digest: the digest (hex) and every Bitcoin
+ * attestation with the commitment it attests (hex, raw byte order; for Bitcoin that is the block's Merkle root).
+ * Paths through ripemd160 or keccak256 are skipped (never on today's Bitcoin path). Throws on a malformed file.
+ */
+export async function readOts(bytes) {
+  let i = 0;
+  const byte = () => { if (i >= bytes.length) throw new Error('ots: unexpected end'); return bytes[i++]; };
+  const take = (n) => { if (i + n > bytes.length) throw new Error('ots: unexpected end'); const o = bytes.slice(i, i + n); i += n; return o; };
+  const uint = (next) => { let v = 0, s = 0; for (;;) { const b = next(); v += (b & 0x7f) * 2 ** s; if (!(b & 0x80)) return v; s += 7; if (s > 49) throw new Error('ots: varuint too large'); } };
+  const varbytes = (max) => { const n = uint(byte); if (n > max) throw new Error('ots: too long'); return take(n); };
+  if (hexOf(take(31)) !== OTS_MAGIC) throw new Error('ots: not an .ots file');
+  if (uint(byte) !== 1) throw new Error('ots: version');
+  if (byte() !== 0x08) throw new Error('ots: only sha256 files');
+  const digest = take(32);
+  const claims = [];
+  const apply = async (tag, arg, m) => {
+    if (tag === 0x08) return new Uint8Array(await crypto.subtle.digest('SHA-256', m));
+    if (tag === 0x02) return new Uint8Array(await crypto.subtle.digest('SHA-1', m));
+    if (tag === 0xf0) return cat(m, arg);
+    if (tag === 0xf1) return cat(arg, m);
+    if (tag === 0xf2) return Uint8Array.from(m).reverse();
+    if (tag === 0xf3) return enc.encode(hexOf(m));
+    return null;
+  };
+  const walk = async (m, depth) => {
+    if (depth > 256) throw new Error('ots: too deep');
+    const item = async (tag) => {
+      if (tag === 0x00) {
+        const t = hexOf(take(8)), payload = varbytes(8192);
+        if (t === TAG_BITCOIN && m) { let j = 0; claims.push({ height: uint(() => { if (j >= payload.length) throw new Error('ots: payload'); return payload[j++]; }), msg: hexOf(m) }); }
+        return;
+      }
+      let arg = null;
+      if (tag === 0xf0 || tag === 0xf1) arg = varbytes(4096);
+      else if (![0x08, 0x02, 0x03, 0x67, 0xf2, 0xf3].includes(tag)) throw new Error(`ots: unknown op 0x${tag.toString(16)}`);
+      await walk(m && (await apply(tag, arg, m)), depth + 1);
+    };
+    let tag = byte();
+    while (tag === 0xff) { await item(byte()); tag = byte(); }
+    await item(tag);
+  };
+  await walk(digest, 0);
+  if (i !== bytes.length) throw new Error('ots: trailing bytes');
+  return { digest: hexOf(digest), claims: claims.sort((a, b) => a.height - b.height) };
+}
+
+/**
+ * Is the root in Bitcoin (section 5)? The .ots proof must be for exactly this root, and one of its Bitcoin
+ * attestations must end in the Merkle root of that block, asked from public block explorers (Esplora API).
+ * { ok: true, status: 'confirmed', block } / { ok: false, status: 'unreadable' | 'wrong_root' | 'wrong_block' } (do
+ * not rely on it) / { ok: null, status: 'pending' | 'unverified' } (no block yet, or no explorer answered).
+ */
+export async function bitcoinHasRoot(otsBase64, root, { fetch: f = fetch, explorers = ['https://blockstream.info/api', 'https://mempool.space/api'] } = {}) {
+  let ots;
+  try { ots = await readOts(Uint8Array.from(atob(otsBase64), (c) => c.charCodeAt(0))); } catch { return { ok: false, status: 'unreadable' }; }
+  if (ots.digest !== String(root).toLowerCase()) return { ok: false, status: 'wrong_root' };
+  if (!ots.claims.length) return { ok: null, status: 'pending' };
+  let wrong = 0;
+  for (const c of ots.claims) {
+    if (c.msg.length !== 64) { wrong++; continue; }
+    const want = c.msg.match(/../g).reverse().join('');
+    for (const base of explorers) {
+      try {
+        const h = await f(`${base}/block-height/${c.height}`);
+        if (!h.ok) continue;
+        const hash = (await h.text()).trim();
+        if (!/^[0-9a-f]{64}$/.test(hash)) continue;
+        const b = await f(`${base}/block/${hash}`);
+        if (!b.ok) continue;
+        const blk = await b.json();
+        if (typeof blk.merkle_root !== 'string' || typeof blk.timestamp !== 'number' || blk.height !== c.height) continue;
+        if (blk.merkle_root.toLowerCase() !== want) { wrong++; break; }
+        return { ok: true, status: 'confirmed', block: { height: c.height, hash, time: new Date(blk.timestamp * 1000).toISOString() } };
+      } catch { /* next explorer */ }
+    }
+  }
+  return wrong === ots.claims.length ? { ok: false, status: 'wrong_block' } : { ok: null, status: 'unverified' };
+}
+
 /**
  * A holder proof (section 9): the issuer signed { agent, nonce } for the agent showing the pass. Proves the pass
  * is theirs and not a copied URL. Check it against the nonce you gave and the pass's agent.
@@ -119,7 +204,7 @@ export async function verifyHolderProof(proof, { keys, agent, nonce, now = Date.
 /**
  * "May I see your Word Pass?" The other agent answers with a URL; this checks it, from any issuer:
  * the pass at the URL, the issuer's keys at <origin>/.well-known/pazair-receipts.json, the Merkle proof,
- * the root on Stellar from the issuer's anchor account and, given { proof, nonce }, that the pass is theirs.
+ * the root on Stellar from the issuer's anchor account, the root in its Bitcoin block and, given { proof, nonce }, that the pass is theirs.
  * Returns a verdict and one sentence to act on.
  */
 export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce } = {}) {
@@ -136,14 +221,16 @@ export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce 
   const v = await verifyPass(anchored ?? pass, { keys: kd.keys });
   const a = kd.anchors?.stellar, account = a?.network === 'mainnet' && typeof a.account === 'string' ? a.account : undefined;
   const stellar = v.in_root && anchored.root.stellar_tx ? await stellarHasRoot(anchored.root.stellar_tx, anchored.root.root, { fetch: f, account }) : null;
+  const btc = v.in_root && anchored.root.bitcoin_ots ? await bitcoinHasRoot(anchored.root.bitcoin_ots, anchored.root.root, { fetch: f }) : null;
   const held = proof != null ? await verifyHolderProof(proof, { keys: kd.keys, agent: pass.agent, nonce }) : null;
-  const checks = { signature: v.signature_valid, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, stellar_account_bound: !!(stellar && account), bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots), holder: held ? held.ok : null };
+  const checks = { signature: v.signature_valid, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, stellar_account_bound: !!(stellar && account), bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots), bitcoin: btc ? btc.ok : null, ...(btc?.block ? { bitcoin_block: btc.block } : {}), holder: held ? held.ok : null };
   const issuer = u.host;
   if (!checks.signature) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its signature does not match ${issuer}'s published key.` };
   if (checks.in_root === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its Merkle proof does not lead to the root of ${checks.day}.` };
   if (stellar === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the Stellar transaction it names does not carry the root of ${checks.day} from ${issuer}'s anchor account.` };
+  if (btc?.ok === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the Bitcoin proof it names for the root of ${checks.day} is not for that root or not in the block it claims.` };
   if (held && !held.ok) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the agent showing it could not prove it is ${pass.name} (${held.reason}). It may be someone else's pass.` };
-  const where = checks.in_root ? `in the Merkle root of ${checks.day}${stellar ? (account ? ", found on Stellar from the issuer's anchor account" : ', found on Stellar') : ''}${checks.bitcoin_ots ? ', stamped in Bitcoin' : ''}` : 'not anchored yet';
+  const where = checks.in_root ? `in the Merkle root of ${checks.day}${stellar ? (account ? ", found on Stellar from the issuer's anchor account" : ', found on Stellar') : ''}${btc?.block ? `, confirmed in Bitcoin block ${btc.block.height} (${btc.block.time.slice(0, 10)})` : checks.bitcoin_ots ? ', stamped in Bitcoin (block confirmation pending)' : ''}` : 'not anchored yet';
   const whose = held?.ok ? ' The agent showing it proved it is this agent.' : ' To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass).';
   return { trust: pass.word?.badge ? 'kept_its_word' : 'no_badge_yet', issuer, checks, pass, say: `${sayPass(pass)} Checked: signature of ${issuer} valid, ${where}.${whose}` };
 }

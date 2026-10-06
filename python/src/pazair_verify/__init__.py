@@ -18,7 +18,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "stellar_has_root", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof"]
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -105,6 +105,12 @@ def _get_json(url: str) -> Any:
         return json.loads(r.read(200_001)[:200_000])
 
 
+def _get_text(url: str) -> str:
+    req = urllib.request.Request(url, headers={"user-agent": "pazair-verify-python"})
+    with urllib.request.urlopen(req, timeout=10) as r:  # noqa: S310 (fixed https explorers)
+        return r.read(1000).decode("ascii", "replace")
+
+
 def fetch_keys_document(origin: str, fetch: Fetch = _get_json) -> dict:
     return fetch(origin.rstrip("/") + "/.well-known/pazair-receipts.json")
 
@@ -127,6 +133,143 @@ def stellar_has_root(tx: str, root: str, fetch: Fetch = _get_json, horizon: str 
     if account and t.get("source_account") != account:
         return False
     return base64.b64decode(t["memo"]).hex() == root.lower()
+
+
+_OTS_MAGIC = bytes.fromhex("004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e89294")
+_TAG_BITCOIN = bytes.fromhex("0588960d73d71901")
+ESPLORA = ["https://blockstream.info/api", "https://mempool.space/api"]
+
+
+def read_ots(data: bytes) -> dict:
+    """Read an OpenTimestamps proof and walk it from its digest: {"digest": hex, "claims": [{"height", "msg"}]},
+    msg being the attested commitment in raw byte order (for Bitcoin: the block's Merkle root). Raises ValueError."""
+    pos = [0]
+
+    def byte() -> int:
+        if pos[0] >= len(data):
+            raise ValueError("ots: unexpected end")
+        pos[0] += 1
+        return data[pos[0] - 1]
+
+    def take(n: int) -> bytes:
+        if pos[0] + n > len(data):
+            raise ValueError("ots: unexpected end")
+        pos[0] += n
+        return data[pos[0] - n:pos[0]]
+
+    def uint(next_byte: Callable[[], int]) -> int:
+        v, s = 0, 0
+        while True:
+            b = next_byte()
+            v += (b & 0x7F) << s
+            if not b & 0x80:
+                return v
+            s += 7
+            if s > 49:
+                raise ValueError("ots: varuint too large")
+
+    def varbytes(mx: int) -> bytes:
+        n = uint(byte)
+        if n > mx:
+            raise ValueError("ots: too long")
+        return take(n)
+
+    def apply(tag: int, arg: Optional[bytes], m: bytes) -> Optional[bytes]:
+        if tag == 0x08:
+            return hashlib.sha256(m).digest()
+        if tag == 0x02:
+            return hashlib.sha1(m).digest()  # noqa: S324 (OpenTimestamps op, not used for security here)
+        if tag == 0x03:
+            try:
+                return hashlib.new("ripemd160", m).digest()
+            except ValueError:
+                return None
+        if tag == 0xF0:
+            return m + (arg or b"")
+        if tag == 0xF1:
+            return (arg or b"") + m
+        if tag == 0xF2:
+            return m[::-1]
+        if tag == 0xF3:
+            return m.hex().encode()
+        return None
+
+    claims: list[dict] = []
+
+    def walk(m: Optional[bytes], depth: int) -> None:
+        if depth > 256:
+            raise ValueError("ots: too deep")
+
+        def item(tag: int) -> None:
+            if tag == 0x00:
+                t, payload = take(8), varbytes(8192)
+                if t == _TAG_BITCOIN and m is not None:
+                    it = iter(payload)
+                    claims.append({"height": uint(lambda: next(it)), "msg": m.hex()})
+                return
+            arg = None
+            if tag in (0xF0, 0xF1):
+                arg = varbytes(4096)
+            elif tag not in (0x08, 0x02, 0x03, 0x67, 0xF2, 0xF3):
+                raise ValueError(f"ots: unknown op {tag:#x}")
+            walk(apply(tag, arg, m) if m is not None else None, depth + 1)
+
+        tag = byte()
+        while tag == 0xFF:
+            item(byte())
+            tag = byte()
+        item(tag)
+
+    if take(31) != _OTS_MAGIC:
+        raise ValueError("ots: not an .ots file")
+    if uint(byte) != 1:
+        raise ValueError("ots: version")
+    if byte() != 0x08:
+        raise ValueError("ots: only sha256 files")
+    digest = take(32)
+    try:
+        walk(digest, 0)
+    except StopIteration:
+        raise ValueError("ots: payload") from None
+    if pos[0] != len(data):
+        raise ValueError("ots: trailing bytes")
+    return {"digest": digest.hex(), "claims": sorted(claims, key=lambda c: c["height"])}
+
+
+def bitcoin_has_root(ots_base64: str, root: str, fetch: Fetch = _get_json, fetch_text: Callable[[str], str] = _get_text, explorers: list[str] = ESPLORA) -> dict:
+    """Is the root in Bitcoin? The .ots must be for exactly this root and end in the Merkle root of the block it names.
+    ok True (confirmed, with block), False (unreadable, wrong_root, wrong_block), None (pending, unverified)."""
+    try:
+        ots = read_ots(base64.b64decode(ots_base64, validate=True))
+    except Exception:
+        return {"ok": False, "status": "unreadable"}
+    if ots["digest"] != str(root).lower():
+        return {"ok": False, "status": "wrong_root"}
+    if not ots["claims"]:
+        return {"ok": None, "status": "pending"}
+    wrong = 0
+    for c in ots["claims"]:
+        if len(c["msg"]) != 64:
+            wrong += 1
+            continue
+        want = bytes.fromhex(c["msg"])[::-1].hex()
+        for base in explorers:
+            try:
+                h = fetch_text(f"{base}/block-height/{c['height']}").strip()
+                if len(h) != 64 or any(x not in "0123456789abcdef" for x in h):
+                    continue
+                b = fetch(f"{base}/block/{h}")
+                if not isinstance(b.get("merkle_root"), str) or not isinstance(b.get("timestamp"), int) or b.get("height") != c["height"]:
+                    continue
+            except Exception:
+                continue
+            if b["merkle_root"].lower() != want:
+                wrong += 1
+                break
+            from datetime import datetime, timezone
+            t = datetime.fromtimestamp(b["timestamp"], tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            return {"ok": True, "status": "confirmed", "block": {"height": c["height"], "hash": h, "time": t}}
+    return {"ok": False, "status": "wrong_block"} if wrong == len(ots["claims"]) else {"ok": None, "status": "unverified"}
 
 
 def say_pass(p: dict) -> str:
@@ -166,7 +309,7 @@ def verify_holder_proof(proof: Any, keys: list[dict], agent: str, nonce: str, no
     return {"ok": True, "reason": "ok"}
 
 
-def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce: Optional[str] = None) -> dict:
+def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce: Optional[str] = None, fetch_text: Callable[[str], str] = _get_text) -> dict:
     """The verdict for a pass shown by URL: kept_its_word, no_badge_yet, invalid or unreachable, with one sentence."""
     def none(say: str) -> dict:
         return {"trust": "unreachable", "say": say, "issuer": None, "checks": None, "pass": None}
@@ -192,9 +335,12 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
     st = (kd.get("anchors") or {}).get("stellar") or {}
     account = st.get("account") if st.get("network") == "mainnet" and isinstance(st.get("account"), str) else None
     stellar = stellar_has_root(root["stellar_tx"], root["root"], fetch, account=account) if v["in_root"] and root.get("stellar_tx") else None
+    btc = bitcoin_has_root(root["bitcoin_ots"], root["root"], fetch, fetch_text) if v["in_root"] and root.get("bitcoin_ots") else None
     held = verify_holder_proof(proof, keys, p.get("agent"), nonce or "") if proof is not None else None
     checks = {"signature": v["signature_valid"], "in_root": v["in_root"], "day": root.get("day"), "stellar": stellar, "stellar_account_bound": bool(stellar and account),
-              "bitcoin_ots": bool(v["in_root"] and root.get("bitcoin_ots")), "holder": held["ok"] if held else None}
+              "bitcoin_ots": bool(v["in_root"] and root.get("bitcoin_ots")), "bitcoin": btc["ok"] if btc else None, "holder": held["ok"] if held else None}
+    if btc and btc.get("block"):
+        checks["bitcoin_block"] = btc["block"]
     issuer = u.netloc
     if not checks["signature"]:
         return {"trust": "invalid", "issuer": issuer, "checks": checks, "pass": p, "say": f"Do not rely on this pass: its signature does not match {issuer}'s published key."}
@@ -202,10 +348,12 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
         return {"trust": "invalid", "issuer": issuer, "checks": checks, "pass": p, "say": f"Do not rely on this pass: its Merkle proof does not lead to the root of {checks['day']}."}
     if stellar is False:
         return {"trust": "invalid", "issuer": issuer, "checks": checks, "pass": p, "say": f"Do not rely on this pass: the Stellar transaction it names does not carry the root of {checks['day']} from {issuer}'s anchor account."}
+    if btc and btc["ok"] is False:
+        return {"trust": "invalid", "issuer": issuer, "checks": checks, "pass": p, "say": f"Do not rely on this pass: the Bitcoin proof it names for the root of {checks['day']} is not for that root or not in the block it claims."}
     if held and not held["ok"]:
         return {"trust": "invalid", "issuer": issuer, "checks": checks, "pass": p, "say": f"Do not rely on this pass: the agent showing it could not prove it is {p.get('name')} ({held['reason']}). It may be someone else's pass."}
     found = (", found on Stellar from the issuer's anchor account" if account else ", found on Stellar") if stellar else ""
-    where = (f"in the Merkle root of {checks['day']}" + found + (", stamped in Bitcoin" if checks["bitcoin_ots"] else "")) if checks["in_root"] else "not anchored yet"
+    where = (f"in the Merkle root of {checks['day']}" + found + (f", confirmed in Bitcoin block {btc['block']['height']} ({btc['block']['time'][:10]})" if btc and btc.get("block") else ", stamped in Bitcoin (block confirmation pending)" if checks["bitcoin_ots"] else "")) if checks["in_root"] else "not anchored yet"
     whose = " The agent showing it proved it is this agent." if held and held["ok"] else " To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass)."
     return {"trust": "kept_its_word" if (p.get("word") or {}).get("badge") else "no_badge_yet", "issuer": issuer, "checks": checks, "pass": p,
             "say": f"{say_pass(p)} Checked: signature of {issuer} valid, {where}.{whose}"}

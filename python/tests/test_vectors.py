@@ -5,16 +5,31 @@ import sys
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / "src"))
-from pazair_verify import canonical, check_word_pass, leaf_of, say_pass, sha256hex, verify_holder_proof, verify_pass, verify_proof, verify_receipt, verify_signature  # noqa: E402
+from pazair_verify import bitcoin_has_root, canonical, read_ots, check_word_pass, leaf_of, say_pass, sha256hex, verify_holder_proof, verify_pass, verify_proof, verify_receipt, verify_signature  # noqa: E402
 
 V = json.loads((pathlib.Path(__file__).parent.parent.parent / "vectors" / "word-pass-1.json").read_text())
 KEYS = [V["key"]]
 
 
-def web(memo=V["stellar_memo"]["memo_base64"], p=V["passes"][0], source="GANCHOR"):
-    doc = {"current": p, "anchored": {"pass": p, "leaf": V["leaves"][0], "proof": V["tree"]["proofs"][0], "root": {"day": "2026-10-05", "root": V["tree"]["root"], "bitcoin_ots": "AA==", "stellar_tx": "ab" * 32}}}
+B = V["bitcoin"]
+
+
+def cwp(url, fetch, **k):
+    return check_word_pass(url, fetch, fetch_text=text, **k)
+
+
+def text(url):
+    if url == f"https://blockstream.info/api/block-height/{B['height']}":
+        return B["block_hash"]
+    raise OSError("404")
+
+
+def web(memo=V["stellar_memo"]["memo_base64"], p=V["passes"][0], source="GANCHOR", ots=B["ots_base64"], merkle=B["block_merkle_root"]):
+    doc = {"current": p, "anchored": {"pass": p, "leaf": V["leaves"][0], "proof": V["tree"]["proofs"][0], "root": {"day": "2026-10-05", "root": V["tree"]["root"], "bitcoin_ots": ots, "stellar_tx": "ab" * 32}}}
 
     def fetch(url):
+        if url == f"https://blockstream.info/api/block/{B['block_hash']}":
+            return {"height": B["height"], "merkle_root": merkle, "timestamp": B["block_time"]}
         if "horizon.stellar.org" in url:
             return {"successful": True, "memo_type": "hash", "memo": memo, "source_account": source}
         if url.endswith("/.well-known/pazair-receipts.json"):
@@ -38,18 +53,34 @@ class Vectors(unittest.TestCase):
         self.assertEqual(say_pass(V["passes"][0]), V["say"])
         self.assertEqual(canonical({"a": 1.0, "b": 0.99, "c": 99.1}), '{"a":1,"b":0.99,"c":99.1}')
 
+    def test_bitcoin(self):
+        r = read_ots(base64.b64decode(B["ots_base64"]))
+        self.assertEqual(r["digest"], V["tree"]["root"])
+        self.assertEqual([(c["height"], bytes.fromhex(c["msg"])[::-1].hex()) for c in r["claims"]], [(B["height"], B["block_merkle_root"])])
+        url = "https://issuer.example/v1/agents/ag_alpha/pass"
+        self.assertEqual(cwp(url, web(ots=B["ots_base64"].replace("KBm0", "KBm1")))["checks"]["bitcoin"], False)
+        bad = cwp(url, web(merkle="ee" * 32))
+        self.assertEqual(bad["trust"], "invalid")
+        self.assertIn("Bitcoin proof", bad["say"])
+        self.assertEqual(cwp(url, web(ots="AA=="))["trust"], "invalid")
+
+        def down(u):
+            raise OSError("503")
+        self.assertEqual(bitcoin_has_root(B["ots_base64"], V["tree"]["root"], down, down), {"ok": None, "status": "unverified"})
+
     def test_check_word_pass(self):
         url = "https://issuer.example/v1/agents/ag_alpha/pass"
-        ok = check_word_pass(url, web())
+        ok = cwp(url, web())
         self.assertEqual(ok["trust"], "kept_its_word")
-        self.assertEqual(ok["checks"], {"signature": True, "in_root": True, "day": "2026-10-05", "stellar": True, "stellar_account_bound": True, "bitcoin_ots": True, "holder": None})
-        self.assertIn("found on Stellar from the issuer's anchor account, stamped in Bitcoin. To be sure it is theirs", ok["say"])
-        self.assertEqual(check_word_pass(url, web(source="GOTHER"))["trust"], "invalid")
-        self.assertEqual(check_word_pass(url, web(base64.b64encode(b"x" * 32).decode()))["trust"], "invalid")
+        self.assertEqual(ok["checks"], {"signature": True, "in_root": True, "day": "2026-10-05", "stellar": True, "stellar_account_bound": True, "bitcoin_ots": True, "bitcoin": True,
+                                       "bitcoin_block": {"height": B["height"], "hash": B["block_hash"], "time": "2026-10-05T00:00:00.000Z"}, "holder": None})
+        self.assertIn("found on Stellar from the issuer's anchor account, confirmed in Bitcoin block 915102 (2026-10-05). To be sure it is theirs", ok["say"])
+        self.assertEqual(cwp(url, web(source="GOTHER"))["trust"], "invalid")
+        self.assertEqual(cwp(url, web(base64.b64encode(b"x" * 32).decode()))["trust"], "invalid")
         forged = dict(V["passes"][0], as_seller=dict(V["passes"][0]["as_seller"], delivered=900))
-        self.assertEqual(check_word_pass(url, web(p=forged))["trust"], "invalid")
-        self.assertEqual(check_word_pass("http://issuer.example/x", web())["trust"], "unreachable")
-        self.assertEqual(check_word_pass("https://issuer.example/nothing", web())["trust"], "unreachable")
+        self.assertEqual(cwp(url, web(p=forged))["trust"], "invalid")
+        self.assertEqual(cwp("http://issuer.example/x", web())["trust"], "unreachable")
+        self.assertEqual(cwp("https://issuer.example/nothing", web())["trust"], "unreachable")
 
 
     def test_holder_proof_and_revocation(self):

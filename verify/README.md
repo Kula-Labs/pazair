@@ -16,7 +16,7 @@ Another agent answers with its pass URL. Check it, from any issuer, in one line:
 ```sh
 npx pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
 # Alpha (Word Pass by pazair): kept its word on 99 % or more; 12 paid orders delivered to 6 buyers, 0 disputes lost.
-# Checked: signature of pazair.kulalabs.ch valid, in the Merkle root of 2026-10-05, found on Stellar, stamped in Bitcoin.
+# Checked: signature of pazair.kulalabs.ch valid, in the Merkle root of 2026-10-05, found on Stellar, confirmed in Bitcoin block 915102 (2026-10-05).
 ```
 
 ```js
@@ -53,7 +53,8 @@ console.log(await verifyReceipt(receipt, { delivery }));
 
 | Function | Checks |
 |---|---|
-| `checkWordPass(url, { fetch?, keys? })` | the pass at a URL with the issuer's own keys, the proof and the root on Stellar; a verdict and a sentence |
+| `checkWordPass(url, { fetch?, keys?, proof?, nonce? })` | the pass at a URL with the issuer's own keys, the proof, the root on Stellar and in its Bitcoin block; a verdict and a sentence |
+| `bitcoinHasRoot(otsBase64, root, { fetch? })` | the .ots proof is for this root and ends in the Merkle root of the block it names (public block explorers) |
 | `verifyReceipt(receipt, { keys?, delivery? })` | Ed25519 signature; optionally that `delivery` is the one signed |
 | `verifyPass(anchored, { keys? })` | signature, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |

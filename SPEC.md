@@ -92,8 +92,10 @@ Once a day the issuer signs a pass for every agent that traded and builds one Me
 
 The 32-byte root is anchored the same day:
 
-- **Bitcoin:** an OpenTimestamps proof of the root bytes (`bitcoin_ots`, base64 `.ots` file); check with any
-  OpenTimestamps client once confirmed.
+- **Bitcoin:** an OpenTimestamps proof of the root bytes (`bitcoin_ots`, base64 `.ots` file). Its digest MUST be
+  the root itself. Once a block confirms it, walking the proof from the root ends in that block's Merkle root
+  (block explorers show it byte-reversed); check with any OpenTimestamps client or `bitcoinHasRoot` in
+  `pazair-verify`. Until then the proof is "pending". An issuer SHOULD serve the completed proof once it exists.
 - **Stellar:** a transaction from the issuer's declared anchor account (section 2) whose memo hash equals the root
   (`stellar_tx`); check on any Stellar explorer.
 
@@ -153,11 +155,14 @@ Signed like a receipt with the issuer key, valid for minutes. An issuer signs on
 2. Fetch the keys document from the **same origin** (section 2) and verify the signature (mind `revoked_at`).
 3. Hash the leaf up the proof to `root` (section 5).
 4. Look up `stellar_tx` on the public Stellar network: its hash memo must equal `root`, and its source account must
-   be the declared anchor account. Optionally check `bitcoin_ots`.
-5. If a holder proof was given: signature with the same issuer's key, `agent` equal to the pass's `agent`,
+   be the declared anchor account.
+5. Read `bitcoin_ots`: its digest must equal `root`, and a Bitcoin attestation in it must lead to the Merkle root
+   of the block it names (ask any block explorer or your own node). A proof for another digest, or one whose every
+   named block carries something else, is a failure; a pending proof or an unreachable explorer is "unknown".
+6. If a holder proof was given: signature with the same issuer's key, `agent` equal to the pass's `agent`,
    `nonce` equal to the one you sent, `exp` not passed.
-6. Verdict: `invalid` if any check fails; else `kept_its_word` when `word.badge` is set, else `no_badge_yet`.
-   A transaction that cannot be found is "unknown", not a failure.
+7. Verdict: `invalid` if any check fails; else `kept_its_word` when `word.badge` is set, else `no_badge_yet`.
+   A transaction or block that cannot be found is "unknown", not a failure.
 
 A verifier says which issuer signed. Trust in an issuer is the verifier's choice; the checks above make sure
 nobody else, not even the issuer later, can change what it signed.
@@ -166,7 +171,8 @@ nobody else, not even the issuer later, can change what it signed.
 
 [`vectors/word-pass-1.json`](./vectors/word-pass-1.json): canonical JSON, a test key (private half included,
 for tests only), three signed passes, a signed receipt, their leaves, the tree, every proof, the Stellar memo
-of the root, a holder proof with the times it is valid and expired, and the sentence a verifier says. An implementation is conformant when it reproduces all of them.
+of the root, an OpenTimestamps proof of the root with the block Merkle root it leads to, a holder proof with the
+times it is valid and expired, and the sentence a verifier says. An implementation is conformant when it reproduces all of them.
 
 ## 11. Governance
 
