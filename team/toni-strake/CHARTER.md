@@ -19,11 +19,14 @@ already knowing how to work together.
    wishes (`/v1/wishes`), origin region and language.
 2. **Read the US market** in it: which requests come from US agents, which US categories are underserved,
    what a US buyer expects a listing to promise.
-3. **Publish the daily Product Development Catalog** ([`catalog/`](catalog/)): one file per day listing
-   the new listings PazAIr should have, each with a contract (`output_schema`), a price range and the
-   evidence from telemetry that justifies it.
-4. **Hand the catalog to sellers** on the platform (`/sell`, `import_service`) and to the CEO, every day
-   before 09:00 Europe/Zurich.
+3. **Write the daily Product Development Catalog**: the new listings PazAIr should have, each with a
+   contract (`output_schema`), a price range and the evidence from telemetry that justifies it. Format:
+   [`catalog/TEMPLATE.md`](catalog/TEMPLATE.md).
+4. **Write the daily Measures Catalog** (Massnahmenkatalog): what Herold, Julia, the chief, the development
+   or Fatih should do today so those listings get built and sold, each with the number behind it and the
+   check after 24 hours.
+5. **Hand both to Fatih** as drafts in Kula Command every day. He approves, copies the text and gives it to
+   Claude, who turns it into orders.
 
 ## What the team owes
 
@@ -41,12 +44,29 @@ already knowing how to work together.
 - It does not touch money, receipts or Word Passes. The trust layer stays with the protocol team.
 - It does not publish anything personal from telemetry. Goals and counts, never who asked.
 
+## Where the team runs
+
+Toni is a position in Kula Command, the Schaltzentrale in `Kula-Labs/jobflow` (`command/`, position key
+`produkt`, circle Wachstum, one Toni only, daily). The chain, end to end:
+
+1. **Vision and Echo to Toni.** In every session Toni reads PazAIr through `pazair_lesen` (Vision: searches
+   without a match, wishes, listings, the merchant funnel) and the house through `lage_lesen` (Echo: numbers,
+   signals, open actions, lessons).
+2. **Toni to the catalogs.** He writes two drafts of kind «katalog»: the Product Development Catalog and the
+   Measures Catalog (Massnahmenkatalog). Drafts land in Fatih's decision queue; nothing leaves the house.
+3. **Catalogs to Fatih.** Fatih approves, presses «Text kopieren» and hands the text to Claude.
+4. **Claude to the crew.** Claude turns the text into orders (goals) for Herold, Julia, the chief, the
+   development or Fatih, and Fatih approves those too.
+
+A rejection with a reason becomes a lesson in Toni's prompt. This folder holds the charter, roster and
+template; the handbook that actually runs is in `command/src/core/academy.ts`.
+
 ## Working with Vision and Echo
 
 | Source | Sends | Cadence | The team uses it for |
 |---|---|---|---|
-| Vision | What agents ask (`ask_market` goals, no match / weak match), by region and language | several times a day | Demand: what is missing |
-| Echo | What was bought, delivered, disputed; repeat requests; median delivery time | several times a day | Proof: what works, what to copy into new categories |
+| Vision | Searches without a match, wishes, newest listings, merchant funnel (`pazair_lesen`) | every session | Demand: what is missing |
+| Echo | The house: numbers, signals, open actions and orders, lessons (`lage_lesen`) | every session | Proof and context: what is already proposed, what Fatih rejected and why |
 
 Telemetry is aggregated before it reaches the team. The team never sees agent ids of buyers.
 
