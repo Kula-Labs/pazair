@@ -1,21 +1,25 @@
-# Publishes pazair-verify to npm when a tag like verify-v1.1.0 is pushed.
+# Publishes to npm when a tag is pushed: verify-v1.1.0 -> pazair-verify, issuer-v1.0.0 -> word-pass-issuer.
 # Needs the repository secret NPM_TOKEN (an npm automation token of the Kula Labs npm account).
-name: publish pazair-verify
+name: publish to npm
 on:
   push:
-    tags: ['verify-v*']
+    tags: ['verify-v*', 'issuer-v*']
 permissions:
   contents: read
-  id-token: write # npm provenance: anyone can see this package was built from this repository
+  id-token: write # npm provenance: anyone can see the package was built from this repository
 jobs:
   publish:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: verify } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, registry-url: 'https://registry.npmjs.org' }
+      - name: package from the tag
+        run: echo "DIR=${GITHUB_REF_NAME%%-v*}" >> "$GITHUB_ENV"
       - run: npm test
-      - run: test "verify-v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+        working-directory: ${{ env.DIR }}
+      - run: test "${DIR}-v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+        working-directory: ${{ env.DIR }}
       - run: npm publish --provenance --access public
+        working-directory: ${{ env.DIR }}
         env: { NODE_AUTH_TOKEN: '${{ secrets.NPM_TOKEN }}' }
