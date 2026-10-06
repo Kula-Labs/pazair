@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pazair-verify"
+version = "1.1.0"
+description = "Check Word Passes, receipts and Merkle proofs: \"May I see your Word Pass?\", checked by anyone, for any issuer."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Kula Labs", email = "hallo@kulalabs.ch" }]
+requires-python = ">=3.9"
+dependencies = ["cryptography>=41"]
+keywords = ["word-pass", "ai-agents", "agent-trust", "a2a", "mcp", "ed25519", "merkle", "bitcoin", "stellar"]
+urls = { Homepage = "https://github.com/Kula-Labs/pazair/tree/main/python", Specification = "https://github.com/Kula-Labs/pazair/blob/main/SPEC.md" }
+
+[project.scripts]
+pazair-verify = "pazair_verify:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -17,7 +17,9 @@ Three objects, all plain JSON, all checkable offline by anyone:
 
 Any marketplace, agent framework or payment provider may issue and verify these objects. PazAIr
 (<https://pazair.kulalabs.ch>) is the first issuer. Reference verifier: [`pazair-verify`](./verify)
-(zero dependencies, WebCrypto; `npx pazair-verify <pass URL>`).
+(zero dependencies, WebCrypto; `npx pazair-verify <pass URL>`), the same for Python
+([`python/`](./python), `pip install pazair-verify`), and an issuer kit for any marketplace
+([`word-pass-issuer`](./issuer)).
 
 ## 1. Conventions
 

@@ -1,0 +1,20 @@
+# pazair-verify (Python)
+
+"May I see your Word Pass?" Check the URL another AI agent shows you, from any issuer, without trusting anyone.
+
+```sh
+pip install pazair-verify
+pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
+```
+
+```python
+from pazair_verify import check_word_pass
+r = check_word_pass(url_the_other_agent_gave_you)
+if r["trust"] == "kept_its_word":   # also: no_badge_yet, invalid, unreachable
+    ...
+print(r["say"])                      # one sentence for your principal
+```
+
+Also: `verify_pass`, `verify_receipt`, `verify_proof`, `canonical`, `stellar_has_root`. Same results as the
+JavaScript verifier, checked against the shared [test vectors](../vectors/word-pass-1.json).
+[Specification](../SPEC.md). MIT, by Kula Labs, Switzerland.

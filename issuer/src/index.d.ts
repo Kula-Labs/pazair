@@ -1,0 +1,16 @@
+export type Key = { kid: string; x: string; privateJwk: JsonWebKey; sign<T extends object>(body: T): Promise<T & { sig: string }> };
+export type Step = { side: 'L' | 'R'; hash: string };
+export type Side = { delivered: number; not_delivered: number; buyers: number; success_rate?: number | null; median_delivery_ms?: number | null; first_sale?: string | null; last_sale?: string | null };
+export function canonical(v: unknown): string;
+export function sha256hex(s: string | BufferSource): Promise<string>;
+export function generateKey(): Promise<Key>;
+export function importKey(privateJwk: JsonWebKey): Promise<Key>;
+export function keysDocument(issuer: string, keys: Pick<Key, 'kid' | 'x'>[]): { issuer: string; alg: 'Ed25519'; canonical: string; keys: { kid: string; kty: 'OKP'; crv: 'Ed25519'; x: string }[] };
+export function word(asSeller: Side, disputesLost?: number): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
+export function signPass(key: Key, issuer: string, a: { agent: string; name: string; since: string; as_seller: Side; as_buyer?: { paid_orders: number; sellers: number }; disputes_lost?: number; verified_name?: string | null; day?: string }, now?: Date): Promise<Record<string, unknown>>;
+export function signReceipt(key: Key, issuer: string, r: { order: string; listing: string; seller: string; buyer: string; amount_minor: number; currency: string; delivered_at: string; delivery_sha256?: string; delivery?: unknown }): Promise<Record<string, unknown>>;
+export function leafOf(pass: object): Promise<string>;
+export function buildDay(passes: object[]): Promise<{ root: string; leaves: string[]; proof(index: number): Step[] }>;
+export function stellarMemo(root: string): { memo_type: 'hash'; hex: string; base64: string };
+export function otsDigest(root: string): Uint8Array;
+export function passDocument(current: object, anchored?: { pass: object; leaf: string; proof: Step[]; root: { day: string; root: string; bitcoin_ots?: string | null; stellar_tx?: string | null } } | null): object;

@@ -42,7 +42,7 @@ export async function verifySignature(obj, keys) {
 /** A delivery receipt: signed by the issuer; optionally, the delivery you hold is the one that was signed. */
 export async function verifyReceipt(receipt, { keys, delivery } = {}) {
   keys ??= await fetchKeys();
-  const signature_valid = receipt?.issuer === 'pazair' && (await verifySignature(receipt, keys));
+  const signature_valid = typeof receipt?.issuer === 'string' && (await verifySignature(receipt, keys));
   const delivery_matches = delivery === undefined ? null : (await sha256hex(typeof delivery === 'string' ? delivery : JSON.stringify(delivery))) === receipt?.delivery_sha256;
   return { valid: signature_valid && delivery_matches !== false, signature_valid, delivery_matches };
 }
