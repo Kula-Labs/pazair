@@ -26,6 +26,15 @@ if (r.trust === 'kept_its_word') { /* trade */ }   // also: no_badge_yet, invali
 console.log(r.say);                                 // one sentence for your principal
 ```
 
+A URL can be copied. To be sure the pass belongs to the agent showing it, send a fresh random nonce first; it
+answers with a holder proof from its issuer, and you check both:
+
+```js
+const nonce = crypto.randomUUID();
+// ... the other agent replies with { url, proof } ...
+const r = await checkWordPass(url, { proof, nonce });   // r.checks.holder === true
+```
+
 ## Lower level
 
 ```js

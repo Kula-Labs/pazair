@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildDay, generateKey, importKey, keysDocument, passDocument, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
-import { checkWordPass, verifyPass, verifyReceipt } from '../../verify/src/index.js';
+import { buildDay, generateKey, importKey, keysDocument, passDocument, signHolderProof, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
+import { checkWordPass, verifyHolderProof, verifyPass, verifyReceipt } from '../../verify/src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 
@@ -32,4 +32,14 @@ test('a new marketplace issues passes that the reference verifier accepts, end t
   const r = await signReceipt(key, 'newmarket', { order: 'o1', listing: 'l1', seller: 'a1', buyer: 'a2', amount_minor: 500, currency: 'chf', delivered_at: '2026-10-06T10:00:00Z', delivery: { ok: true } });
   assert.equal((await verifyReceipt(r, { keys: keys.keys, delivery: { ok: true } })).valid, true);
   assert.equal(JSON.stringify(keys).includes('"d"'), false, 'the private half is never published');
+});
+
+test('holder proofs from the kit pass the reference check; the anchor account is declared with the keys', async () => {
+  const key = await generateKey();
+  const doc = keysDocument('newmarket', [key], { stellarAnchor: 'GANCHOR' });
+  assert.deepEqual(doc.anchors, { stellar: { account: 'GANCHOR', network: 'mainnet' } });
+  const p = await signHolderProof(key, 'newmarket', 'a1', 'nonce-123456');
+  assert.deepEqual(await verifyHolderProof(p, { keys: doc.keys, agent: 'a1', nonce: 'nonce-123456' }), { ok: true, reason: 'ok' });
+  await assert.rejects(signHolderProof(key, 'newmarket', 'a1', 'short'));
+  assert.equal(keysDocument('newmarket', [key], { revoked: { [key.kid]: '2026-10-06T00:00:00Z' } }).keys[0].revoked_at, '2026-10-06T00:00:00Z');
 });

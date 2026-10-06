@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { canonical, checkWordPass, leafOf, sayPass, sha256hex, verifyProof, verifySignature, stellarHasRoot } from '../src/index.js';
+import { canonical, checkWordPass, leafOf, sayPass, sha256hex, verifyHolderProof, verifyPass, verifyProof, verifySignature, stellarHasRoot } from '../src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 const keys = [V.key];
@@ -22,12 +22,12 @@ test('the published test vectors hold: canonical form, signatures, leaves, root,
 });
 
 /** A tiny web: one issuer serving Alpha's pass and its keys, and Horizon. */
-function web(memo = V.stellar_memo.memo_base64, pass = V.passes[0]) {
+function web(memo = V.stellar_memo.memo_base64, pass = V.passes[0], { source = 'GANCHOR', anchors = { stellar: { account: 'GANCHOR', network: 'mainnet' } } } = {}) {
   const doc = { current: pass, anchored: { pass, leaf: V.leaves[0], proof: V.tree.proofs[0], root: { day: '2026-10-05', root: V.tree.root, bitcoin_ots: 'AA==', stellar_tx: 'ab'.repeat(32) } } };
   return async (url) => {
     const u = new URL(url);
-    if (u.host === 'horizon.stellar.org') return Response.json({ successful: true, memo_type: 'hash', memo });
-    if (u.pathname === '/.well-known/pazair-receipts.json') return Response.json({ keys });
+    if (u.host === 'horizon.stellar.org') return Response.json({ successful: true, memo_type: 'hash', memo, source_account: source });
+    if (u.pathname === '/.well-known/pazair-receipts.json') return Response.json({ keys, anchors });
     if (u.pathname === '/v1/agents/ag_alpha/pass') return Response.json(doc);
     return new Response('no', { status: 404 });
   };
@@ -36,8 +36,10 @@ function web(memo = V.stellar_memo.memo_base64, pass = V.passes[0]) {
 test('"May I see your Word Pass?": one URL, checked against the issuer key, the proof and Stellar', async () => {
   const ok = await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web() });
   assert.equal(ok.trust, 'kept_its_word');
-  assert.deepEqual(ok.checks, { signature: true, in_root: true, day: '2026-10-05', stellar: true, bitcoin_ots: true });
-  assert.match(ok.say, /^Alpha .* Checked: signature of issuer\.example valid, in the Merkle root of 2026-10-05, found on Stellar, stamped in Bitcoin\.$/);
+  assert.deepEqual(ok.checks, { signature: true, in_root: true, day: '2026-10-05', stellar: true, stellar_account_bound: true, bitcoin_ots: true, holder: null });
+  assert.match(ok.say, /^Alpha .* Checked: signature of issuer\.example valid, in the Merkle root of 2026-10-05, found on Stellar from the issuer's anchor account, stamped in Bitcoin\. To be sure it is theirs/);
+  // The same memo written from someone else's account is not the issuer's anchor.
+  assert.equal((await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web(undefined, undefined, { source: 'GOTHER' }) })).trust, 'invalid');
 
   assert.equal((await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web(btoa('x'.repeat(32))) })).trust, 'invalid');
   const forged = { ...V.passes[0], as_seller: { ...V.passes[0].as_seller, delivered: 900 } };
@@ -45,4 +47,30 @@ test('"May I see your Word Pass?": one URL, checked against the issuer key, the 
   assert.equal((await checkWordPass('http://issuer.example/v1/agents/ag_alpha/pass', { fetch: web() })).trust, 'unreachable');
   assert.equal((await checkWordPass('https://issuer.example/nothing', { fetch: web() })).trust, 'unreachable');
   assert.equal(await stellarHasRoot('ab'.repeat(32), V.tree.root, { fetch: async () => new Response('', { status: 404 }) }), null);
+});
+
+const signer = async () => {
+  const priv = await crypto.subtle.importKey('jwk', { kty: 'OKP', crv: 'Ed25519', x: V.key.x, d: V.key.d_test_only }, { name: 'Ed25519' }, false, ['sign']);
+  return async (body) => ({ ...body, sig: btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign({ name: 'Ed25519' }, priv, new TextEncoder().encode(canonical(body)))))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') });
+};
+
+test('holder proof: the published vector, then a copied URL with someone else\'s proof is rejected', async () => {
+  const h = V.holder_proof;
+  assert.deepEqual(await verifyHolderProof(h.object, { keys, agent: 'ag_alpha', nonce: h.object.nonce, now: Date.parse(h.valid_at) }), { ok: true, reason: 'ok' });
+  assert.equal((await verifyHolderProof(h.object, { keys, agent: 'ag_alpha', nonce: h.object.nonce, now: Date.parse(h.expired_at) })).ok, false);
+  assert.equal((await verifyHolderProof(h.object, { keys, agent: 'ag_beta', nonce: h.object.nonce, now: Date.parse(h.valid_at) })).ok, false);
+  const sign = await signer(), nonce = 'n-' + crypto.randomUUID(), exp = new Date(Date.now() + 60000).toISOString();
+  const mine = await sign({ v: 1, kind: 'word_pass_proof', issuer: 'example', kid: V.key.kid, agent: 'ag_alpha', nonce, aud: null, iat: new Date().toISOString(), exp });
+  const theirs = await sign({ ...mine, sig: undefined, agent: 'ag_beta' }).then(({ sig, ...b }) => sign(b));
+  const url = 'https://issuer.example/v1/agents/ag_alpha/pass';
+  assert.equal((await checkWordPass(url, { fetch: web(), proof: mine, nonce })).checks.holder, true);
+  assert.equal((await checkWordPass(url, { fetch: web(), proof: theirs, nonce })).trust, 'invalid');
+  assert.equal((await checkWordPass(url, { fetch: web(), proof: mine, nonce: 'a-different-nonce' })).trust, 'invalid');
+});
+
+test('a revoked key signs nothing new; what was anchored before the revocation stays valid', async () => {
+  const anchored = { pass: V.passes[0], proof: V.tree.proofs[0], root: { day: '2026-10-05', root: V.tree.root } };
+  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-06T00:00:00Z' }] })).valid, true);
+  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-05T12:00:00Z' }] })).valid, false, 'same day: not provably before');
+  assert.equal((await verifyPass(V.passes[0], { keys: [{ ...V.key, revoked_at: '2026-10-06T00:00:00Z' }] })).valid, false, 'not anchored: could be backdated');
 });
