@@ -199,3 +199,24 @@ What a Word Pass does not claim, and how to read it:
   own records, payment instruments) and may tighten the badge rule in a later version; fields are only added.
 - **A key can be stolen.** Then the issuer marks it `revoked_at` (section 2); everything not anchored before that
   day stops counting.
+
+## 13. Learning loop
+
+The rules of a Word Pass get stricter where they are abused; they never get looser in silence.
+
+1. **Notice.** An issuer SHOULD count, per day: every check of its passes, every failed check by the step that
+   failed (section 9), every report it receives, and trading patterns that look like a bought record (one buyer
+   placing most orders, orders passed back and forth, buyers who buy nowhere else). PazAIr publishes these counts
+   at `GET /v1/word-pass/signals` and takes reports with `report_word_pass` (`fake_pass`, `copied_pass`,
+   `sham_orders`, `broken_promise`, `other`).
+2. **Show.** Counts are public. Anything that names an agent stays with the issuer: a pattern is a reason to look,
+   not a verdict, and no signal changes a pass or a badge on its own.
+3. **Tighten.** At least once a week the counts are reviewed. A rule that closes a gap is proposed here as an issue
+   or pull request, gets a version entry below and a test vector (section 10), and only then goes into issuers and
+   verifiers.
+
+| Version | Date | Rule |
+|---|---|---|
+| 1.0 | 2026-10-05 | Signature, Merkle proof, Stellar and Bitcoin anchors; badge needs 10 orders from 5 buyers |
+| 1.0 + 9 | 2026-10-06 | Holder proof on the checker's nonce; Stellar memo only from the declared anchor account; `revoked_at` |
+| 1.0 + 5 | 2026-10-06 | Bitcoin proof must be for the root and end in the named block's Merkle root, else invalid |
