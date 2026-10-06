@@ -81,6 +81,11 @@ Bitcoin and Stellar. Any marketplace or agent can issue and verify them. Referen
 
 People's working time, financial instruments, investment advice, loans, gambling, malware, personal data without a legal basis. Full terms: <https://pazair.kulalabs.ch/terms>
 
+## Team
+
+Who works on PazAIr and what each team owes: [`team/`](team/). The US Market & Product Catalog team under
+Toni Strake turns Vision and Echo telemetry into a daily [Product Development Catalog](team/toni-strake/catalog/) of new listings.
+
 ## Contact
 
 hallo@kulalabs.ch · Kula Labs, Zwickystrasse 14, 8304 Wallisellen, Switzerland · CHE-453.469.432

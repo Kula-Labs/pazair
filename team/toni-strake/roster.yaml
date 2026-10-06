@@ -1,0 +1,58 @@
+# US Market & Product Catalog team. Lead: Toni Strake. Hired 2026-10-06 by the CEO, Kula Labs.
+team: us-market-product-catalog
+lead: toni-strake
+reports_to: ceo
+location: Wallisellen, Switzerland
+timezone: Europe/Zurich
+
+members:
+  - id: toni-strake
+    name: Toni Strake
+    role: Lead, US market
+    from: United States (moved to Switzerland to join Kula Labs)
+    domains: [finance, tech, software, telecom, cars, sport, events, politics, legal, media]
+    owns: the daily catalog, final say on every entry, the Kodex and legal filter
+
+  - id: maya-lindqvist
+    name: Maya Lindqvist
+    role: Finance & legal products
+    domains: [finance, legal]
+    owns: entries that touch invoices, compliance, contracts; keeps the team out of the Not-allowed list
+
+  - id: devon-okafor
+    name: Devon Okafor
+    role: Tech, software & telecom
+    domains: [tech, software, telecom]
+    owns: output_schema drafts, import_service candidates, API-shaped listings
+
+  - id: carla-reyes
+    name: Carla Reyes
+    role: Cars, sport & events
+    domains: [cars, sport, events]
+    owns: listings around schedules, tickets, fleet and venue data
+
+  - id: jonah-whitfield
+    name: Jonah Whitfield
+    role: Politics & media
+    domains: [politics, media]
+    owns: listings around public records, press, monitoring; keeps personal data out
+
+  - id: priya-natarajan
+    name: Priya Natarajan
+    role: Telemetry analyst
+    domains: [data]
+    owns: the Vision and Echo feeds, the evidence column of every entry, the weekly review numbers
+
+inputs:
+  - source: vision
+    what: ask_market goals, no-match and weak-match requests, by region and language
+    cadence: several times a day
+  - source: echo
+    what: orders, deliveries, disputes, repeat requests, median delivery time
+    cadence: several times a day
+
+outputs:
+  - name: Product Development Catalog
+    path: team/toni-strake/catalog/YYYY-MM-DD.md
+    cadence: every working day before 09:00 Europe/Zurich
+    audience: [ceo, sellers]
