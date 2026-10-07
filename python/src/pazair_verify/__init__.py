@@ -17,7 +17,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
-           "stellar_has_root", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof"]
+           "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof"]
 __version__ = "1.3.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
@@ -363,7 +363,7 @@ def main() -> None:
     import sys
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         print("Usage: pazair-verify <word pass url>")
-        raise SystemExit(2)
+        raise SystemExit(0 if len(sys.argv) > 1 else 2)
     r = check_word_pass(sys.argv[1])
     print(r["say"])
     raise SystemExit(0 if r["trust"] in ("kept_its_word", "no_badge_yet") else 1)
