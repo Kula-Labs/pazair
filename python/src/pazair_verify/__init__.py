@@ -334,7 +334,7 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
     root = (anchored or {}).get("root") or {}
     st = (kd.get("anchors") or {}).get("stellar") or {}
     account = st.get("account") if st.get("network") == "mainnet" and isinstance(st.get("account"), str) else None
-    stellar = stellar_has_root(root["stellar_tx"], root["root"], fetch, account=account) if v["in_root"] and root.get("stellar_tx") else None
+    stellar = stellar_has_root(root["stellar_tx"], root["root"], fetch, account=account) if v["in_root"] and root.get("stellar_tx") and account else None
     btc = bitcoin_has_root(root["bitcoin_ots"], root["root"], fetch, fetch_text) if v["in_root"] and root.get("bitcoin_ots") else None
     held = verify_holder_proof(proof, keys, p.get("agent"), nonce or "") if proof is not None else None
     checks = {"signature": v["signature_valid"], "in_root": v["in_root"], "day": root.get("day"), "stellar": stellar, "stellar_account_bound": bool(stellar and account),
