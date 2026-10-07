@@ -16,6 +16,7 @@ if (!url || help) {
   process.exit(help ? 0 : 2);
 }
 const r = await checkWordPass(url);
-console.log(r.say);
+const clean = (s) => s.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'); // a pass name cannot rewrite your terminal
+console.log(clean(r.say));
 if (args.includes('--json')) console.log(JSON.stringify({ ...r, pass: undefined }, null, 2));
 process.exit({ kept_its_word: 0, no_badge_yet: 0, invalid: 1, unreachable: 3 }[r.trust] ?? 1);

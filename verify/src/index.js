@@ -62,6 +62,7 @@ export const leafOf = (pass) => sha256hex(canonical(pass));
 
 /** Hash up the path: L means the step is the left sibling (sha256(step + h)), R the right one (sha256(h + step)); hex strings, concatenated as text. */
 export async function verifyProof(leaf, proof, root) {
+  if (!Array.isArray(proof) || !proof.every((s) => (s?.side === 'L' || s?.side === 'R') && /^[0-9a-f]{64}$/.test(s.hash))) return false;
   let h = leaf;
   for (const s of proof) h = s.side === 'L' ? await sha256hex(s.hash + h) : await sha256hex(h + s.hash);
   return h === root;
@@ -70,12 +71,14 @@ export async function verifyProof(leaf, proof, root) {
 /**
  * A Word Pass as an agent shows it (GET /v1/agents/<id>/pass, "anchored"): signature, leaf in the day's root,
  * and where to check the root on Bitcoin (OpenTimestamps) and Stellar (memo hash of the transaction).
+ * A revoked key counts only with { anchoredBefore }: a day you proved yourself (a Bitcoin block time), never the
+ * root.day the document claims, which whoever holds the stolen key can write.
  */
-export async function verifyPass(anchored, { keys } = {}) {
+export async function verifyPass(anchored, { keys, anchoredBefore } = {}) {
   keys ??= await fetchKeys();
   const pass = anchored?.pass ?? anchored;
   const in_root = anchored?.proof && anchored?.root?.root ? await verifyProof(await leafOf(pass), anchored.proof, anchored.root.root) : null;
-  const signature_valid = pass?.kind === 'word_pass' && (await verifySignature(pass, keys, { anchoredBefore: in_root ? anchored.root.day : undefined }));
+  const signature_valid = pass?.kind === 'word_pass' && (await verifySignature(pass, keys, { anchoredBefore: in_root ? anchoredBefore : undefined }));
   return {
     valid: signature_valid && in_root !== false,
     signature_valid,
@@ -215,15 +218,17 @@ export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce 
   try { u = new URL(url); } catch { return none('That is not a URL.'); }
   if (u.protocol !== 'https:') return none('A Word Pass is shown at a public https URL.');
   let doc, kd;
-  try { const r = await f(u.href, { headers: { accept: 'application/json' } }); if (!r.ok) throw new Error(); doc = await r.json(); } catch { return none(`No Word Pass could be read at ${u.href}.`); }
+  try { const r = await f(u.href, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) }); if (!r.ok) throw new Error(); if (Number(r.headers?.get?.('content-length')) > 200_000) throw new Error(); doc = await r.json(); } catch { return none(`No Word Pass could be read at ${u.href}.`); }
   const anchored = doc?.anchored?.pass ? doc.anchored : doc?.pass?.kind === 'word_pass' ? doc : null;
   const pass = anchored?.pass ?? (doc?.current?.kind === 'word_pass' ? doc.current : doc?.kind === 'word_pass' ? doc : null);
   if (!pass) return none(`The document at ${u.href} is not a Word Pass.`);
   try { kd = keys ? { keys } : await fetchKeysDocument(u.origin, f); } catch { return none(`${u.host} publishes no keys at /.well-known/pazair-receipts.json.`); }
-  const v = await verifyPass(anchored ?? pass, { keys: kd.keys });
+  let v = await verifyPass(anchored ?? pass, { keys: kd.keys });
   const a = kd.anchors?.stellar, account = a?.network === 'mainnet' && typeof a.account === 'string' ? a.account : undefined;
   const stellar = v.in_root && anchored.root.stellar_tx && account ? await stellarHasRoot(anchored.root.stellar_tx, anchored.root.root, { fetch: f, account }) : null;
   const btc = v.in_root && anchored.root.bitcoin_ots ? await bitcoinHasRoot(anchored.root.bitcoin_ots, anchored.root.root, { fetch: f }) : null;
+  // Revoked key: only a Bitcoin block older than the revocation proves the pass was signed before the theft.
+  if (!v.signature_valid && btc?.ok && btc.block?.time) v = await verifyPass(anchored, { keys: kd.keys, anchoredBefore: btc.block.time.slice(0, 10) });
   const held = proof != null ? await verifyHolderProof(proof, { keys: kd.keys, agent: pass.agent, nonce }) : null;
   const checks = { signature: v.signature_valid, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, stellar_account_bound: !!(stellar && account), bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots), bitcoin: btc ? btc.ok : null, ...(btc?.block ? { bitcoin_block: btc.block } : {}), holder: held ? held.ok : null };
   const issuer = u.host;
@@ -234,13 +239,13 @@ export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce 
   if (held && !held.ok) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the agent showing it could not prove it is ${pass.name} (${held.reason}). It may be someone else's pass.` };
   const where = checks.in_root ? `in the Merkle root of ${checks.day}${stellar ? (account ? ", found on Stellar from the issuer's anchor account" : ', found on Stellar') : ''}${btc?.block ? `, confirmed in Bitcoin block ${btc.block.height} (${btc.block.time.slice(0, 10)})` : checks.bitcoin_ots ? ', stamped in Bitcoin (block confirmation pending)' : ''}` : 'not anchored yet';
   const whose = held?.ok ? ' The agent showing it proved it is this agent.' : ' To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass).';
-  return { trust: pass.word?.badge ? 'kept_its_word' : 'no_badge_yet', issuer, checks, pass, say: `${sayPass(pass)} Checked: signature of ${issuer} valid, ${where}.${whose}` };
+  return { trust: pass.word?.badge ? 'kept_its_word' : 'no_badge_yet', issuer, checks, pass, say: `${sayPass(pass, issuer)} Checked: signature of ${issuer} valid, ${where}.${whose}` };
 }
 
 /** One plain sentence about a pass. */
-export function sayPass(p) {
+export function sayPass(p, by = p.issuer) {
   const s = p.as_seller ?? {}, w = p.word ?? {}, n = (x, one, many = one + 's') => `${x} ${x === 1 ? one : many}`;
   const record = s.delivered ? `${n(s.delivered, 'paid order')} delivered to ${n(s.buyers, 'buyer')}, ${n(p.disputes_lost ?? 0, 'dispute')} lost` : `no sales yet, ${n(p.as_buyer?.paid_orders ?? 0, 'paid purchase')}`;
   const head = w.badge === 'word_kept_99' ? 'kept its word on 99 % or more' : w.badge === 'word_kept_95' ? 'kept its word on 95 % or more' : w.kept_pct != null ? `kept its word on ${w.kept_pct} % (no badge yet)` : 'new, no record yet';
-  return `${p.name} (Word Pass by ${p.issuer}): ${head}; ${record}.`;
+  return `${p.name} (Word Pass by ${by}): ${head}; ${record}.`;
 }

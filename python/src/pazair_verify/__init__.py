@@ -85,17 +85,21 @@ def leaf_of(p: dict) -> str:
 
 
 def verify_proof(leaf: str, proof: list[dict], root: str) -> bool:
+    if not isinstance(proof, list) or not all(isinstance(s, dict) and s.get("side") in ("L", "R") and isinstance(s.get("hash"), str)
+                                               and len(s["hash"]) == 64 and all(c in "0123456789abcdef" for c in s["hash"]) for s in proof):
+        return False
     h = leaf
     for s in proof:
         h = sha256hex(s["hash"] + h) if s["side"] == "L" else sha256hex(h + s["hash"])
     return h == root
 
 
-def verify_pass(anchored: dict, keys: list[dict]) -> dict:
+def verify_pass(anchored: dict, keys: list[dict], anchored_before: Optional[str] = None) -> dict:
+    """A revoked key counts only with anchored_before: a day you proved yourself (a Bitcoin block time), never root.day."""
     p = anchored.get("pass", anchored)
     root = (anchored.get("root") or {}).get("root")
     in_root = verify_proof(leaf_of(p), anchored["proof"], root) if anchored.get("proof") is not None and root else None
-    sig = p.get("kind") == "word_pass" and verify_signature(p, keys, (anchored.get("root") or {}).get("day") if in_root else None)
+    sig = p.get("kind") == "word_pass" and verify_signature(p, keys, anchored_before if in_root else None)
     return {"valid": sig and in_root is not False, "signature_valid": sig, "in_root": in_root, "word": p.get("word")}
 
 
@@ -272,7 +276,7 @@ def bitcoin_has_root(ots_base64: str, root: str, fetch: Fetch = _get_json, fetch
     return {"ok": False, "status": "wrong_block"} if wrong == len(ots["claims"]) else {"ok": None, "status": "unverified"}
 
 
-def say_pass(p: dict) -> str:
+def say_pass(p: dict, by: Optional[str] = None) -> str:
     s, w = p.get("as_seller") or {}, p.get("word") or {}
 
     def n(x: int, one: str) -> str:
@@ -285,7 +289,7 @@ def say_pass(p: dict) -> str:
     b = w.get("badge")
     head = ("kept its word on 99 % or more" if b == "word_kept_99" else "kept its word on 95 % or more" if b == "word_kept_95"
             else f"kept its word on {_num(float(w['kept_pct']))} % (no badge yet)" if w.get("kept_pct") is not None else "new, no record yet")
-    return f"{p.get('name')} (Word Pass by {p.get('issuer')}): {head}; {record}."
+    return f"{p.get('name')} (Word Pass by {by or p.get('issuer')}): {head}; {record}."
 
 
 def verify_holder_proof(proof: Any, keys: list[dict], agent: str, nonce: str, now: Optional[float] = None) -> dict:
@@ -321,6 +325,16 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
         doc = fetch(url)
     except Exception:
         return none(f"No Word Pass could be read at {url}.")
+    try:
+        return _check_doc(url, u, doc, fetch, proof, nonce, fetch_text)
+    except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+        return none(f"The document at {url} is not a valid Word Pass.")
+
+
+def _check_doc(url, u, doc, fetch, proof, nonce, fetch_text) -> dict:
+    def none(say: str) -> dict:
+        return {"trust": "unreachable", "say": say, "issuer": None, "checks": None, "pass": None}
+
     anchored = doc.get("anchored") if isinstance(doc.get("anchored"), dict) and doc["anchored"].get("pass") else (doc if (doc.get("pass") or {}).get("kind") == "word_pass" else None)
     p = anchored["pass"] if anchored else (doc.get("current") if (doc.get("current") or {}).get("kind") == "word_pass" else doc if doc.get("kind") == "word_pass" else None)
     if not p:
@@ -336,6 +350,8 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
     account = st.get("account") if st.get("network") == "mainnet" and isinstance(st.get("account"), str) else None
     stellar = stellar_has_root(root["stellar_tx"], root["root"], fetch, account=account) if v["in_root"] and root.get("stellar_tx") and account else None
     btc = bitcoin_has_root(root["bitcoin_ots"], root["root"], fetch, fetch_text) if v["in_root"] and root.get("bitcoin_ots") else None
+    if not v["signature_valid"] and btc and btc.get("ok") and (btc.get("block") or {}).get("time"):
+        v = verify_pass(anchored, keys, btc["block"]["time"][:10])  # revoked key: only a Bitcoin block proves "before"
     held = verify_holder_proof(proof, keys, p.get("agent"), nonce or "") if proof is not None else None
     checks = {"signature": v["signature_valid"], "in_root": v["in_root"], "day": root.get("day"), "stellar": stellar, "stellar_account_bound": bool(stellar and account),
               "bitcoin_ots": bool(v["in_root"] and root.get("bitcoin_ots")), "bitcoin": btc["ok"] if btc else None, "holder": held["ok"] if held else None}
@@ -356,7 +372,7 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
     where = (f"in the Merkle root of {checks['day']}" + found + (f", confirmed in Bitcoin block {btc['block']['height']} ({btc['block']['time'][:10]})" if btc and btc.get("block") else ", stamped in Bitcoin (block confirmation pending)" if checks["bitcoin_ots"] else "")) if checks["in_root"] else "not anchored yet"
     whose = " The agent showing it proved it is this agent." if held and held["ok"] else " To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass)."
     return {"trust": "kept_its_word" if (p.get("word") or {}).get("badge") else "no_badge_yet", "issuer": issuer, "checks": checks, "pass": p,
-            "say": f"{say_pass(p)} Checked: signature of {issuer} valid, {where}.{whose}"}
+            "say": f"{say_pass(p, issuer)} Checked: signature of {issuer} valid, {where}.{whose}"}
 
 
 def main() -> None:
