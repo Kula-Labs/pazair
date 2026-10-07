@@ -83,9 +83,14 @@ export async function signPass(key, issuer, a, now = new Date()) {
   });
 }
 
-/** Section 3: a receipt for one paid, delivered order. */
+/**
+ * Section 3: a receipt for one paid, delivered order. Section 3.1: an order placed to deliver another names it in
+ * `parent_order`; the receipt of the other order lists the receipts it was built on in `inputs` (receiptHash of each).
+ */
 export async function signReceipt(key, issuer, r) {
-  return key.sign({ v: 1, issuer, kid: key.kid, order: r.order, listing: r.listing, seller: r.seller, buyer: r.buyer, amount_minor: r.amount_minor, currency: r.currency, delivered_at: r.delivered_at, delivery_sha256: r.delivery_sha256 ?? await sha256hex(typeof r.delivery === 'string' ? r.delivery : JSON.stringify(r.delivery)) });
+  return key.sign({ v: 1, issuer, kid: key.kid, order: r.order, listing: r.listing, seller: r.seller, buyer: r.buyer, amount_minor: r.amount_minor, currency: r.currency, delivered_at: r.delivered_at, delivery_sha256: r.delivery_sha256 ?? await sha256hex(typeof r.delivery === 'string' ? r.delivery : JSON.stringify(r.delivery)),
+    ...(r.parent_order ? { parent_order: r.parent_order } : {}),
+    ...(r.inputs ? { inputs: await Promise.all(r.inputs.map((x) => typeof x === 'string' ? x : sha256hex(canonical(x)))) } : {}) });
 }
 
 export const leafOf = (pass) => sha256hex(canonical(pass));

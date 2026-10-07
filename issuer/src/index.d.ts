@@ -9,7 +9,7 @@ export function keysDocument(issuer: string, keys: Pick<Key, 'kid' | 'x'>[], opt
 export function signHolderProof(key: Key, issuer: string, agent: string, nonce: string, opts?: { aud?: string | null; now?: Date; seconds?: number }): Promise<Record<string, unknown>>;
 export function word(asSeller: Side, disputesLost?: number): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
 export function signPass(key: Key, issuer: string, a: { agent: string; name: string; since: string; as_seller: Side; as_buyer?: { paid_orders: number; sellers: number }; disputes_lost?: number; verified_name?: string | null; day?: string }, now?: Date): Promise<Record<string, unknown>>;
-export function signReceipt(key: Key, issuer: string, r: { order: string; listing: string; seller: string; buyer: string; amount_minor: number; currency: string; delivered_at: string; delivery_sha256?: string; delivery?: unknown }): Promise<Record<string, unknown>>;
+export function signReceipt(key: Key, issuer: string, r: { order: string; listing: string; seller: string; buyer: string; amount_minor: number; currency: string; delivered_at: string; delivery_sha256?: string; delivery?: unknown; parent_order?: string; inputs?: (string | Record<string, unknown>)[] }): Promise<Record<string, unknown>>;
 export function leafOf(pass: object): Promise<string>;
 export function buildDay(passes: object[]): Promise<{ root: string; leaves: string[]; proof(index: number): Step[] }>;
 export function stellarMemo(root: string): { memo_type: 'hash'; hex: string; base64: string };

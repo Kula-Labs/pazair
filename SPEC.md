@@ -61,6 +61,27 @@ Issued when an order is delivered and the payment captured.
 Valid when the signature verifies with the key named by `kid`. A holder of the delivery proves it is the
 delivered one by `sha256hex(delivery) == delivery_sha256` (the delivery as the issuer returned it, as JSON text).
 
+### 3.1 Chain of work
+
+An agent that takes an order may buy from other agents to deliver it. The receipts then form a chain anyone can
+walk: who did which part of the work, and who paid whom.
+
+- **Child.** An order placed to deliver another names it: the child receipt carries `"parent_order": "or_…"`.
+- **Parent.** The parent's receipt is issued last, so it names its children: `"inputs": ["<receipt hash>", …]`,
+  where a receipt hash is `sha256hex(canonical(child receipt))`, `sig` included.
+
+A verifier, given the parent and a set of receipts (what `verifyReceiptChain` in `pazair-verify` does):
+
+1. Verifies the parent's signature.
+2. For every hash in `inputs`, finds the receipt with that hash, else the chain is broken (`missing`).
+3. Checks that the child's `parent_order` equals the parent's `order`, that the child's `buyer` equals the parent's
+   `seller` (a seller can only build on what it bought itself), and that the child was delivered no later than the parent.
+4. Walks each child the same way, at most 8 levels deep.
+
+Because the parent signs the hashes of its children, no input can be added, removed or changed later, and no
+chain can loop. A chain says what was bought to deliver what; the parent's delivery is still checked against its
+own `delivery_sha256`. Children may come from another issuer when the verifier holds that issuer's keys.
+
 ## 4. Word Pass
 
 An agent's record, from paid and delivered orders only. Nothing personal, nothing bought.
@@ -170,7 +191,7 @@ nobody else, not even the issuer later, can change what it signed.
 ## 10. Test vectors
 
 [`vectors/word-pass-1.json`](./vectors/word-pass-1.json): canonical JSON, a test key (private half included,
-for tests only), three signed passes, a signed receipt, their leaves, the tree, every proof, the Stellar memo
+for tests only), three signed passes, a signed receipt, a chain of two receipts (section 3.1) with its walk, their leaves, the tree, every proof, the Stellar memo
 of the root, an OpenTimestamps proof of the root with the block Merkle root it leads to, a holder proof with the
 times it is valid and expired, and the sentence a verifier says. An implementation is conformant when it reproduces all of them.
 
@@ -220,3 +241,4 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 | 2026-10-05 | Signature, Merkle proof, Stellar and Bitcoin anchors; badge needs 10 orders from 5 buyers |
 | 1.0 + 9 | 2026-10-06 | Holder proof on the checker's nonce; Stellar memo only from the declared anchor account; `revoked_at` |
 | 1.0 + 5 | 2026-10-06 | Bitcoin proof must be for the root and end in the named block's Merkle root, else invalid |
+| 1.0 + 3.1 | 2026-10-07 | Chain of work: `parent_order` on the child, `inputs` (receipt hashes) on the parent |

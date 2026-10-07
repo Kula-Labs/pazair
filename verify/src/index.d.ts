@@ -7,6 +7,8 @@ export function verifySignature(obj: { sig?: string; kid?: string } & Record<str
 export function fetchKeysDocument(origin?: string, f?: typeof fetch): Promise<{ keys: Jwk[]; anchors?: { stellar?: { account: string; network: string } } }>;
 export function verifyHolderProof(proof: unknown, opts: { keys: Jwk[]; agent: string; nonce: string; now?: number }): Promise<{ ok: boolean; reason: string }>;
 export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; delivery_matches: boolean | null }>;
+export function receiptHash(receipt: Record<string, unknown>): Promise<string>;
+export function verifyReceiptChain(top: Record<string, unknown>, opts?: { receipts?: Record<string, unknown>[]; keys?: Jwk[]; maxDepth?: number }): Promise<{ valid: boolean; links: number; depth: number; total_minor: Record<string, number>; broken: string | null }>;
 export function leafOf(pass: Record<string, unknown>): Promise<string>;
 export function verifyProof(leaf: string, proof: Step[], root: string): Promise<boolean>;
 export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jwk[] }): Promise<{ valid: boolean; signature_valid: boolean; in_root: boolean | null; word: unknown; anchors: { root: string; day: string; bitcoin_ots: string | null; stellar_tx: string | null } | null }>;

@@ -56,6 +56,40 @@ export async function verifyReceipt(receipt, { keys, delivery } = {}) {
   return { valid: signature_valid && delivery_matches !== false, signature_valid, delivery_matches };
 }
 
+/** Section 3.1: the hash a parent receipt names in `inputs`, the child receipt with its signature. */
+export const receiptHash = (receipt) => sha256hex(canonical(receipt));
+
+/**
+ * Section 3.1: a chain of work. `top` is the receipt the buyer got; `receipts` are the receipts of the orders its
+ * seller placed to deliver it (and theirs, down the chain). Every input must be present, signed, placed by the
+ * parent's seller for the parent's order, and delivered no later than the parent. Returns the first broken link.
+ */
+export async function verifyReceiptChain(top, { receipts = [], keys, maxDepth = 8 } = {}) {
+  keys ??= await fetchKeys();
+  const byHash = new Map(await Promise.all(receipts.map(async (r) => [await receiptHash(r), r])));
+  let links = 0, depth = 0, total_minor = {};
+  const walk = async (p, d) => {
+    if (!(await verifySignature(p, keys))) return `${p?.order}: signature`;
+    if (p.inputs === undefined) return null;
+    if (!Array.isArray(p.inputs)) return `${p.order}: inputs`;
+    if (p.inputs.length && d >= maxDepth) return `${p.order}: deeper than ${maxDepth}`;
+    for (const h of p.inputs) {
+      const c = byHash.get(h);
+      if (!c) return `${p.order}: input ${String(h).slice(0, 12)}… missing`;
+      if (c.parent_order !== p.order) return `${c.order}: parent_order is not ${p.order}`;
+      if (c.buyer !== p.seller) return `${c.order}: bought by ${c.buyer}, not by ${p.seller}`;
+      if (!(String(c.delivered_at) <= String(p.delivered_at))) return `${c.order}: delivered after ${p.order}`;
+      links++; depth = Math.max(depth, d + 1);
+      total_minor[c.currency] = (total_minor[c.currency] ?? 0) + c.amount_minor;
+      const bad = await walk(c, d + 1);
+      if (bad) return bad;
+    }
+    return null;
+  };
+  const broken = await walk(top, 0);
+  return { valid: broken === null, links, depth, total_minor, broken };
+}
+
 /** The Merkle leaf of a Word Pass: sha256 of its canonical JSON, signature included. */
 export const leafOf = (pass) => sha256hex(canonical(pass));
 
