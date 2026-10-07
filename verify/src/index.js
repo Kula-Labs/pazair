@@ -37,7 +37,8 @@ export async function fetchKeys(origin = 'https://pazair.kulalabs.ch', f = fetch
 export async function verifySignature(obj, keys, { anchoredBefore } = {}) {
   if (!obj || typeof obj.sig !== 'string' || typeof obj.kid !== 'string') return false;
   const jwk = keys.find((k) => k.kid === obj.kid);
-  if (!jwk) return false;
+  if (!jwk || typeof jwk.x !== 'string') return false;
+  if ((await sha256hex(jwk.x)).slice(0, 16) !== jwk.kid) return false; // SPEC §1: kid = sha256(x)[0:16]
   if (jwk.revoked_at && !(anchoredBefore && anchoredBefore < String(jwk.revoked_at).slice(0, 10))) return false;
   const { sig, ...body } = obj;
   try {
@@ -193,6 +194,7 @@ export async function bitcoinHasRoot(otsBase64, root, { fetch: f = fetch, explor
  * is theirs and not a copied URL. Check it against the nonce you gave and the pass's agent.
  */
 export async function verifyHolderProof(proof, { keys, agent, nonce, now = Date.now() } = {}) {
+  keys ??= await fetchKeys();
   if (proof?.kind !== 'word_pass_proof') return { ok: false, reason: 'not a holder proof' };
   if (!(await verifySignature(proof, keys))) return { ok: false, reason: "signature does not match the issuer's key" };
   if (proof.agent !== agent) return { ok: false, reason: 'the proof is for another agent' };
@@ -220,7 +222,7 @@ export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce 
   try { kd = keys ? { keys } : await fetchKeysDocument(u.origin, f); } catch { return none(`${u.host} publishes no keys at /.well-known/pazair-receipts.json.`); }
   const v = await verifyPass(anchored ?? pass, { keys: kd.keys });
   const a = kd.anchors?.stellar, account = a?.network === 'mainnet' && typeof a.account === 'string' ? a.account : undefined;
-  const stellar = v.in_root && anchored.root.stellar_tx ? await stellarHasRoot(anchored.root.stellar_tx, anchored.root.root, { fetch: f, account }) : null;
+  const stellar = v.in_root && anchored.root.stellar_tx && account ? await stellarHasRoot(anchored.root.stellar_tx, anchored.root.root, { fetch: f, account }) : null;
   const btc = v.in_root && anchored.root.bitcoin_ots ? await bitcoinHasRoot(anchored.root.bitcoin_ots, anchored.root.root, { fetch: f }) : null;
   const held = proof != null ? await verifyHolderProof(proof, { keys: kd.keys, agent: pass.agent, nonce }) : null;
   const checks = { signature: v.signature_valid, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, stellar_account_bound: !!(stellar && account), bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots), bitcoin: btc ? btc.ok : null, ...(btc?.block ? { bitcoin_block: btc.block } : {}), holder: held ? held.ok : null };

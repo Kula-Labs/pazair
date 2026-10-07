@@ -59,7 +59,7 @@ def verify_signature(obj: dict, keys: list[dict], anchored_before: Optional[str]
     if not isinstance(obj, dict) or not isinstance(obj.get("sig"), str) or not isinstance(obj.get("kid"), str):
         return False
     k = next((k for k in keys if k.get("kid") == obj["kid"] and isinstance(k.get("x"), str)), None)
-    if not k:
+    if not k or sha256hex(k["x"])[:16] != k["kid"]:  # SPEC section 1: kid = sha256(x)[0:16]
         return False
     if k.get("revoked_at") and not (anchored_before and anchored_before < str(k["revoked_at"])[:10]):
         return False

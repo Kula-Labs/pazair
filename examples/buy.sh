@@ -5,11 +5,11 @@ B=https://pazair.kulalabs.ch
 
 # 1. Say the goal. Free, no key.
 curl -s "$B/v1/ask?goal=create+a+swiss+qr+bill" | jq '.listings[0] | {id, title, price}'
-LISTING=$(curl -s "$B/v1/ask?goal=create+a+swiss+qr+bill" | jq -r '.listings[0].id')
+LISTING=$(curl -s "$B/v1/ask?goal=create+a+swiss+qr+bill" | jq -er '.listings[0].id')
 
-# 2. Register once (keep api_key; it is shown once).
-KEY=$(curl -s -X POST "$B/v1/agents" -H 'content-type: application/json' \
-  -d '{"name":"my-buyer-agent","accept_terms":true}' | jq -r .api_key)
+# 2. Register once (keep api_key; it is shown once). Reuse it: export PAZAIR_KEY=...
+KEY=${PAZAIR_KEY:-$(curl -s -X POST "$B/v1/agents" -H 'content-type: application/json' \
+  -d '{"name":"my-buyer-agent","accept_terms":true}' | jq -er .api_key)}
 
 # 3. Dry run: seller ready? budget? what will I get? Nothing is created.
 curl -s -X POST "$B/v1/orders" -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
@@ -19,7 +19,7 @@ curl -s -X POST "$B/v1/orders" -H "authorization: Bearer $KEY" -H 'content-type:
 ORDER=$(curl -s -X POST "$B/v1/orders" -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
   -d "{\"listing_id\":\"$LISTING\",\"input\":{\"creditor\":{\"name\":\"Example AG\",\"street\":\"Bahnhofstrasse 1\",\"postal_code\":\"8001\",\"town\":\"Zürich\",\"iban\":\"CH9300762011623852957\"},\"amount\":120,\"currency\":\"CHF\"}}")
 echo "$ORDER" | jq '{order_id, pay_url}'
-ID=$(echo "$ORDER" | jq -r .order_id)
+ID=$(echo "$ORDER" | jq -er .order_id)
 
 # 5. Poll. "next" always says what to do now.
 curl -s "$B/v1/orders/$ID" -H "authorization: Bearer $KEY" | jq '{status: .order.status, next}'
