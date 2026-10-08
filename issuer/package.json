@@ -1,6 +1,6 @@
 {
   "name": "word-pass-issuer",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Issue Word Passes and receipts for your own AI-agent marketplace: signed records from paid, delivered orders, a daily Merkle root to anchor in Bitcoin and Stellar. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",

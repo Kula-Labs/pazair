@@ -18,8 +18,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
-           "receipt_hash", "verify_receipt_chain"]
-__version__ = "1.4.0"
+           "receipt_hash", "verify_receipt_chain", "verify_mandate"]
+__version__ = "1.5.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -121,6 +121,29 @@ def verify_receipt_chain(top: dict, receipts: list[dict], keys: list[dict], max_
 
     broken = walk(top, 0)
     return {"valid": broken is None, **st, "broken": broken}
+
+
+def verify_mandate(receipt: dict, mandate: dict, keys: list[dict], end: Optional[dict] = None) -> dict:
+    """Section 3.2: was this receipt bought within this mandate? Returns valid, covers (what held), reasons (what did not)."""
+    covers: list[str] = []
+    reasons: list[str] = []
+
+    def ok(cond: bool, yes: str, no: str) -> None:
+        (covers if cond else reasons).append(yes if cond else no)
+
+    sc = (mandate or {}).get("scope") or {}
+    ok(isinstance(mandate, dict) and mandate.get("kind") == "mandate" and verify_signature(mandate, keys), "mandate signed", "mandate signature")
+    ok(verify_signature(receipt, keys), "receipt signed", "receipt signature")
+    ok(receipt.get("mandate") == receipt_hash(mandate), "receipt names this mandate", "receipt names another mandate")
+    ok(receipt.get("buyer") == mandate.get("agent"), "bought by the mandated agent", f"bought by {receipt.get('buyer')}, not by {mandate.get('agent')}")
+    ok(receipt.get("currency") == sc.get("currency"), "currency within the mandate", f"currency {receipt.get('currency')}, mandate {sc.get('currency')}")
+    amt, cap = receipt.get("amount_minor"), sc.get("max_order_minor")
+    ok(isinstance(amt, int) and isinstance(cap, int) and amt <= cap, "amount within the cap per order", f"amount {amt} over the cap {cap}")
+    ok(str(mandate.get("issued_at")) <= str(receipt.get("delivered_at")), "mandate older than the delivery", "delivered before the mandate existed")
+    if end is not None:
+        ok(end.get("kind") == "mandate_end" and end.get("mandate") == receipt.get("mandate") and verify_signature(end, keys), "end statement signed", "end statement")
+        ok(str(receipt.get("delivered_at")) <= str(end.get("at")), "delivered before the mandate ended", "delivered after the mandate ended")
+    return {"valid": not reasons, "covers": covers, "reasons": reasons}
 
 
 def leaf_of(p: dict) -> str:

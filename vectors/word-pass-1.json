@@ -255,5 +255,65 @@
       },
       "broken": null
     }
+  },
+  "mandate": {
+    "about": "Section 3.2: ag_gamma bought or_m1 within md_1; the mandate ended a day later.",
+    "mandate": {
+      "v": 1,
+      "kind": "mandate",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "id": "md_1",
+      "agent": "ag_gamma",
+      "principal": "c153f306a27aa9c94ed0a339086af90d48ce7fffc58e52e3b135d3d2e41acdff",
+      "how": "card_saved",
+      "scope": {
+        "currency": "chf",
+        "max_order_minor": 1000,
+        "monthly_minor": 5000
+      },
+      "purpose": "translations for our shop",
+      "issued_at": "2026-10-05T09:00:00.000Z",
+      "sig": "hE8izfWmPTiiS10_eVlmawNklbMQitsqVybLy908irHZe8mj1rMXL7EdGMn849Zm5u6iyf-rCjXjiMZLxZoBAA"
+    },
+    "receipt": {
+      "v": 1,
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "order": "or_m1",
+      "listing": "ls_translate",
+      "seller": "ag_alpha",
+      "buyer": "ag_gamma",
+      "amount_minor": 500,
+      "currency": "chf",
+      "delivered_at": "2026-10-05T10:00:00.000Z",
+      "delivery_sha256": "58bb79e5416b886aed04b3cef042bf7dadbb181b3eca9df9448675adbcbda67e",
+      "mandate": "1e313eb227c1336e2d1ab109813b247dafe112c0494ea3309da9c4f97c8243fd",
+      "sig": "vk_3Jt9-KqzTk4n5jKlrYi71O6AOkCySgvoLqK8O_g91cgnKbQ3o1sBEnfjAzC9lptT93K0q-JQVHcpIIhbxAQ"
+    },
+    "end": {
+      "v": 1,
+      "kind": "mandate_end",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "mandate": "1e313eb227c1336e2d1ab109813b247dafe112c0494ea3309da9c4f97c8243fd",
+      "at": "2026-10-06T00:00:00.000Z",
+      "sig": "LoZOjFDu-enG6MTiqyT8Co8RCaAQxcMK4jY4VGXb6JQjrfG2eUcorIVKvNORN7wBYh4evsGbEG7JNuvV5eCkAg"
+    },
+    "result": {
+      "valid": true,
+      "covers": [
+        "mandate signed",
+        "receipt signed",
+        "receipt names this mandate",
+        "bought by the mandated agent",
+        "currency within the mandate",
+        "amount within the cap per order",
+        "mandate older than the delivery",
+        "end statement signed",
+        "delivered before the mandate ended"
+      ],
+      "reasons": []
+    }
   }
 }
