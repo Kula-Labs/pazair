@@ -1,5 +1,5 @@
 # Publishes when a tag is pushed:
-#   verify-v1.6.0 -> npm pazair-verify    issuer-v1.1.0 -> npm word-pass-issuer    python-v1.6.0 -> PyPI pazair-verify
+#   verify-v1.6.1 -> npm pazair-verify    issuer-v1.1.0 -> npm word-pass-issuer    python-v1.6.1 -> PyPI pazair-verify
 # npm: trusted publishing (OIDC) once configured on npmjs.com; until then the repository secret NPM_TOKEN.
 # PyPI: trusted publishing only (no token). Release steps: RELEASING.md.
 name: publish

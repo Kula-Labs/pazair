@@ -20,7 +20,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
            "receipt_hash", "verify_receipt_chain", "verify_mandate"]
-__version__ = "1.6.0"
+__version__ = "1.6.1"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
