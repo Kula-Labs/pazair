@@ -43,6 +43,7 @@ A verifier keeps the keys it trusts. A rotated key stays listed while objects si
 
 - **Anchor account.** `"anchors": { "stellar": { "account": "G…", "network": "mainnet" } }` names the account that
   writes the daily roots (section 5). Anyone can write a memo on Stellar; only this account's transactions count.
+  An issuer that declares no anchor account has no Stellar check: verifiers report it as unknown, never as found.
 - **Revocation.** A key that may be compromised gets `"revoked_at": "<ISO time>"` and a new key is added. From then
   on it signs nothing valid: a pass signed with it counts only if its proof leads to a root of a day *before*
   `revoked_at` (the anchor proves it is older); receipts and holder proofs signed with it are invalid.
@@ -59,7 +60,8 @@ Issued when an order is delivered and the payment captured.
 ```
 
 Valid when the signature verifies with the key named by `kid`. A holder of the delivery proves it is the
-delivered one by `sha256hex(delivery) == delivery_sha256` (the delivery as the issuer returned it, as JSON text).
+delivered one by `sha256hex(delivery) == delivery_sha256` (the delivery as the issuer returned it, as JSON text). Hash the string exactly as received; re-serialising a
+parsed object can reorder keys or rewrite numbers and gives a false mismatch.
 
 ### 3.1 Chain of work
 

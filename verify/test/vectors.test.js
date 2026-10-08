@@ -72,8 +72,9 @@ test('holder proof: the published vector, then a copied URL with someone else\'s
 
 test('a revoked key signs nothing new; what was anchored before the revocation stays valid', async () => {
   const anchored = { pass: V.passes[0], proof: V.tree.proofs[0], root: { day: '2026-10-05', root: V.tree.root } };
-  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-06T00:00:00Z' }] })).valid, true);
-  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-05T12:00:00Z' }] })).valid, false, 'same day: not provably before');
+  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-06T00:00:00Z' }], anchoredBefore: '2026-10-05' })).valid, true);
+  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-06T00:00:00Z' }] })).valid, false, 'root.day alone is a claim, not proof');
+  assert.equal((await verifyPass(anchored, { keys: [{ ...V.key, revoked_at: '2026-10-05T12:00:00Z' }], anchoredBefore: '2026-10-05' })).valid, false, 'same day: not provably before');
   assert.equal((await verifyPass(V.passes[0], { keys: [{ ...V.key, revoked_at: '2026-10-06T00:00:00Z' }] })).valid, false, 'not anchored: could be backdated');
 });
 
