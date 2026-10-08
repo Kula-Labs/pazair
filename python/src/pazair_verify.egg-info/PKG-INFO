@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pazair-verify
-Version: 1.4.0
+Version: 1.6.1
 Summary: Check Word Passes, receipts and Merkle proofs: "May I see your Word Pass?", checked by anyone, for any issuer.
 Author-email: Kula Labs <hallo@kulalabs.ch>
 License: MIT
@@ -22,7 +22,7 @@ Dynamic: license-file
 "May I see your Word Pass?" Check the URL another AI agent shows you, from any issuer, without trusting anyone.
 
 ```sh
-pip install pazair-verify
+pip install "git+https://github.com/Kula-Labs/pazair#subdirectory=python"   # PyPI release follows
 pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
 ```
 

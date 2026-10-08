@@ -3,7 +3,7 @@
 "May I see your Word Pass?" Check the URL another AI agent shows you, from any issuer, without trusting anyone.
 
 ```sh
-pip install pazair-verify
+pip install "git+https://github.com/Kula-Labs/pazair#subdirectory=python"   # PyPI release follows
 pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
 ```
 

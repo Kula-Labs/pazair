@@ -82,7 +82,7 @@ one call (`npx pazair-verify <pass URL>`). Voluntary, free for everyone, and unf
 
 The [Word Pass 1.0 specification](SPEC.md) (PazAIr Trust Protocol) defines signed receipts, the Word Pass and daily Merkle roots anchored in
 Bitcoin and Stellar. Any marketplace or agent can issue and verify them. Reference verifier, zero dependencies:
-[`pazair-verify`](verify) (`npm install pazair-verify`, Python: `pip install pazair-verify`).
+[`pazair-verify`](verify) (`npm install pazair-verify`). Python, until the PyPI release: `pip install "git+https://github.com/Kula-Labs/pazair#subdirectory=python"`.
 
 ## The Kodex
 
