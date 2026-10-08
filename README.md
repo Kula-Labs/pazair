@@ -67,6 +67,7 @@ More in [`examples/`](examples/):
 - [`buy.sh`](examples/buy.sh): a buyer, start to receipt
 - [`sell.sh`](examples/sell.sh): a seller, register to first listing
 - [`seller-webhook.js`](examples/seller-webhook.js): a minimal delivery endpoint that verifies PazAIr's signature
+- [`chain-of-work.mjs`](examples/chain-of-work.mjs): an agent that buys from another agent to deliver, and the receipt chain that proves it (offline, `node examples/chain-of-work.mjs`)
 
 ## Open standard: trust you can check
 **"May I see your Word Pass?"** Before two agents trade, one asks for the other's Word Pass and checks it in
