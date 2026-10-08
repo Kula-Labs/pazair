@@ -38,7 +38,7 @@ function web(memo = V.stellar_memo.memo_base64, pass = V.passes[0], { source = '
 test('"May I see your Word Pass?": one URL, checked against the issuer key, the proof and Stellar', async () => {
   const ok = await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web() });
   assert.equal(ok.trust, 'kept_its_word');
-  assert.deepEqual(ok.checks, { signature: true, in_root: true, day: '2026-10-05', stellar: true, stellar_account_bound: true, bitcoin_ots: true, bitcoin: true, bitcoin_block: { height: V.bitcoin.height, hash: V.bitcoin.block_hash, time: new Date(V.bitcoin.block_time * 1000).toISOString() }, holder: null });
+  assert.deepEqual(ok.checks, { signature: true, in_root: true, day: '2026-10-05', stellar: true, stellar_account_bound: true, bitcoin_ots: true, bitcoin: true, bitcoin_block: { height: V.bitcoin.height, hash: V.bitcoin.block_hash, time: new Date(V.bitcoin.block_time * 1000).toISOString() }, holder: null, word: true });
   assert.match(ok.say, /^Alpha .* Checked: signature of issuer\.example valid, in the Merkle root of 2026-10-05, found on Stellar from the issuer's anchor account, confirmed in Bitcoin block 915102 \(2026-10-05\)\. To be sure it is theirs/);
   // The same memo written from someone else's account is not the issuer's anchor.
   assert.equal((await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web(undefined, undefined, { source: 'GOTHER' }) })).trust, 'invalid');
@@ -49,6 +49,12 @@ test('"May I see your Word Pass?": one URL, checked against the issuer key, the 
   assert.equal((await checkWordPass('http://issuer.example/v1/agents/ag_alpha/pass', { fetch: web() })).trust, 'unreachable');
   assert.equal((await checkWordPass('https://issuer.example/nothing', { fetch: web() })).trust, 'unreachable');
   assert.equal(await stellarHasRoot('ab'.repeat(32), V.tree.root, { fetch: async () => new Response('', { status: 404 }) }), null);
+  // A badge no anchor confirms is signed, not proven: no Stellar account declared, no Bitcoin stamp.
+  assert.equal((await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web(undefined, undefined, { anchors: {}, ots: null }) })).trust, 'signed_unanchored');
+  // A badge its own counts do not earn is invalid, even when signed.
+  const k = await signer(), { sig, ...body } = V.passes[0];
+  const boasting = await k({ ...body, as_seller: { ...body.as_seller, delivered: 3 } });
+  assert.equal((await verifyPass(boasting, { keys })).word_consistent, false);
 });
 
 const signer = async () => {
@@ -61,6 +67,8 @@ test('holder proof: the published vector, then a copied URL with someone else\'s
   assert.deepEqual(await verifyHolderProof(h.object, { keys, agent: 'ag_alpha', nonce: h.object.nonce, now: Date.parse(h.valid_at) }), { ok: true, reason: 'ok' });
   assert.equal((await verifyHolderProof(h.object, { keys, agent: 'ag_alpha', nonce: h.object.nonce, now: Date.parse(h.expired_at) })).ok, false);
   assert.equal((await verifyHolderProof(h.object, { keys, agent: 'ag_beta', nonce: h.object.nonce, now: Date.parse(h.valid_at) })).ok, false);
+  // Relayed: a proof made for another checker does not convince this one.
+  assert.equal((await verifyHolderProof(h.object, { keys, agent: 'ag_alpha', nonce: h.object.nonce, aud: 'ag_checker', now: Date.parse(h.valid_at) })).ok, false);
   const sign = await signer(), nonce = 'n-' + crypto.randomUUID(), exp = new Date(Date.now() + 60000).toISOString();
   const mine = await sign({ v: 1, kind: 'word_pass_proof', issuer: 'example', kid: V.key.kid, agent: 'ag_alpha', nonce, aud: null, iat: new Date().toISOString(), exp });
   const theirs = await sign({ ...mine, sig: undefined, agent: 'ag_beta' }).then(({ sig, ...b }) => sign(b));

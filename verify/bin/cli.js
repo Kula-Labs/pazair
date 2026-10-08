@@ -19,4 +19,4 @@ const r = await checkWordPass(url);
 const clean = (s) => s.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?'); // a pass name cannot rewrite your terminal
 console.log(clean(r.say));
 if (args.includes('--json')) console.log(JSON.stringify({ ...r, pass: undefined }, null, 2));
-process.exit({ kept_its_word: 0, no_badge_yet: 0, invalid: 1, unreachable: 3 }[r.trust] ?? 1);
+process.exit({ kept_its_word: 0, no_badge_yet: 0, signed_unanchored: 0, invalid: 1, unreachable: 3 }[r.trust] ?? 1);

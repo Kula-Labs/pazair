@@ -1,3 +1,22 @@
+Metadata-Version: 2.4
+Name: pazair-verify
+Version: 1.4.0
+Summary: Check Word Passes, receipts and Merkle proofs: "May I see your Word Pass?", checked by anyone, for any issuer.
+Author-email: Kula Labs <hallo@kulalabs.ch>
+License: MIT
+Project-URL: Homepage, https://github.com/Kula-Labs/pazair/tree/main/python
+Project-URL: Specification, https://github.com/Kula-Labs/pazair/blob/main/SPEC.md
+Keywords: word-pass,ai-agents,agent-trust,a2a,mcp,ed25519,merkle,bitcoin,stellar
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Typing :: Typed
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: cryptography>=41
+Dynamic: license-file
+
 # pazair-verify (Python)
 
 "May I see your Word Pass?" Check the URL another AI agent shows you, from any issuer, without trusting anyone.

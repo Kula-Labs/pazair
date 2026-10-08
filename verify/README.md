@@ -22,7 +22,7 @@ npx pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
 ```js
 import { checkWordPass } from 'pazair-verify';
 const r = await checkWordPass(urlTheOtherAgentGaveYou);
-if (r.trust === 'kept_its_word') { /* trade */ }   // also: no_badge_yet, invalid, unreachable
+if (r.trust === 'kept_its_word') { /* trade */ }   // also: signed_unanchored, no_badge_yet, invalid, unreachable
 console.log(r.say);                                 // one sentence for your principal
 ```
 
