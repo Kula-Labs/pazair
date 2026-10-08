@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { bitcoinHasRoot, canonical, checkWordPass, readOts, leafOf, sayPass, sha256hex, verifyHolderProof, verifyPass, verifyProof, verifySignature, stellarHasRoot } from '../src/index.js';
+import { bitcoinHasRoot, canonical, checkWordPass, readOts, leafOf, sayPass, sha256hex, verifyHolderProof, verifyPass, verifyProof, verifySignature, stellarHasRoot, receiptHash, verifyReceiptChain, verifyMandate } from '../src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 const keys = [V.key];
@@ -103,4 +103,26 @@ test('Bitcoin: the published .ots vector walks to the block\'s Merkle root; a pr
   assert.equal((await checkWordPass(url, { fetch: web(undefined, undefined, { ots: 'AA==' }) })).trust, 'invalid');
   // No explorer answers: neutral, the rest of the pass still stands.
   assert.deepEqual(await bitcoinHasRoot(V.bitcoin.ots_base64, V.tree.root, { fetch: async () => new Response('', { status: 503 }) }), { ok: null, status: 'unverified' });
+});
+
+test('a chain of work (section 3.1): the vector holds, and every way to break a link is caught', async () => {
+  const { top, receipts, sub_hash, result } = V.chain;
+  assert.equal(await receiptHash(receipts[0]), sub_hash);
+  assert.deepEqual(await verifyReceiptChain(top, { receipts, keys }), result);
+  assert.equal((await verifyReceiptChain(V.receipt.object, { keys })).valid, true, 'a receipt without inputs is a chain of one');
+  const broken = async (rs, t = top) => (await verifyReceiptChain(t, { receipts: rs, keys })).broken;
+  assert.match(await broken([]), /missing/);
+  assert.match(await broken([{ ...receipts[0], amount_minor: 1 }]), /missing/, 'a changed child no longer has the named hash');
+  assert.match(await broken(receipts, { ...top, inputs: [] }), /signature/, 'inputs cannot be dropped after signing');
+  assert.equal((await verifyReceiptChain(top, { receipts, keys, maxDepth: 0 })).valid, false);
+});
+
+test('a mandate (section 3.2): the vector holds, and a receipt outside it is caught', async () => {
+  const { mandate, receipt, end, result } = V.mandate;
+  assert.deepEqual(await verifyMandate(receipt, mandate, { keys, end }), result);
+  const reasons = async (r, m = mandate, e) => (await verifyMandate(r, m, { keys, ...(e ? { end: e } : {}) })).reasons;
+  assert.ok((await reasons({ ...receipt, amount_minor: 5000 })).includes('receipt signature'), 'a changed amount breaks the signature');
+  assert.ok((await reasons(receipt, { ...mandate, scope: { ...mandate.scope, max_order_minor: 100000 } })).includes('mandate signature'), 'limits cannot be raised afterwards');
+  assert.ok((await reasons(V.receipt.object)).includes('receipt names another mandate'), 'a receipt without a mandate is not within it');
+  assert.ok((await reasons(receipt, mandate, { ...end, at: '2026-10-05T09:30:00.000Z' })).includes('end statement'), 'an end cannot be backdated');
 });

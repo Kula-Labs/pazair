@@ -65,6 +65,60 @@ Valid when the signature verifies with the key named by `kid`. A holder of the d
 delivered one by `sha256hex(delivery) == delivery_sha256` (the delivery as the issuer returned it, as JSON text). Hash the string exactly as received; re-serialising a
 parsed object can reorder keys or rewrite numbers and gives a false mismatch.
 
+### 3.1 Chain of work
+
+An agent that takes an order may buy from other agents to deliver it. The receipts then form a chain anyone can
+walk: who did which part of the work, and who paid whom.
+
+- **Child.** An order placed to deliver another names it: the child receipt carries `"parent_order": "or_…"`.
+- **Parent.** The parent's receipt is issued last, so it names its children: `"inputs": ["<receipt hash>", …]`,
+  where a receipt hash is `sha256hex(canonical(child receipt))`, `sig` included.
+
+A verifier, given the parent and a set of receipts (what `verifyReceiptChain` in `pazair-verify` does):
+
+1. Verifies the parent's signature.
+2. For every hash in `inputs`, finds the receipt with that hash, else the chain is broken (`missing`).
+3. Checks that the child's `parent_order` equals the parent's `order`, that the child's `buyer` equals the parent's
+   `seller` (a seller can only build on what it bought itself), and that the child was delivered no later than the parent.
+4. Walks each child the same way, at most 8 levels deep.
+
+Because the parent signs the hashes of its children, no input can be added, removed or changed later, and no
+chain can loop. A chain says what was bought to deliver what; the parent's delivery is still checked against its
+own `delivery_sha256`. Children may come from another issuer when the verifier holds that issuer's keys.
+
+### 3.2 Mandate (the intent receipt)
+
+A receipt says what was delivered. A **mandate** says who allowed it. The principal (the person or company behind
+an agent) sets limits once; the issuer signs them; every receipt bought within them names the mandate. The chain of
+section 3.1 then starts at a human decision: principal → mandate → agent → sub-orders → delivery → payment.
+
+```json
+{ "v": 1, "kind": "mandate", "issuer": "pazair", "kid": "3f1c…", "id": "md_…", "agent": "ag_…",
+  "principal": "<sha256hex of the issuer's own reference to the principal>", "how": "card_saved",
+  "scope": { "currency": "chf", "max_order_minor": 5000, "monthly_minor": 20000 },
+  "purpose": null, "issued_at": "2026-10-08T10:00:00.000Z", "sig": "…" }
+```
+
+- `principal` is a hash, never a name, address or card: anyone can see that two mandates come from the same
+  principal, nobody can see who it is. `how` says how the principal confirmed it (`card_saved`: saved a payment card
+  with the payment provider for exactly these limits).
+- `purpose` is an optional sentence from the principal ("translations for our shop"). It MUST NOT contain personal
+  data; `null` when not given.
+- A receipt bought within a mandate carries `"mandate": "<sha256hex(canonical(mandate))>"`, `sig` included.
+- Changing the limits makes a new mandate. Ending one is a signed statement:
+  `{ "v": 1, "kind": "mandate_end", "issuer": "…", "kid": "…", "mandate": "<hash>", "at": "…", "sig": "…" }`.
+
+A verifier, given a receipt and the mandate it names (what `verifyMandate` in `pazair-verify` does):
+
+1. Verifies both signatures and that the receipt's `mandate` is the hash of the mandate.
+2. Checks that the receipt's `buyer` is the mandate's `agent`, that the currency is the mandate's, that
+   `amount_minor ≤ max_order_minor`, and that the mandate was issued no later than the delivery.
+3. Given a `mandate_end` for it, checks that the delivery was not after the end.
+
+The monthly limit is enforced by the issuer when the order is placed; a verifier holding every receipt that names
+a mandate can add them up per calendar month (UTC) and check it too. What a mandate does not claim: that the purchase
+was wise, only that it was allowed.
+
 ## 4. Word Pass
 
 An agent's record, from paid and delivered orders only. Nothing personal, nothing bought.
@@ -178,7 +232,7 @@ nobody else, not even the issuer later, can change what it signed.
 ## 10. Test vectors
 
 [`vectors/word-pass-1.json`](./vectors/word-pass-1.json): canonical JSON, a test key (private half included,
-for tests only), three signed passes, a signed receipt, their leaves, the tree, every proof, the Stellar memo
+for tests only), three signed passes, a signed receipt, a chain of two receipts (section 3.1) with its walk, a mandate and a receipt within it (section 3.2), their leaves, the tree, every proof, the Stellar memo
 of the root, an OpenTimestamps proof of the root with the block Merkle root it leads to, a holder proof with the
 times it is valid and expired, and the sentence a verifier says. An implementation is conformant when it reproduces all of them.
 
@@ -229,3 +283,5 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 | 2026-10-05 | Signature, Merkle proof, Stellar and Bitcoin anchors; badge needs 10 orders from 5 buyers |
 | 1.0 + 9 | 2026-10-06 | Holder proof on the checker's nonce; Stellar memo only from the declared anchor account; `revoked_at` |
 | 1.0 + 5 | 2026-10-06 | Bitcoin proof must be for the root and end in the named block's Merkle root, else invalid |
+| 1.0 + 3.1 | 2026-10-07 | Chain of work: `parent_order` on the child, `inputs` (receipt hashes) on the parent |
+| 1.0 + 3.2 | 2026-10-08 | Mandate: the principal's limits, signed; receipts name the mandate they were bought within |

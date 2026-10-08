@@ -5,7 +5,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / "src"))
-from pazair_verify import bitcoin_has_root, canonical, read_ots, check_word_pass, leaf_of, say_pass, sha256hex, verify_holder_proof, verify_pass, verify_proof, verify_receipt, verify_signature  # noqa: E402
+from pazair_verify import bitcoin_has_root, canonical, read_ots, check_word_pass, leaf_of, say_pass, sha256hex, verify_holder_proof, verify_pass, verify_proof, verify_receipt, verify_signature, receipt_hash, verify_receipt_chain, verify_mandate  # noqa: E402
 
 V = json.loads((pathlib.Path(__file__).parent.parent.parent / "vectors" / "word-pass-1.json").read_text())
 KEYS = [V["key"]]
@@ -102,6 +102,24 @@ class Vectors(unittest.TestCase):
         self.assertFalse(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")])["valid"])
         self.assertFalse(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-05T12:00:00Z")], "2026-10-05")["valid"])
         self.assertFalse(verify_pass(V["passes"][0], [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")])["valid"])
+
+
+class Chain(unittest.TestCase):
+    def test_chain_vector(self):
+        c = V["chain"]
+        self.assertEqual(receipt_hash(c["receipts"][0]), c["sub_hash"])
+        self.assertEqual(verify_receipt_chain(c["top"], c["receipts"], KEYS), c["result"])
+        self.assertIn("missing", verify_receipt_chain(c["top"], [], KEYS)["broken"])
+        self.assertIn("signature", verify_receipt_chain({**c["top"], "inputs": []}, c["receipts"], KEYS)["broken"])
+        self.assertFalse(verify_receipt_chain(c["top"], c["receipts"], KEYS, max_depth=0)["valid"])
+
+
+class Mandate(unittest.TestCase):
+    def test_mandate_vector(self):
+        m = V["mandate"]
+        self.assertEqual(verify_mandate(m["receipt"], m["mandate"], KEYS, m["end"]), m["result"])
+        self.assertIn("receipt signature", verify_mandate({**m["receipt"], "amount_minor": 5000}, m["mandate"], KEYS)["reasons"])
+        self.assertIn("receipt names another mandate", verify_mandate(V["receipt"]["object"], m["mandate"], KEYS)["reasons"])
 
 
 if __name__ == "__main__":

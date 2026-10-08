@@ -56,6 +56,9 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `checkWordPass(url, { fetch?, keys?, proof?, nonce? })` | the pass at a URL with the issuer's own keys, the proof, the root on Stellar and in its Bitcoin block; a verdict and a sentence |
 | `bitcoinHasRoot(otsBase64, root, { fetch? })` | the .ots proof is for this root and ends in the Merkle root of the block it names (public block explorers) |
 | `verifyReceipt(receipt, { keys?, delivery? })` | Ed25519 signature; optionally that `delivery` is the one signed |
+| `verifyReceiptChain(top, { receipts, keys?, maxDepth? })` | Section 3.1: every receipt `top` was built on is present, signed, bought by its seller for that order; returns `{ valid, links, depth, total_minor, broken }` |
+| `verifyMandate(receipt, mandate, { keys?, end? })` | Section 3.2: the receipt was bought within the principal's mandate (agent, currency, cap per order, before its end); returns `{ valid, covers, reasons }` |
+| `receiptHash(receipt)` | The hash a parent receipt lists in `inputs` |
 | `verifyPass(anchored, { keys? })` | signature, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |
 | `leafOf(pass)`, `canonical(obj)`, `sha256hex(s)` | the building blocks of the spec |

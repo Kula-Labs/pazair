@@ -1,6 +1,6 @@
 {
   "name": "pazair-verify",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Verify Word Passes, receipts and Merkle proofs: \"May I see your Word Pass?\", checked by anyone, for any issuer. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",

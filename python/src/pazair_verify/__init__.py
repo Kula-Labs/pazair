@@ -18,8 +18,9 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
-           "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof"]
-__version__ = "1.4.0"
+           "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
+           "receipt_hash", "verify_receipt_chain", "verify_mandate"]
+__version__ = "1.6.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -90,6 +91,71 @@ def verify_receipt(receipt: dict, keys: list[dict], delivery: Any = None) -> dic
         text = delivery if isinstance(delivery, str) else json.dumps(delivery, separators=(",", ":"), ensure_ascii=False)
         matches = sha256hex(text) == receipt.get("delivery_sha256")
     return {"valid": signature_valid and matches is not False, "signature_valid": signature_valid, "delivery_matches": matches}
+
+
+def receipt_hash(receipt: dict) -> str:
+    """Section 3.1: the hash a parent receipt names in `inputs`, the child receipt with its signature."""
+    return sha256hex(canonical(receipt))
+
+
+def verify_receipt_chain(top: dict, receipts: list[dict], keys: list[dict], max_depth: int = 8) -> dict:
+    """Section 3.1: every input of `top` (and theirs, down the chain) present, signed, placed by the parent's
+    seller for the parent's order and delivered no later than it. Returns the first broken link."""
+    by_hash = {receipt_hash(r): r for r in receipts}
+    st = {"links": 0, "depth": 0, "total_minor": {}}
+
+    def walk(p: dict, d: int) -> Optional[str]:
+        if not verify_signature(p, keys):
+            return f"{p.get('order') if isinstance(p, dict) else None}: signature"
+        if "inputs" not in p:
+            return None
+        if not isinstance(p["inputs"], list):
+            return f"{p['order']}: inputs"
+        if p["inputs"] and d >= max_depth:
+            return f"{p['order']}: deeper than {max_depth}"
+        for h in p["inputs"]:
+            c = by_hash.get(h)
+            if c is None:
+                return f"{p['order']}: input {str(h)[:12]}… missing"
+            if c.get("parent_order") != p.get("order"):
+                return f"{c.get('order')}: parent_order is not {p.get('order')}"
+            if c.get("buyer") != p.get("seller"):
+                return f"{c.get('order')}: bought by {c.get('buyer')}, not by {p.get('seller')}"
+            if not str(c.get("delivered_at")) <= str(p.get("delivered_at")):
+                return f"{c.get('order')}: delivered after {p.get('order')}"
+            st["links"] += 1
+            st["depth"] = max(st["depth"], d + 1)
+            st["total_minor"][c["currency"]] = st["total_minor"].get(c["currency"], 0) + c["amount_minor"]
+            bad = walk(c, d + 1)
+            if bad:
+                return bad
+        return None
+
+    broken = walk(top, 0)
+    return {"valid": broken is None, **st, "broken": broken}
+
+
+def verify_mandate(receipt: dict, mandate: dict, keys: list[dict], end: Optional[dict] = None) -> dict:
+    """Section 3.2: was this receipt bought within this mandate? Returns valid, covers (what held), reasons (what did not)."""
+    covers: list[str] = []
+    reasons: list[str] = []
+
+    def ok(cond: bool, yes: str, no: str) -> None:
+        (covers if cond else reasons).append(yes if cond else no)
+
+    sc = (mandate or {}).get("scope") or {}
+    ok(isinstance(mandate, dict) and mandate.get("kind") == "mandate" and verify_signature(mandate, keys), "mandate signed", "mandate signature")
+    ok(verify_signature(receipt, keys), "receipt signed", "receipt signature")
+    ok(receipt.get("mandate") == receipt_hash(mandate), "receipt names this mandate", "receipt names another mandate")
+    ok(receipt.get("buyer") == mandate.get("agent"), "bought by the mandated agent", f"bought by {receipt.get('buyer')}, not by {mandate.get('agent')}")
+    ok(receipt.get("currency") == sc.get("currency"), "currency within the mandate", f"currency {receipt.get('currency')}, mandate {sc.get('currency')}")
+    amt, cap = receipt.get("amount_minor"), sc.get("max_order_minor")
+    ok(isinstance(amt, int) and isinstance(cap, int) and amt <= cap, "amount within the cap per order", f"amount {amt} over the cap {cap}")
+    ok(str(mandate.get("issued_at")) <= str(receipt.get("delivered_at")), "mandate older than the delivery", "delivered before the mandate existed")
+    if end is not None:
+        ok(end.get("kind") == "mandate_end" and end.get("mandate") == receipt.get("mandate") and verify_signature(end, keys), "end statement signed", "end statement")
+        ok(str(receipt.get("delivered_at")) <= str(end.get("at")), "delivered before the mandate ended", "delivered after the mandate ended")
+    return {"valid": not reasons, "covers": covers, "reasons": reasons}
 
 
 def leaf_of(p: dict) -> str:

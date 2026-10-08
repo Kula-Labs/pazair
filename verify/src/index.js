@@ -66,6 +66,63 @@ export function wordOf(pass) {
   return { kept_pct: kept, badge: enough && kept >= 99 ? 'word_kept_99' : enough && kept >= 95 ? 'word_kept_95' : null };
 }
 
+/** Section 3.1: the hash a parent receipt names in `inputs`, the child receipt with its signature. */
+export const receiptHash = (receipt) => sha256hex(canonical(receipt));
+
+/**
+ * Section 3.1: a chain of work. `top` is the receipt the buyer got; `receipts` are the receipts of the orders its
+ * seller placed to deliver it (and theirs, down the chain). Every input must be present, signed, placed by the
+ * parent's seller for the parent's order, and delivered no later than the parent. Returns the first broken link.
+ */
+export async function verifyReceiptChain(top, { receipts = [], keys, maxDepth = 8 } = {}) {
+  keys ??= await fetchKeys();
+  const byHash = new Map(await Promise.all(receipts.map(async (r) => [await receiptHash(r), r])));
+  let links = 0, depth = 0, total_minor = {};
+  const walk = async (p, d) => {
+    if (!(await verifySignature(p, keys))) return `${p?.order}: signature`;
+    if (p.inputs === undefined) return null;
+    if (!Array.isArray(p.inputs)) return `${p.order}: inputs`;
+    if (p.inputs.length && d >= maxDepth) return `${p.order}: deeper than ${maxDepth}`;
+    for (const h of p.inputs) {
+      const c = byHash.get(h);
+      if (!c) return `${p.order}: input ${String(h).slice(0, 12)}… missing`;
+      if (c.parent_order !== p.order) return `${c.order}: parent_order is not ${p.order}`;
+      if (c.buyer !== p.seller) return `${c.order}: bought by ${c.buyer}, not by ${p.seller}`;
+      if (!(String(c.delivered_at) <= String(p.delivered_at))) return `${c.order}: delivered after ${p.order}`;
+      links++; depth = Math.max(depth, d + 1);
+      total_minor[c.currency] = (total_minor[c.currency] ?? 0) + c.amount_minor;
+      const bad = await walk(c, d + 1);
+      if (bad) return bad;
+    }
+    return null;
+  };
+  const broken = await walk(top, 0);
+  return { valid: broken === null, links, depth, total_minor, broken };
+}
+
+/**
+ * Section 3.2: was this receipt bought within this mandate? `end` is an optional signed mandate_end.
+ * Returns { valid, covers, reasons }: covers lists what held, reasons what did not.
+ */
+export async function verifyMandate(receipt, mandate, { keys, end } = {}) {
+  keys ??= await fetchKeys();
+  const reasons = [], covers = [];
+  const ok = (cond, yes, no) => (cond ? covers.push(yes) : reasons.push(no));
+  ok(mandate?.kind === 'mandate' && (await verifySignature(mandate, keys)), 'mandate signed', 'mandate signature');
+  ok(await verifySignature(receipt, keys), 'receipt signed', 'receipt signature');
+  ok(receipt?.mandate === (await receiptHash(mandate)), 'receipt names this mandate', 'receipt names another mandate');
+  ok(receipt?.buyer === mandate?.agent, 'bought by the mandated agent', `bought by ${receipt?.buyer}, not by ${mandate?.agent}`);
+  const sc = mandate?.scope ?? {};
+  ok(receipt?.currency === sc.currency, 'currency within the mandate', `currency ${receipt?.currency}, mandate ${sc.currency}`);
+  ok(Number.isInteger(receipt?.amount_minor) && receipt.amount_minor <= sc.max_order_minor, 'amount within the cap per order', `amount ${receipt?.amount_minor} over the cap ${sc.max_order_minor}`);
+  ok(String(mandate?.issued_at) <= String(receipt?.delivered_at), 'mandate older than the delivery', 'delivered before the mandate existed');
+  if (end !== undefined) {
+    ok(end?.kind === 'mandate_end' && end.mandate === receipt?.mandate && (await verifySignature(end, keys)), 'end statement signed', 'end statement');
+    ok(String(receipt?.delivered_at) <= String(end?.at), 'delivered before the mandate ended', 'delivered after the mandate ended');
+  }
+  return { valid: reasons.length === 0, covers, reasons };
+}
+
 /** The Merkle leaf of a Word Pass: sha256 of its canonical JSON, signature included. */
 export const leafOf = (pass) => sha256hex(canonical(pass));
 
