@@ -9,7 +9,7 @@ export function verifyHolderProof(proof: unknown, opts: { keys: Jwk[]; agent: st
 export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; delivery_matches: boolean | null }>;
 export function leafOf(pass: Record<string, unknown>): Promise<string>;
 export function verifyProof(leaf: string, proof: Step[], root: string): Promise<boolean>;
-export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jwk[] }): Promise<{ valid: boolean; signature_valid: boolean; in_root: boolean | null; word: unknown; anchors: { root: string; day: string; bitcoin_ots: string | null; stellar_tx: string | null } | null }>;
+export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jwk[]; anchoredBefore?: string }): Promise<{ valid: boolean; signature_valid: boolean; in_root: boolean | null; word: unknown; anchors: { root: string; day: string; bitcoin_ots: string | null; stellar_tx: string | null } | null }>;
 export type PassCheck = {
   trust: 'kept_its_word' | 'no_badge_yet' | 'invalid' | 'unreachable';
   say: string; issuer: string | null;
@@ -21,4 +21,4 @@ export function readOts(bytes: Uint8Array): Promise<{ digest: string; claims: { 
 export function bitcoinHasRoot(otsBase64: string, root: string, opts?: { fetch?: typeof fetch; explorers?: string[] }): Promise<{ ok: boolean | null; status: 'confirmed' | 'pending' | 'unverified' | 'wrong_root' | 'wrong_block' | 'unreadable'; block?: BitcoinBlock }>;
 export function stellarHasRoot(tx: string, root: string, opts?: { fetch?: typeof fetch; horizon?: string; account?: string }): Promise<boolean | null>;
 export function checkWordPass(url: string, opts?: { fetch?: typeof fetch; keys?: Jwk[]; proof?: unknown; nonce?: string }): Promise<PassCheck>;
-export function sayPass(pass: Record<string, unknown>): string;
+export function sayPass(pass: Record<string, unknown>, by?: string): string;

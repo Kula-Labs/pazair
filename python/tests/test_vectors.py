@@ -91,8 +91,9 @@ class Vectors(unittest.TestCase):
         self.assertFalse(verify_holder_proof(h["object"], KEYS, "ag_alpha", h["object"]["nonce"], ts(h["expired_at"]))["ok"])
         self.assertFalse(verify_holder_proof(h["object"], KEYS, "ag_beta", h["object"]["nonce"], ts(h["valid_at"]))["ok"])
         anchored = {"pass": V["passes"][0], "proof": V["tree"]["proofs"][0], "root": {"day": "2026-10-05", "root": V["tree"]["root"]}}
-        self.assertTrue(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")])["valid"])
-        self.assertFalse(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-05T12:00:00Z")])["valid"])
+        self.assertTrue(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")], "2026-10-05")["valid"])
+        self.assertFalse(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")])["valid"])
+        self.assertFalse(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-05T12:00:00Z")], "2026-10-05")["valid"])
         self.assertFalse(verify_pass(V["passes"][0], [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")])["valid"])
 
 

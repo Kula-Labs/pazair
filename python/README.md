@@ -16,5 +16,5 @@ print(r["say"])                      # one sentence for your principal
 ```
 
 Also: `verify_pass`, `verify_receipt`, `verify_proof`, `canonical`, `stellar_has_root`. Same results as the
-JavaScript verifier, checked against the shared [test vectors](../vectors/word-pass-1.json).
-[Specification](../SPEC.md). MIT, by Kula Labs, Switzerland.
+JavaScript verifier, checked against the shared [test vectors](https://github.com/Kula-Labs/pazair/blob/main/vectors/word-pass-1.json).
+[Specification](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md). MIT, by Kula Labs, Switzerland.
