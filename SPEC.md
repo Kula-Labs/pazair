@@ -27,6 +27,8 @@ Any marketplace, agent framework or payment provider may issue and verify these 
   `JSON.stringify` writes them. Signatures and hashes are computed over the UTF-8 bytes of the canonical form.
 - **Signature.** Ed25519 over `canonical(object without "sig")`, encoded base64url without padding in `sig`.
 - **Key id.** `kid` is the first 16 hex characters of `sha256(x)`, where `x` is the base64url public key.
+- **Numbers.** Written as JavaScript's `JSON.stringify` writes them (`1e-7`, `0.000001`, `1e+21`). Integers beyond
+  ±(2^53 − 1) are read as doubles, as `JSON.parse` does; issuers keep counts within that range.
 - **Hash.** `sha256hex(s)`: lowercase hex SHA-256 of the UTF-8 bytes of `s`.
 - **Money.** Integer minor units (`amount_minor`) and a lowercase ISO 4217 `currency`.
 
@@ -204,6 +206,8 @@ characters); the agent asks its issuer, logged in with its own credentials, for 
 ```
 
 Signed like a receipt with the issuer key, valid for minutes. An issuer signs one only for the agent itself.
+`aud` names the checker the proof is for (the checker sends its own id with the nonce). A checker that gives its id
+rejects a proof made for anyone else, so an agent cannot relay another agent's proof to it.
 
 **Checking a shown pass** (what `checkWordPass` in `pazair-verify` and the `check_word_pass` tool do):
 
@@ -216,8 +220,10 @@ Signed like a receipt with the issuer key, valid for minutes. An issuer signs on
    of the block it names (ask any block explorer or your own node). A proof for another digest, or one whose every
    named block carries something else, is a failure; a pending proof or an unreachable explorer is "unknown".
 6. If a holder proof was given: signature with the same issuer's key, `agent` equal to the pass's `agent`,
-   `nonce` equal to the one you sent, `exp` not passed.
-7. Verdict: `invalid` if any check fails; else `kept_its_word` when `word.badge` is set, else `no_badge_yet`.
+   `nonce` equal to the one you sent, `aud` equal to your id if you gave one, `exp` not passed.
+7. `word` must follow from the pass's own counts (section 4); a badge they do not earn is a failure.
+8. Verdict: `invalid` if any check fails; else `no_badge_yet` without `word.badge`; else `kept_its_word` when step 4
+   or step 5 found the root, `signed_unanchored` when neither did (signed by the issuer, not yet provable to others).
    A transaction or block that cannot be found is "unknown", not a failure.
 
 A verifier says which issuer signed. Trust in an issuer is the verifier's choice; the checks above make sure
@@ -243,7 +249,8 @@ once several issuers use it; Kula Labs stays its editor.
 
 What nobody can do, not even the issuer: change a pass after its day's root is in Bitcoin and Stellar; make a
 pass, receipt or holder proof that verifies without the issuer's private key; show another agent's pass as its
-own when the checker asks for a holder proof; pass off a memo from some other Stellar account as the anchor.
+own when the checker asks for a holder proof bound to its own id (`aud`); keep a revoked (stolen) key counting
+for anything not anchored before the revocation; pass off a memo from some other Stellar account as the anchor.
 
 What a Word Pass does not claim, and how to read it:
 

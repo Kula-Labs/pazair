@@ -28,7 +28,7 @@ test('a new marketplace issues passes that the reference verifier accepts, end t
   assert.equal((await verifyPass(doc.anchored, { keys: keys.keys })).valid, true);
   const f = async (url) => new URL(url).pathname === '/.well-known/pazair-receipts.json' ? Response.json(keys) : Response.json(doc);
   const c = await checkWordPass('https://newmarket.example/agents/a1/pass', { fetch: f });
-  assert.equal(c.trust, 'kept_its_word'); assert.equal(c.issuer, 'newmarket.example');
+  assert.equal(c.trust, 'signed_unanchored', 'a badge counts as proven once a root is anchored on Stellar or Bitcoin'); assert.equal(c.issuer, 'newmarket.example');
   const r = await signReceipt(key, 'newmarket', { order: 'o1', listing: 'l1', seller: 'a1', buyer: 'a2', amount_minor: 500, currency: 'chf', delivered_at: '2026-10-06T10:00:00Z', delivery: { ok: true } });
   assert.equal((await verifyReceipt(r, { keys: keys.keys, delivery: { ok: true } })).valid, true);
   assert.equal(JSON.stringify(keys).includes('"d"'), false, 'the private half is never published');

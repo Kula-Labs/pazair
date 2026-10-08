@@ -73,7 +73,7 @@ class Vectors(unittest.TestCase):
         ok = cwp(url, web())
         self.assertEqual(ok["trust"], "kept_its_word")
         self.assertEqual(ok["checks"], {"signature": True, "in_root": True, "day": "2026-10-05", "stellar": True, "stellar_account_bound": True, "bitcoin_ots": True, "bitcoin": True,
-                                       "bitcoin_block": {"height": B["height"], "hash": B["block_hash"], "time": "2026-10-05T00:00:00.000Z"}, "holder": None})
+                                       "bitcoin_block": {"height": B["height"], "hash": B["block_hash"], "time": "2026-10-05T00:00:00.000Z"}, "holder": None, "word": True})
         self.assertIn("found on Stellar from the issuer's anchor account, confirmed in Bitcoin block 915102 (2026-10-05). To be sure it is theirs", ok["say"])
         self.assertEqual(cwp(url, web(source="GOTHER"))["trust"], "invalid")
         self.assertEqual(cwp(url, web(base64.b64encode(b"x" * 32).decode()))["trust"], "invalid")
@@ -81,6 +81,12 @@ class Vectors(unittest.TestCase):
         self.assertEqual(cwp(url, web(p=forged))["trust"], "invalid")
         self.assertEqual(cwp("http://issuer.example/x", web())["trust"], "unreachable")
         self.assertEqual(cwp("https://issuer.example/nothing", web())["trust"], "unreachable")
+
+    def test_numbers_as_javascript_writes_them(self):
+        cases = {1e-7: "1e-7", 1.5e-7: "1.5e-7", 0.000001: "0.000001", 1e21: "1e+21", 1e20: "100000000000000000000",
+                 123456789012345678901: "123456789012345680000", 2**53 + 1: "9007199254740992", -0.0: "0", 99.1: "99.1"}
+        for v, js in cases.items():
+            self.assertEqual(canonical(v), js)
 
 
     def test_holder_proof_and_revocation(self):
@@ -90,6 +96,7 @@ class Vectors(unittest.TestCase):
         self.assertEqual(verify_holder_proof(h["object"], KEYS, "ag_alpha", h["object"]["nonce"], ts(h["valid_at"])), {"ok": True, "reason": "ok"})
         self.assertFalse(verify_holder_proof(h["object"], KEYS, "ag_alpha", h["object"]["nonce"], ts(h["expired_at"]))["ok"])
         self.assertFalse(verify_holder_proof(h["object"], KEYS, "ag_beta", h["object"]["nonce"], ts(h["valid_at"]))["ok"])
+        self.assertFalse(verify_holder_proof(h["object"], KEYS, "ag_alpha", h["object"]["nonce"], ts(h["valid_at"]), aud="ag_checker")["ok"])
         anchored = {"pass": V["passes"][0], "proof": V["tree"]["proofs"][0], "root": {"day": "2026-10-05", "root": V["tree"]["root"]}}
         self.assertTrue(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")], "2026-10-05")["valid"])
         self.assertFalse(verify_pass(anchored, [dict(V["key"], revoked_at="2026-10-06T00:00:00Z")])["valid"])

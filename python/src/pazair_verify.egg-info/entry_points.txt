@@ -1,0 +1,2 @@
+[console_scripts]
+pazair-verify = pazair_verify:main
