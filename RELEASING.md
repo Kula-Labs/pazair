@@ -6,9 +6,9 @@ this repository).
 
 | Tag | Publishes |
 |---|---|
-| `verify-v1.6.0` | npm `pazair-verify` from `verify/` |
+| `verify-v1.6.1` | npm `pazair-verify` from `verify/` |
 | `issuer-v1.1.0` | npm `word-pass-issuer` from `issuer/` |
-| `python-v1.6.0` | PyPI `pazair-verify` from `python/` |
+| `python-v1.6.1` | PyPI `pazair-verify` from `python/` |
 
 ## Once: connect the registries
 
@@ -35,14 +35,14 @@ this repository).
 ```bash
 git checkout main && git pull
 # bump the version in verify/package.json, python/pyproject.toml and python/src/pazair_verify/__init__.py (same number)
-git tag verify-v1.6.0 && git tag python-v1.6.0
-git push origin verify-v1.6.0 python-v1.6.0
+git tag verify-v1.6.1 && git tag python-v1.6.1
+git push origin verify-v1.6.1 python-v1.6.1
 ```
 
 Watch the *publish* run under Actions. Then check, from any machine:
 
 ```bash
-npx pazair-verify@1.6.0 --version          # 1.6.0
+npx pazair-verify@1.6.1 --version          # 1.6.1
 pipx run pazair-verify --help              # usage, exit 0
 npm view pazair-verify dist.attestations   # provenance present
 ```
