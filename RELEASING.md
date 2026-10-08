@@ -12,15 +12,15 @@ this repository).
 
 ## Once: connect the registries
 
-**npm (first publish needs a token, then switch to trusted publishing)**
+**npm (the first version by hand, then trusted publishing)**
 
-1. On npmjs.com, sign in with the Kula Labs account (two-factor on). Access Tokens → Generate New Token →
-   Granular, *Read and write*, all packages, short expiry. Save it as the repository secret `NPM_TOKEN`
-   (GitHub → Settings → Secrets and variables → Actions).
-2. Push the first tags (below). The packages now exist.
-3. For each package on npmjs.com: Settings → Trusted Publisher → GitHub Actions: organization `Kula-Labs`,
-   repository `pazair`, workflow `publish-verify.yml`. Then delete the `NPM_TOKEN` secret and the token on npm.
-   From now on publishing uses OIDC: no secret to leak.
+1. On npmjs.com, sign in with the Kula Labs account, two-factor on.
+2. Publish the very first version of a new package from your machine, in its folder:
+   `npm login`, then `npm publish --access public --provenance=false` (provenance only exists in CI).
+3. On npmjs.com: the package → Settings → Trusted Publisher → GitHub Actions: organization `Kula-Labs`,
+   repository `pazair`, workflow `publish-verify.yml`, *Allow npm publish* checked. From now on every tag
+   publishes from GitHub with provenance; no token exists that could leak. The connection must be used once
+   within a few days of setting it up, or it lapses.
 
 **PyPI (trusted publishing from the start, no token ever)**
 

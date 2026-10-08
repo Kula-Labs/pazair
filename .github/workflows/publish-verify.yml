@@ -1,6 +1,7 @@
 # Publishes when a tag is pushed:
 #   verify-v1.6.1 -> npm pazair-verify    issuer-v1.1.0 -> npm word-pass-issuer    python-v1.6.1 -> PyPI pazair-verify
-# npm: trusted publishing (OIDC) once configured on npmjs.com; until then the repository secret NPM_TOKEN.
+# npm: trusted publishing (OIDC), configured per package on npmjs.com. The very first version of a new package is
+# published by hand (npm publish --access public --provenance=false), see RELEASING.md.
 # PyPI: trusted publishing only (no token). Release steps: RELEASING.md.
 name: publish
 on:
@@ -18,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with: { node-version: 22, registry-url: 'https://registry.npmjs.org' }
+        with: { node-version: 22 } # no registry-url: its generated .npmrc token line would shadow OIDC
       - run: npm install -g npm@11 # trusted publishing needs npm 11.5 or later
       - name: package from the tag
         run: echo "DIR=${GITHUB_REF_NAME%%-v*}" >> "$GITHUB_ENV"
@@ -26,9 +27,9 @@ jobs:
         working-directory: ${{ env.DIR }}
       - run: test "${DIR}-v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
         working-directory: ${{ env.DIR }}
+      # Trusted publishing (OIDC): no token. A NODE_AUTH_TOKEN, even an empty one, would stop npm from using OIDC.
       - run: npm publish --provenance --access public
         working-directory: ${{ env.DIR }}
-        env: { NODE_AUTH_TOKEN: '${{ secrets.NPM_TOKEN }}' } # empty once trusted publishing is set up: OIDC is used
   pypi:
     if: ${{ startsWith(github.ref_name, 'python-v') }}
     runs-on: ubuntu-latest
