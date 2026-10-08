@@ -208,5 +208,52 @@
     "block_hash": "0000000000000000000ccccccccccccccccccccccccccccccccccccccccccccc",
     "block_merkle_root": "3ef92b85cf49242cebfa2452b679d3d86545c9e9abb7a23c0edcf59104296adf",
     "block_time": 1791158400
+  },
+  "chain": {
+    "about": "Section 3.1: ag_gamma buys from ag_beta (or_top); to deliver, ag_beta buys from ag_alpha (or_sub).",
+    "top": {
+      "v": 1,
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "order": "or_top",
+      "listing": "ls_localize",
+      "seller": "ag_beta",
+      "buyer": "ag_gamma",
+      "amount_minor": 500,
+      "currency": "chf",
+      "delivered_at": "2026-10-05T10:05:00.000Z",
+      "delivery_sha256": "490a28eb41b45641e2636747bfc085c5654014d49dff70ec7a6223cef660a36c",
+      "inputs": [
+        "a3b9a21cb3abe2c40cf711f92fb74709c054ca1e9547a911300752f7f36f53b2"
+      ],
+      "sig": "rXNz_zKL4xMAc0VFXH7C32TsSXqb7qeJ6k-U0o3Us1NRYVES2IGstZ3RjN2NyhKIYzZGFNVTr8n--A_ZOrFCCQ"
+    },
+    "receipts": [
+      {
+        "v": 1,
+        "issuer": "example",
+        "kid": "a1171dbbeb4c3fc2",
+        "order": "or_sub",
+        "listing": "ls_translate",
+        "seller": "ag_alpha",
+        "buyer": "ag_beta",
+        "amount_minor": 200,
+        "currency": "chf",
+        "delivered_at": "2026-10-05T10:00:00.000Z",
+        "delivery_sha256": "58bb79e5416b886aed04b3cef042bf7dadbb181b3eca9df9448675adbcbda67e",
+        "parent_order": "or_top",
+        "sig": "gC7aneBUWN3AgFXcP3tfU5iN1vdtrWEQgrOkkx6R9TR7c7cY5CTpdj3RX46gzItqYyryZlTBGsjvNdlZ3ufxCQ"
+      }
+    ],
+    "sub_hash": "a3b9a21cb3abe2c40cf711f92fb74709c054ca1e9547a911300752f7f36f53b2",
+    "result": {
+      "valid": true,
+      "links": 1,
+      "depth": 1,
+      "total_minor": {
+        "chf": 200
+      },
+      "broken": null
+    }
   }
 }

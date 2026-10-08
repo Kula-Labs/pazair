@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildDay, generateKey, importKey, keysDocument, passDocument, signHolderProof, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
-import { checkWordPass, verifyHolderProof, verifyPass, verifyReceipt } from '../../verify/src/index.js';
+import { checkWordPass, verifyHolderProof, verifyPass, verifyReceipt, verifyReceiptChain } from '../../verify/src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 
@@ -42,4 +42,15 @@ test('holder proofs from the kit pass the reference check; the anchor account is
   assert.deepEqual(await verifyHolderProof(p, { keys: doc.keys, agent: 'a1', nonce: 'nonce-123456' }), { ok: true, reason: 'ok' });
   await assert.rejects(signHolderProof(key, 'newmarket', 'a1', 'short'));
   assert.equal(keysDocument('newmarket', [key], { revoked: { [key.kid]: '2026-10-06T00:00:00Z' } }).keys[0].revoked_at, '2026-10-06T00:00:00Z');
+});
+
+test('a seller that buys to deliver: the kit signs the chain, the reference check walks it', async () => {
+  const key = await generateKey(); const keys = keysDocument('newmarket', [key]).keys;
+  const base = { listing: 'l', currency: 'chf', delivery: { ok: true } };
+  const sub = await signReceipt(key, 'newmarket', { ...base, order: 'o2', seller: 'a3', buyer: 'a2', amount_minor: 100, delivered_at: '2026-10-06T10:00:00Z', parent_order: 'o1' });
+  const top = await signReceipt(key, 'newmarket', { ...base, order: 'o1', seller: 'a2', buyer: 'a1', amount_minor: 500, delivered_at: '2026-10-06T10:01:00Z', inputs: [sub] });
+  assert.equal((await verifyReceiptChain(top, { receipts: [sub], keys })).valid, true);
+  const foreign = await signReceipt(key, 'newmarket', { ...base, order: 'o3', seller: 'a3', buyer: 'a9', amount_minor: 100, delivered_at: '2026-10-06T10:00:00Z', parent_order: 'o1' });
+  const claims = await signReceipt(key, 'newmarket', { ...base, order: 'o1', seller: 'a2', buyer: 'a1', amount_minor: 500, delivered_at: '2026-10-06T10:01:00Z', inputs: [foreign] });
+  assert.match((await verifyReceiptChain(claims, { receipts: [foreign], keys })).broken, /bought by a9/, 'no claiming someone else\'s purchase');
 });

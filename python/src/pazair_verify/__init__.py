@@ -17,8 +17,9 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
-           "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof"]
-__version__ = "1.3.0"
+           "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
+           "receipt_hash", "verify_receipt_chain"]
+__version__ = "1.4.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -78,6 +79,48 @@ def verify_receipt(receipt: dict, keys: list[dict], delivery: Any = None) -> dic
         text = delivery if isinstance(delivery, str) else json.dumps(delivery, separators=(",", ":"), ensure_ascii=False)
         matches = sha256hex(text) == receipt.get("delivery_sha256")
     return {"valid": signature_valid and matches is not False, "signature_valid": signature_valid, "delivery_matches": matches}
+
+
+def receipt_hash(receipt: dict) -> str:
+    """Section 3.1: the hash a parent receipt names in `inputs`, the child receipt with its signature."""
+    return sha256hex(canonical(receipt))
+
+
+def verify_receipt_chain(top: dict, receipts: list[dict], keys: list[dict], max_depth: int = 8) -> dict:
+    """Section 3.1: every input of `top` (and theirs, down the chain) present, signed, placed by the parent's
+    seller for the parent's order and delivered no later than it. Returns the first broken link."""
+    by_hash = {receipt_hash(r): r for r in receipts}
+    st = {"links": 0, "depth": 0, "total_minor": {}}
+
+    def walk(p: dict, d: int) -> Optional[str]:
+        if not verify_signature(p, keys):
+            return f"{p.get('order') if isinstance(p, dict) else None}: signature"
+        if "inputs" not in p:
+            return None
+        if not isinstance(p["inputs"], list):
+            return f"{p['order']}: inputs"
+        if p["inputs"] and d >= max_depth:
+            return f"{p['order']}: deeper than {max_depth}"
+        for h in p["inputs"]:
+            c = by_hash.get(h)
+            if c is None:
+                return f"{p['order']}: input {str(h)[:12]}… missing"
+            if c.get("parent_order") != p.get("order"):
+                return f"{c.get('order')}: parent_order is not {p.get('order')}"
+            if c.get("buyer") != p.get("seller"):
+                return f"{c.get('order')}: bought by {c.get('buyer')}, not by {p.get('seller')}"
+            if not str(c.get("delivered_at")) <= str(p.get("delivered_at")):
+                return f"{c.get('order')}: delivered after {p.get('order')}"
+            st["links"] += 1
+            st["depth"] = max(st["depth"], d + 1)
+            st["total_minor"][c["currency"]] = st["total_minor"].get(c["currency"], 0) + c["amount_minor"]
+            bad = walk(c, d + 1)
+            if bad:
+                return bad
+        return None
+
+    broken = walk(top, 0)
+    return {"valid": broken is None, **st, "broken": broken}
 
 
 def leaf_of(p: dict) -> str:
