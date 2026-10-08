@@ -91,6 +91,29 @@ export async function verifyReceiptChain(top, { receipts = [], keys, maxDepth = 
   return { valid: broken === null, links, depth, total_minor, broken };
 }
 
+/**
+ * Section 3.2: was this receipt bought within this mandate? `end` is an optional signed mandate_end.
+ * Returns { valid, covers, reasons }: covers lists what held, reasons what did not.
+ */
+export async function verifyMandate(receipt, mandate, { keys, end } = {}) {
+  keys ??= await fetchKeys();
+  const reasons = [], covers = [];
+  const ok = (cond, yes, no) => (cond ? covers.push(yes) : reasons.push(no));
+  ok(mandate?.kind === 'mandate' && (await verifySignature(mandate, keys)), 'mandate signed', 'mandate signature');
+  ok(await verifySignature(receipt, keys), 'receipt signed', 'receipt signature');
+  ok(receipt?.mandate === (await receiptHash(mandate)), 'receipt names this mandate', 'receipt names another mandate');
+  ok(receipt?.buyer === mandate?.agent, 'bought by the mandated agent', `bought by ${receipt?.buyer}, not by ${mandate?.agent}`);
+  const sc = mandate?.scope ?? {};
+  ok(receipt?.currency === sc.currency, 'currency within the mandate', `currency ${receipt?.currency}, mandate ${sc.currency}`);
+  ok(Number.isInteger(receipt?.amount_minor) && receipt.amount_minor <= sc.max_order_minor, 'amount within the cap per order', `amount ${receipt?.amount_minor} over the cap ${sc.max_order_minor}`);
+  ok(String(mandate?.issued_at) <= String(receipt?.delivered_at), 'mandate older than the delivery', 'delivered before the mandate existed');
+  if (end !== undefined) {
+    ok(end?.kind === 'mandate_end' && end.mandate === receipt?.mandate && (await verifySignature(end, keys)), 'end statement signed', 'end statement');
+    ok(String(receipt?.delivered_at) <= String(end?.at), 'delivered before the mandate ended', 'delivered after the mandate ended');
+  }
+  return { valid: reasons.length === 0, covers, reasons };
+}
+
 /** The Merkle leaf of a Word Pass: sha256 of its canonical JSON, signature included. */
 export const leafOf = (pass) => sha256hex(canonical(pass));
 

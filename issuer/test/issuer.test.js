@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildDay, generateKey, importKey, keysDocument, passDocument, signHolderProof, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
-import { checkWordPass, verifyHolderProof, verifyPass, verifyReceipt, verifyReceiptChain } from '../../verify/src/index.js';
+import { buildDay, signMandate, signMandateEnd, generateKey, importKey, keysDocument, passDocument, signHolderProof, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
+import { checkWordPass, verifyHolderProof, verifyPass, verifyReceipt, verifyReceiptChain, verifyMandate } from '../../verify/src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 
@@ -53,4 +53,15 @@ test('a seller that buys to deliver: the kit signs the chain, the reference chec
   const foreign = await signReceipt(key, 'newmarket', { ...base, order: 'o3', seller: 'a3', buyer: 'a9', amount_minor: 100, delivered_at: '2026-10-06T10:00:00Z', parent_order: 'o1' });
   const claims = await signReceipt(key, 'newmarket', { ...base, order: 'o1', seller: 'a2', buyer: 'a1', amount_minor: 500, delivered_at: '2026-10-06T10:01:00Z', inputs: [foreign] });
   assert.match((await verifyReceiptChain(claims, { receipts: [foreign], keys })).broken, /bought by a9/, 'no claiming someone else\'s purchase');
+});
+
+test('a mandate from the kit: receipts within it pass, one over the cap or after the end does not', async () => {
+  const key = await generateKey(); const keys = keysDocument('newmarket', [key]).keys;
+  const m = await signMandate(key, 'newmarket', { id: 'md_1', agent: 'a1', principal: 'cus_1', currency: 'chf', max_order_minor: 1000, issued_at: '2026-10-08T08:00:00Z' });
+  assert.equal(m.principal.length, 64, 'only a hash of the principal is published');
+  const r = (amount_minor, delivered_at = '2026-10-08T10:00:00Z') => signReceipt(key, 'newmarket', { order: 'o1', listing: 'l', seller: 'a2', buyer: 'a1', amount_minor, currency: 'chf', delivered_at, delivery: { ok: true }, mandate: m });
+  assert.equal((await verifyMandate(await r(500), m, { keys })).valid, true);
+  assert.equal((await verifyMandate(await r(5000), m, { keys })).valid, false);
+  const end = await signMandateEnd(key, 'newmarket', m, new Date('2026-10-08T09:00:00Z'));
+  assert.deepEqual((await verifyMandate(await r(500), m, { keys, end })).reasons, ['delivered after the mandate ended']);
 });

@@ -90,7 +90,25 @@ export async function signPass(key, issuer, a, now = new Date()) {
 export async function signReceipt(key, issuer, r) {
   return key.sign({ v: 1, issuer, kid: key.kid, order: r.order, listing: r.listing, seller: r.seller, buyer: r.buyer, amount_minor: r.amount_minor, currency: r.currency, delivered_at: r.delivered_at, delivery_sha256: r.delivery_sha256 ?? await sha256hex(typeof r.delivery === 'string' ? r.delivery : JSON.stringify(r.delivery)),
     ...(r.parent_order ? { parent_order: r.parent_order } : {}),
-    ...(r.inputs ? { inputs: await Promise.all(r.inputs.map((x) => typeof x === 'string' ? x : sha256hex(canonical(x)))) } : {}) });
+    ...(r.inputs ? { inputs: await Promise.all(r.inputs.map((x) => typeof x === 'string' ? x : sha256hex(canonical(x)))) } : {}),
+    ...(r.mandate ? { mandate: typeof r.mandate === 'string' ? r.mandate : await sha256hex(canonical(r.mandate)) } : {}) });
+}
+
+/**
+ * Section 3.2: the principal's limits for one agent, signed once the principal confirmed them (e.g. saved a card for
+ * exactly these limits). `principal` is your own reference to them; only its hash is published.
+ */
+export async function signMandate(key, issuer, m, now = new Date()) {
+  return key.sign({
+    v: 1, kind: 'mandate', issuer, kid: key.kid, id: m.id, agent: m.agent, principal: await sha256hex(String(m.principal)), how: m.how ?? 'card_saved',
+    scope: { currency: m.currency, max_order_minor: m.max_order_minor, monthly_minor: m.monthly_minor ?? null }, purpose: m.purpose ?? null,
+    issued_at: (m.issued_at ? new Date(m.issued_at) : now).toISOString(),
+  });
+}
+
+/** Section 3.2: the mandate ends; receipts delivered after `at` no longer fall under it. */
+export async function signMandateEnd(key, issuer, mandate, now = new Date()) {
+  return key.sign({ v: 1, kind: 'mandate_end', issuer, kid: key.kid, mandate: await sha256hex(canonical(mandate)), at: now.toISOString() });
 }
 
 export const leafOf = (pass) => sha256hex(canonical(pass));
