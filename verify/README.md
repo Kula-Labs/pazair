@@ -4,6 +4,8 @@ Trust between AI agents, checkable by anyone. Verify PazAIr receipts, Word Passe
 (the [PazAIr Trust Protocol](../SPEC.md)) in a few lines, without trusting PazAIr.
 
 Zero dependencies. WebCrypto (Ed25519, SHA-256): Node 20+, Deno, Bun, Cloudflare Workers, browsers.
+To also check the post-quantum signatures (ML-DSA-65, FIPS 204) install `@noble/post-quantum` next to it; without it
+they are reported as *not checked*, never as valid.
 
 ```sh
 npm install pazair-verify
@@ -35,6 +37,29 @@ const nonce = crypto.randomUUID();
 const r = await checkWordPass(url, { proof, nonce });   // r.checks.holder === true
 ```
 
+## Remember: "Forgets nothing. Holds nothing against you."
+
+An issuer's daily roots form one chain, `head_d = sha256(head_{d-1} ‖ root_d)` from 64 zeros, every link signed with
+Ed25519 and ML-DSA-65. Every answer the issuer gives carries the current head (`pazair-head` header). Recompute the
+whole chain here, from the issuer's published roots, and compare it with what the issuer claims:
+
+```sh
+npx pazair-verify remember https://pazair.kulalabs.ch
+# https://pazair.kulalabs.ch: Remember holds. 12 days recomputed from genesis to head 3f9c1a…, document signed by the issuer's key and by ML-DSA-65, 12/12 links signed (12 post-quantum).
+
+npx pazair-verify witness 2026-10-10:3f9c1a…   # a head you kept from an earlier answer
+# Your head of 2026-10-10 is what the chain recomputes to today; 2 day(s) anchored since.
+```
+
+```js
+import { checkRemember, checkHead, recomputeChain } from 'pazair-verify';
+const r = await checkRemember('https://pazair.kulalabs.ch');   // r.verdict: consistent | inconsistent | unreachable
+const h = await checkHead('2026-10-10:3f9c…');                  // the head you kept, against the chain you recompute
+```
+
+Nothing here asks the issuer whether its chain is fine. The chain is fetched as data and recomputed; the issuer's
+`witness` tool is for the issuer's own count of witnesses, this is yours. SPEC section 14 has the formulas.
+
 ## Lower level
 
 ```js
@@ -54,6 +79,9 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | Function | Checks |
 |---|---|
 | `checkWordPass(url, { fetch?, keys?, proof?, nonce? })` | the pass at a URL with the issuer's own keys, the proof, the root on Stellar and in its Bitcoin block; a verdict and a sentence |
+| `checkRemember(origin, { fetch? })` | Section 14: the Remember document's two signatures, the chain recomputed from genesis, the document's head against it, every link's two signatures; a verdict and a sentence |
+| `checkHead("<day>:<head>", origin, { fetch? })` | a head you kept (`pazair-head`) against the chain you recompute; consistent, inconsistent, unreachable |
+| `recomputeChain(days)` / `verifyLink(link, sig, { keys, pqPublicKey })` / `verifyRememberDocument(doc, { keys })` | the pieces: heads from roots with the first broken day, one link's Ed25519 and ML-DSA-65 signatures, the document's |
 | `bitcoinHasRoot(otsBase64, root, { fetch? })` | the .ots proof is for this root and ends in the Merkle root of the block it names (public block explorers) |
 | `verifyReceipt(receipt, { keys?, delivery? })` | Ed25519 signature; optionally that `delivery` is the one signed |
 | `verifyReceiptChain(top, { receipts, keys?, maxDepth? })` | Section 3.1: every receipt `top` was built on is present, signed, bought by its seller for that order; returns `{ valid, links, depth, total_minor, broken }` |

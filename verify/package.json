@@ -1,7 +1,7 @@
 {
   "name": "pazair-verify",
-  "version": "1.6.1",
-  "description": "Verify Word Passes, receipts and Merkle proofs: \"May I see your Word Pass?\", checked by anyone, for any issuer. Zero dependencies.",
+  "version": "1.7.0",
+  "description": "Verify Word Passes, receipts, Merkle proofs and Remember (the chain of daily roots, Ed25519 + ML-DSA-65): checked by anyone, for any issuer, without trusting it. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -23,8 +23,20 @@
   "scripts": {
     "test": "node --test test/*.test.js"
   },
+  "devDependencies": {
+    "@noble/post-quantum": "^0.7.1"
+  },
+  "peerDependencies": {
+    "@noble/post-quantum": ">=0.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@noble/post-quantum": { "optional": true }
+  },
   "keywords": [
     "word-pass",
+    "remember",
+    "post-quantum",
+    "ml-dsa",
     "ai-agents",
     "agent-trust",
     "a2a",
