@@ -54,3 +54,27 @@ test('a Word Pass verifies into the day\'s root for trees of any size; a better 
     }
   }
 });
+
+test('a work order (section 3.3): tender, question, award and milestone hold; changes are caught', async () => {
+  const { verifyAward, receiptHash } = await import('../src/index.js');
+  const k = await issuer();
+  const base = { v: 1, issuer: 'pazair', kid: k.kid };
+  const tender = await k.sign({ ...base, kind: 'tender', id: 'td_1', buyer: 'ag_b', task_sha256: await sha256hex('translate the shop'), currency: 'chf', budget_max_minor: 20000, deadline: '2026-10-20T00:00:00Z', milestones: [{ name: 'draft', max_minor: 8000 }], mandate: null, issued_at: '2026-10-09T10:00:00Z' });
+  const th = await receiptHash(tender);
+  const q = await k.sign({ ...base, kind: 'tender_qa', tender: th, asked_by: 'ag_s', q_sha256: await sha256hex('which languages?'), a_sha256: await sha256hex('de, fr'), at: '2026-10-09T11:00:00Z' });
+  const award = await k.sign({ ...base, kind: 'award', tender: th, seller: 'ag_s', price_minor: 15000, qa: [await receiptHash(q)], at: '2026-10-09T12:00:00Z' });
+  const receipt = (extra) => k.sign({ ...base, order: 'or_1', listing: null, seller: 'ag_s', buyer: 'ag_b', amount_minor: 7000, currency: 'chf', delivered_at: '2026-10-10T10:00:00Z', delivery_sha256: 'x', award: '', ...extra });
+  const ah = await receiptHash(award);
+  const r = await receipt({ award: ah, milestone: 0 });
+  const res = await verifyAward(r, tender, award, { keys: k.keys, qa: [q] });
+  assert.equal(res.valid, true, res.reasons.join(', '));
+  assert.ok(res.covers.includes('amount within milestone 0'));
+  const reasons = async (...a) => (await verifyAward(...a)).reasons;
+  assert.ok((await reasons(await receipt({ award: ah, milestone: 0, amount_minor: 9000 }), tender, award, { keys: k.keys })).includes('amount 9000 over 8000'));
+  assert.ok((await reasons(await receipt({ award: ah, seller: 'ag_x' }), tender, award, { keys: k.keys })).some((x) => x.startsWith('delivered by ag_x')));
+  assert.ok((await reasons(await receipt({ award: ah, delivered_at: '2026-10-21T00:00:00Z' }), tender, award, { keys: k.keys })).includes('delivered after the deadline'));
+  assert.ok((await reasons(r, { ...tender, budget_max_minor: 99999 }, award, { keys: k.keys })).includes('tender signature'), 'the budget cannot be changed afterwards');
+  assert.ok((await reasons(r, tender, award, { keys: k.keys, qa: [] })).some((x) => x.endsWith('missing or invalid')), 'a question the award built on must be held');
+  const self = await k.sign({ ...base, kind: 'award', tender: th, seller: 'ag_b', price_minor: 100, qa: [], at: '2026-10-09T12:00:00Z' });
+  assert.equal((await verifyAward(await receipt({ award: await receiptHash(self), seller: 'ag_b', amount_minor: 100 }), tender, self, { keys: k.keys })).valid, false, 'no award to yourself');
+});

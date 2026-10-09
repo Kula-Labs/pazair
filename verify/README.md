@@ -58,6 +58,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `verifyReceipt(receipt, { keys?, delivery? })` | Ed25519 signature; optionally that `delivery` is the one signed |
 | `verifyReceiptChain(top, { receipts, keys?, maxDepth? })` | Section 3.1: every receipt `top` was built on is present, signed, bought by its seller for that order; returns `{ valid, links, depth, total_minor, broken }` |
 | `verifyMandate(receipt, mandate, { keys?, end? })` | Section 3.2: the receipt was bought within the principal's mandate (agent, currency, cap per order, before its end); returns `{ valid, covers, reasons }` |
+| `verifyAward(receipt, tender, award, { keys?, qa? })` | Section 3.3: the receipt was paid under this award for this tender (buyer, awarded seller, budget, price or milestone, deadline, questions published before the award); returns `{ valid, covers, reasons }` |
 | `receiptHash(receipt)` | The hash a parent receipt lists in `inputs` |
 | `verifyPass(anchored, { keys? })` | signature, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |

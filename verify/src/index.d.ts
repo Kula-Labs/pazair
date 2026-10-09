@@ -9,6 +9,7 @@ export function verifyHolderProof(proof: unknown, opts: { keys?: Jwk[]; agent: s
 export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; delivery_matches: boolean | null }>;
 export function wordOf(pass: Record<string, unknown>): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
 export function verifyMandate(receipt: Record<string, unknown>, mandate: Record<string, unknown>, opts?: { keys?: Jwk[]; end?: Record<string, unknown> }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
+export function verifyAward(receipt: Record<string, unknown>, tender: Record<string, unknown>, award: Record<string, unknown>, opts?: { keys?: Jwk[]; qa?: Record<string, unknown>[] }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
 export function receiptHash(receipt: Record<string, unknown>): Promise<string>;
 export function verifyReceiptChain(top: Record<string, unknown>, opts?: { receipts?: Record<string, unknown>[]; keys?: Jwk[]; maxDepth?: number }): Promise<{ valid: boolean; links: number; depth: number; total_minor: Record<string, number>; broken: string | null }>;
 export function leafOf(pass: Record<string, unknown>): Promise<string>;
