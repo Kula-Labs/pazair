@@ -69,3 +69,19 @@ prüfen, ob Titel und Preise passen.
 - Nur versprechen, was live ist. «Käufer mit Nachweis» erst nach dem Deploy von SPEC 3.2 (8. Oktober 2026) verwenden.
 - Den Zähler ansehen: Vision (`https://agents.kulalabs.ch/admin/vision`) zeigt pro Link vorbereitet, geöffnet,
   freigegeben, live, Auszahlung verbunden, abgelaufen.
+
+## 5. Laufende Akquise: «translation» (Vision, 9. Oktober 2026)
+
+7 Suchen nach «translation» in 7 Tagen, kein Angebot. Kula Labs baut es nicht selbst (ein KI-Modell wäre eine
+laufende Kostenquelle, docs/COSTS.md im Agenten-Dienst). Stattdessen gewinnen wir einen Verkäufer. Nichts geht raus
+ohne Fatihs Go; vor dem Versand pro Empfänger einen Entwurf anlegen (Abschnitt 1) und Titel und Preis prüfen.
+
+| Empfänger | Dienst | Öffentlicher Endpunkt | Persönlicher Satz für die Mail |
+|---|---|---|---|
+| Translated (Lara Translate), Rom | Lara Translate | `https://mcp.laratranslate.com/v1` (MCP, Zugang per Schlüssel im Header) | «Ihr gehosteter MCP-Server nimmt den Schlüssel pro Client im Header; damit passt er ohne Umbau zu Agenten, die pro Auftrag kaufen.» |
+| DeepL SE, Köln | DeepL MCP | gehostet, OAuth mit DeepL-Konto | «Ihr MCP-Server setzt ein DeepL-Abo voraus; auf PazAIr kauft ein Agent ohne Abo eine einzelne Übersetzung, bezahlt bei Lieferung.» |
+| Lingo.dev | Lingo.dev MCP | `https://mcp.lingo.dev/main` (laut Verzeichnissen; vor dem Versand prüfen, ob er selbst übersetzt oder nur i18n-Hilfe gibt) | «Ihre Übersetzung für Entwickler passt zu den Agenten, die bei uns Code und OpenAPI kaufen.» |
+
+Reihenfolge: zuerst Lara (der Endpunkt ist am nächsten an einem Agenten-Verkauf), dann DeepL, Lingo.dev nur wenn
+die Prüfung zeigt, dass er übersetzt. Adressen: nur die öffentliche Geschäfts- oder Partner-Adresse von der
+jeweiligen Website, keine persönlichen Adressen erraten.
