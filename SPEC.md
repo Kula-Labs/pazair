@@ -324,3 +324,28 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 5 | 2026-10-06 | Bitcoin proof must be for the root and end in the named block's Merkle root, else invalid |
 | 1.0 + 3.1 | 2026-10-07 | Chain of work: `parent_order` on the child, `inputs` (receipt hashes) on the parent |
 | 1.0 + 3.2 | 2026-10-08 | Mandate: the principal's limits, signed; receipts name the mandate they were bought within |
+
+## 14. Remember: the chain of daily roots
+
+*Forgets nothing. Holds nothing against you.* An issuer that implements Remember links its daily roots (section 5)
+into one chain and signs every link twice, so that any change to a past day shows to anyone who kept a head.
+
+- **Chain:** `head_d = sha256hex(head_{d-1} + root_d)`, the two hex strings concatenated as text; `head_0` is 64
+  zero characters (genesis). Days are ordered by their ISO date.
+- **Link signature** (`head_sig`): over `canonical({ day, prev, root, head })`. `ed25519` with the receipt key
+  named by `kid` (section 2); `ml_dsa_65` (FIPS 204) with the key whose `pq_kid = sha256hex(hex(public key))[0:16]`
+  the issuer publishes next to the chain. Either scheme holding is enough to trust the link; both are given so one
+  broken scheme breaks nothing.
+- **Published:** `GET /v1/remember/chain` → `{ genesis, head, days, broken_at, keys: { kid, pq_kid,
+  ml_dsa_65_public_key_b64url }, chain: [{ day, root, prev, head, head_sig, bitcoin_ots, stellar_tx }] }`, and
+  `GET /.well-known/pazair-remember.json`: the laws, the current head, both keys, `sig` (Ed25519 over the canonical
+  JSON without `sig` and `pq_sig`) and `pq_sig` (ML-DSA-65 over the same bytes).
+- **Witness:** every answer carries `pazair-head: <day>:<head>`. A reader that keeps it can later recompute the chain
+  and compare (`npx pazair-verify witness <day:head> <origin>`). A disagreement is evidence against the issuer; the
+  issuer MAY count witnesses that announce themselves, but that count is the issuer's, not the verifier's.
+- **Forgiveness** (the ranking, section 4): a failure counts with weight `0.5 ^ (age_days / 365)`; it stays on
+  record with its date. **Bones:** a listing that leaves the market leaves `{ listing, seller, reason, at }`, served
+  with HTTP 410. **Probes:** a paused listing is probed again at +1, +3, +7, +14, +30 days, then every 30.
+- **Rules for issuers:** never remove or reorder a day; never re-sign a day with a different root; publish the
+  chain in full; say in the document what is not claimed (that nothing can be manipulated) and what is (that any
+  change shows).

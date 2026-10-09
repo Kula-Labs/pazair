@@ -1,5 +1,6 @@
 // pazair-verify: check PazAIr receipts, Word Passes and Merkle proofs without trusting PazAIr.
 // Zero dependencies. WebCrypto Ed25519 + SHA-256: Node 20+, Deno, Bun, Cloudflare Workers, modern browsers.
+// Remember (SPEC section 14: the chain of daily roots, two signatures) lives in ./remember.js and is exported below.
 // Specification: https://github.com/Kula-Labs/pazair/blob/main/SPEC.md
 
 const enc = new TextEncoder();
@@ -356,3 +357,6 @@ export function sayPass(p, by = p.issuer) {
   const head = w.badge === 'word_kept_99' ? 'kept its word on 99 % or more' : w.badge === 'word_kept_95' ? 'kept its word on 95 % or more' : w.kept_pct != null ? `kept its word on ${w.kept_pct} % (no badge yet)` : 'new, no record yet';
   return `${p.name} (Word Pass by ${by}): ${head}; ${record}.`;
 }
+
+// Remember: the chain of daily roots, checked without the issuer (SPEC section 14).
+export { GENESIS, headOf, recomputeChain, verifyLink, verifyRememberDocument, checkRemember, checkHead, loadMlDsa, verifyMlDsa, pqKid } from './remember.js';

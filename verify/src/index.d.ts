@@ -27,3 +27,19 @@ export function bitcoinHasRoot(otsBase64: string, root: string, opts?: { fetch?:
 export function stellarHasRoot(tx: string, root: string, opts?: { fetch?: typeof fetch; horizon?: string; account?: string }): Promise<boolean | null>;
 export function checkWordPass(url: string, opts?: { fetch?: typeof fetch; keys?: Jwk[]; proof?: unknown; nonce?: string; aud?: string }): Promise<PassCheck>;
 export function sayPass(pass: Record<string, unknown>, by?: string): string;
+
+// Remember (SPEC section 14): the chain of daily roots and its two signatures, checked without the issuer.
+export const GENESIS: string;
+export function headOf(prev: string, root: string): Promise<string>;
+export type ChainHead = { day: string; root: string; prev: string; head: string; published_head: string | null; published_matches: boolean | null };
+export function recomputeChain(days: { day: string; root: string; head?: string | null }[]): Promise<{ head: string; days: number; last_day: string | null; broken_at: string | null; heads: ChainHead[] }>;
+export type HeadSig = { kid: string; ed25519: string; pq_kid: string; ml_dsa_65: string; over?: string };
+/** ml_dsa_65 is null when @noble/post-quantum is not installed next to pazair-verify: not checked, never trusted. */
+export function verifyLink(link: { day: string; prev: string; root: string; head: string }, sig: HeadSig | null, opts?: { keys?: Jwk[]; pqPublicKey?: string }): Promise<{ ed25519: boolean; ml_dsa_65: boolean | null; pq_kid_matches: boolean }>;
+export function verifyRememberDocument(doc: Record<string, unknown>, opts?: { keys?: Jwk[] }): Promise<{ ed25519: boolean; ml_dsa_65: boolean | null; pq_kid_matches: boolean }>;
+export function loadMlDsa(): Promise<unknown | null>;
+export function verifyMlDsa(sigB64u: string, msg: Uint8Array, publicKeyB64u: string): Promise<boolean | null>;
+export function pqKid(publicKeyB64u: string): Promise<string>;
+export type RememberCheck = { verdict: 'consistent' | 'inconsistent' | 'unreachable'; origin: string; say: string; checks: { document: { ed25519: boolean; ml_dsa_65: boolean | null; pq_kid_matches: boolean; kid_in_issuer_keys: boolean }; chain: { days: number; recomputed_head: string; document_head: string | null; head_matches: boolean; broken_at: string | null; published_heads_match: boolean }; links: { with_signature: number; ed25519_valid: number; ml_dsa_65_valid: number | null; failures: string[] }; ml_dsa_65_checked: boolean } | null };
+export function checkRemember(origin?: string, opts?: { fetch?: typeof fetch }): Promise<RememberCheck>;
+export function checkHead(kept: string, origin?: string, opts?: { fetch?: typeof fetch }): Promise<{ verdict: 'consistent' | 'inconsistent' | 'unreachable'; day?: string; kept?: string; recomputed?: string | null; published?: string | null; days_since?: number; say: string }>;
