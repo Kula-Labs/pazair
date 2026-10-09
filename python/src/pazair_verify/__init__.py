@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
-           "receipt_hash", "verify_receipt_chain", "verify_mandate"]
+           "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award"]
 __version__ = "1.6.1"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
@@ -156,6 +156,55 @@ def verify_mandate(receipt: dict, mandate: dict, keys: list[dict], end: Optional
         ok(end.get("kind") == "mandate_end" and end.get("mandate") == receipt.get("mandate") and verify_signature(end, keys), "end statement signed", "end statement")
         ok(str(receipt.get("delivered_at")) <= str(end.get("at")), "delivered before the mandate ended", "delivered after the mandate ended")
     return {"valid": not reasons, "covers": covers, "reasons": reasons}
+
+
+def verify_award(receipt: dict, tender: dict, award: dict, keys: list[dict], qa: Optional[list[dict]] = None) -> dict:
+    """Section 3.3: was this receipt paid under this award, for this tender? Returns valid, covers (what held), reasons (what did not)."""
+    covers: list[str] = []
+    reasons: list[str] = []
+
+    def ok(cond: bool, yes: str, no: str) -> None:
+        (covers if cond else reasons).append(yes if cond else no)
+
+    tender, award = tender or {}, award or {}
+    tender_hash = receipt_hash(tender)
+    ok(tender.get("kind") == "tender" and verify_signature(tender, keys), "tender signed", "tender signature")
+    ok(award.get("kind") == "award" and verify_signature(award, keys), "award signed", "award signature")
+    ok(verify_signature(receipt, keys), "receipt signed", "receipt signature")
+    ok(award.get("tender") == tender_hash, "award names this tender", "award names another tender")
+    ok(receipt.get("award") == receipt_hash(award), "receipt names this award", "receipt names another award")
+    ok(receipt.get("buyer") == tender.get("buyer"), "paid by the tendering agent", f"paid by {receipt.get('buyer')}, not by {tender.get('buyer')}")
+    ok(receipt.get("seller") == award.get("seller") and award.get("seller") != tender.get("buyer"), "delivered by the awarded seller",
+       f"delivered by {receipt.get('seller')}, awarded to {award.get('seller')}")
+    ok(receipt.get("currency") == tender.get("currency"), "currency of the tender", f"currency {receipt.get('currency')}, tender {tender.get('currency')}")
+    price, budget = award.get("price_minor"), tender.get("budget_max_minor")
+    ok(_is_int(price) and _is_num(budget) and price <= budget, "price within the budget", f"price {price} over the budget {budget}")
+    m = receipt.get("milestone")
+    ms = None
+    if m is not None:
+        mss = tender.get("milestones") or []
+        ms = mss[m] if _is_int(m) and 0 <= m < len(mss) and isinstance(mss[m], dict) else None
+    cap = price if m is None else (ms or {}).get("max_minor")
+    amt = receipt.get("amount_minor")
+    ok(_is_int(amt) and _is_int(cap) and amt <= cap, f"amount within milestone {m}" if ms else "amount within the price", f"amount {amt} over {cap}")
+    ok(str(tender.get("issued_at")) <= str(award.get("at")) <= str(receipt.get("delivered_at")), "tender, award, delivery in order", "out of order in time")
+    if tender.get("deadline") is not None:
+        ok(str(receipt.get("delivered_at")) <= str(tender["deadline"]), "delivered by the deadline", "delivered after the deadline")
+    if qa is not None:
+        held = {receipt_hash(q): q for q in qa}
+        for h in award.get("qa") or []:
+            q = held.get(h)
+            ok(isinstance(q, dict) and q.get("kind") == "tender_qa" and q.get("tender") == tender_hash and str(q.get("at")) <= str(award.get("at"))
+               and verify_signature(q, keys), f"question {h[:8]} published before the award", f"question {h[:8]} missing or invalid")
+    return {"valid": not reasons, "covers": covers, "reasons": reasons}
+
+
+def _is_int(x) -> bool:
+    return isinstance(x, int) and not isinstance(x, bool)
+
+
+def _is_num(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
 def leaf_of(p: dict) -> str:

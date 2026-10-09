@@ -123,6 +123,42 @@ export async function verifyMandate(receipt, mandate, { keys, end } = {}) {
   return { valid: reasons.length === 0, covers, reasons };
 }
 
+/**
+ * Section 3.3: was this receipt paid under this award, for this tender? `qa` are the signed questions, if held.
+ * Returns { valid, covers, reasons }: covers lists what held, reasons what did not.
+ */
+export async function verifyAward(receipt, tender, award, { keys, qa } = {}) {
+  keys ??= await fetchKeys();
+  const reasons = [], covers = [];
+  const ok = (cond, yes, no) => (cond ? covers.push(yes) : reasons.push(no));
+  const tenderHash = await receiptHash(tender);
+  ok(tender?.kind === 'tender' && (await verifySignature(tender, keys)), 'tender signed', 'tender signature');
+  ok(award?.kind === 'award' && (await verifySignature(award, keys)), 'award signed', 'award signature');
+  ok(await verifySignature(receipt, keys), 'receipt signed', 'receipt signature');
+  ok(award?.tender === tenderHash, 'award names this tender', 'award names another tender');
+  ok(receipt?.award === (await receiptHash(award)), 'receipt names this award', 'receipt names another award');
+  ok(receipt?.buyer === tender?.buyer, 'paid by the tendering agent', `paid by ${receipt?.buyer}, not by ${tender?.buyer}`);
+  ok(receipt?.seller === award?.seller && award?.seller !== tender?.buyer, 'delivered by the awarded seller', `delivered by ${receipt?.seller}, awarded to ${award?.seller}`);
+  ok(receipt?.currency === tender?.currency, 'currency of the tender', `currency ${receipt?.currency}, tender ${tender?.currency}`);
+  ok(Number.isInteger(award?.price_minor) && award.price_minor <= tender?.budget_max_minor, 'price within the budget', `price ${award?.price_minor} over the budget ${tender?.budget_max_minor}`);
+  const ms = receipt?.milestone === undefined ? null : tender?.milestones?.[receipt.milestone];
+  const cap = receipt?.milestone === undefined ? award?.price_minor : ms?.max_minor;
+  ok(Number.isInteger(receipt?.amount_minor) && Number.isInteger(cap) && receipt.amount_minor <= cap,
+    ms ? `amount within milestone ${receipt.milestone}` : 'amount within the price', `amount ${receipt?.amount_minor} over ${cap}`);
+  ok(String(tender?.issued_at) <= String(award?.at) && String(award?.at) <= String(receipt?.delivered_at), 'tender, award, delivery in order', 'out of order in time');
+  if (tender?.deadline != null) ok(String(receipt?.delivered_at) <= String(tender.deadline), 'delivered by the deadline', 'delivered after the deadline');
+  if (qa !== undefined) {
+    const held = new Map();
+    for (const q of qa) held.set(await receiptHash(q), q);
+    for (const h of award?.qa ?? []) {
+      const q = held.get(h);
+      ok(q?.kind === 'tender_qa' && q.tender === tenderHash && String(q.at) <= String(award.at) && (await verifySignature(q, keys)),
+        `question ${h.slice(0, 8)} published before the award`, `question ${h.slice(0, 8)} missing or invalid`);
+    }
+  }
+  return { valid: reasons.length === 0, covers, reasons };
+}
+
 /** The Merkle leaf of a Word Pass: sha256 of its canonical JSON, signature included. */
 export const leafOf = (pass) => sha256hex(canonical(pass));
 
