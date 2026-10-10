@@ -1,6 +1,7 @@
 # Word Pass Fingerprint: kein Pass gleicht dem anderen, beweisbar
 
-**Status:** Vorschlag (Owner-Idee vom 10. Oktober 2026, ausgearbeitet). Wird zu SPEC Abschnitt 15, sobald freigegeben.
+**Status:** Owner-Idee vom 10. Oktober 2026, ausgearbeitet und umgesetzt: [SPEC Abschnitt 15](SPEC.md#15-fingerprint-no-two-passes-alike-provably),
+Testvektor in `vectors/word-pass-1.json`, Referenz in `pazair-verify` (JS und Python, byte-gleiche Zeichnung). Offen: der Issuer (Schritt 4) und die zweite Signatur (Schritt 3).
 Vorschau der Präsentation: `examples/fingerprint.html` (rechnet echt: Seed, Reed-Solomon-Code, Zeichnung, Vergleich).
 
 ## Die Idee
@@ -85,7 +86,7 @@ Weil der Record als Ringe darüber liegt, sieht der Loop, wo ein Mandat Spielrau
 
 ## Nächste Schritte
 
-1. SPEC Abschnitt 15 mit Testvektor (Seed, Codewort, SVG-Hash) in `vectors/word-pass-1.json`.
-2. `fingerprintOf(pass)` und `drawFingerprint(codeword, record)` in `pazair-verify` (JS und Python).
+1. ~~SPEC Abschnitt 15 mit Testvektor (Seed, Codewort, SVG-Hash) in `vectors/word-pass-1.json`.~~ Erledigt.
+2. ~~`fingerprintOf` und `fingerprintSvg` in `pazair-verify` (JS und Python).~~ Erledigt, Version 1.8.0.
 3. `pq_sig` (ML-DSA-65) am Pass und an der Quittung, Verifier meldet «nicht geprüft», nie «gültig», ohne die Bibliothek.
 4. Issuer: `fingerprint.codeword` in `get_pass`, Siegel in `/passes`, Abdruck im Badge, Startseiten-Block.

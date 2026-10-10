@@ -273,7 +273,8 @@ nobody else, not even the issuer later, can change what it signed.
 [`vectors/word-pass-1.json`](./vectors/word-pass-1.json): canonical JSON, a test key (private half included,
 for tests only), three signed passes, a signed receipt, a chain of two receipts (section 3.1) with its walk, a mandate and a receipt within it (section 3.2), their leaves, the tree, every proof, the Stellar memo
 of the root, an OpenTimestamps proof of the root with the block Merkle root it leads to, a holder proof with the
-times it is valid and expired, and the sentence a verifier says. An implementation is conformant when it reproduces all of them.
+times it is valid and expired, the sentence a verifier says, and a fingerprint (section 15) with its seed, codeword, the distance
+to another agent's and the hash of the reference drawing. An implementation is conformant when it reproduces all of them.
 
 ## 11. Governance
 
@@ -324,6 +325,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 5 | 2026-10-06 | Bitcoin proof must be for the root and end in the named block's Merkle root, else invalid |
 | 1.0 + 3.1 | 2026-10-07 | Chain of work: `parent_order` on the child, `inputs` (receipt hashes) on the parent |
 | 1.0 + 3.2 | 2026-10-08 | Mandate: the principal's limits, signed; receipts name the mandate they were bought within |
+| 1.0 + 15 | 2026-10-10 | Fingerprint: a print per agent from a Reed-Solomon codeword over the seed; any two differ in at least 55 of 64 symbols |
 
 ## 14. Remember: the chain of daily roots
 
@@ -349,3 +351,37 @@ into one chain and signs every link twice, so that any change to a past day show
 - **Rules for issuers:** never remove or reorder a day; never re-sign a day with a different root; publish the
   chain in full; say in the document what is not claimed (that nothing can be manipulated) and what is (that any
   change shows).
+
+## 15. Fingerprint: no two passes alike, provably
+
+Every Word Pass carries a **fingerprint**: a print no other agent can have. Two prints of different agents differ in
+at least 55 of their 64 symbols. That is a theorem of the code below, not a probability, and it holds for 2^80 agents
+and against quantum computers, because nothing in it is a problem Shor solves: only a hash and a code.
+
+- **Seed.** `seed = sha256hex(origin + "\n" + agent + "\n" + first_leaf)`: the issuer's https origin (section 2,
+  without a trailing slash), the agent's id, and the leaf (section 5) of the agent's first anchored pass. The issuer
+  serves that leaf as `fingerprint.first_leaf` next to the pass. No two agents share this input.
+- **Codeword.** The first 10 bytes of the seed are the message of a systematic Reed-Solomon code over GF(256)
+  (primitive polynomial 0x11d, generator polynomial with roots α^0 … α^53), `n = 64`, `k = 10`: the 10 message bytes
+  followed by 54 parity bytes, written as 128 lowercase hex characters in `fingerprint.codeword`. The minimum distance
+  is `d = n − k + 1 = 55` (Singleton bound, met by Reed-Solomon codes): for any two agents A ≠ B with
+  `seed(A) ≠ seed(B)`, their codewords differ in at least 55 of 64 symbols. A verifier compares two prints by counting
+  differing bytes (`fingerprintDistance` in `pazair-verify`); 0 means the same agent, anything below 55 means at
+  least one of them is not a fingerprint of this section.
+- **Drawing.** Each symbol is one of 64 sectors of a print drawn like a finger: closed ridges around a core, taller
+  than wide. In sector `j` with symbol `s`, bits 0–4 say on which ridge (`(s & 31) mod ridges`) the sector's ridge
+  ending sits, bits 5–7 how far the ridges bulge there (smoothed over the neighbouring sectors); the first four bytes
+  lean and squeeze the whole loop. The reference drawing is `fingerprintSvg` in `pazair-verify` (JavaScript and
+  Python give the same bytes); the test vector fixes its hash. An issuer MAY draw it differently, but the codeword is
+  the fingerprint, not the picture.
+- **Growing.** The record (section 4) is drawn over the print and never changes the identity: `5 + floor(delivered / 3)`
+  ridges, at most 26; the two innermost ridges form an open loop until `as_seller.buyers ≥ 5`; with a badge the
+  outermost ridge is gold; every lost dispute is a scar across the ridges.
+- **Where it shows.** `fingerprint: { first_leaf, seed, codeword, svg }` in the pass document (section 5), the
+  codeword in the holder proof (section 9) as `"fingerprint": "<codeword>"` when the issuer implements this section,
+  and the print wherever the pass is shown to people.
+
+What it does not claim: that a person tells trillions of pictures apart. The eye recognises that a picture belongs
+to a pass; a machine counts the 64 symbols. And a fingerprint is only as durable as the signatures around it: an
+issuer that wants the chain to outlive Ed25519 adds the second signature of section 14 (`ml_dsa_65`) to passes and
+receipts as well.

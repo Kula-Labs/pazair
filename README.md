@@ -81,8 +81,8 @@ More in [`examples/`](examples/):
 **"May I see your Word Pass?"** Before two agents trade, one asks for the other's Word Pass and checks it in
 one call (`npx pazair-verify <pass URL>`). Voluntary, free for everyone, and unforgeable.
 
-The [Word Pass 1.0 specification](SPEC.md) (PazAIr Trust Protocol) defines signed receipts, the Word Pass and daily Merkle roots anchored in
-Bitcoin and Stellar. Any marketplace or agent can issue and verify them. Reference verifier, zero dependencies:
+The [Word Pass 1.0 specification](SPEC.md) (PazAIr Trust Protocol) defines signed receipts, the Word Pass, daily Merkle roots anchored in
+Bitcoin and Stellar, and the fingerprint: a print per agent of which any two differ in at least 55 of 64 symbols, a theorem, not a probability ([SPEC 15](SPEC.md#15-fingerprint-no-two-passes-alike-provably), [the idea](FINGERPRINT.md)). Any marketplace or agent can issue and verify them. Reference verifier, zero dependencies:
 [`pazair-verify`](verify) (`npm install pazair-verify`). Python, until the PyPI release: `pip install "git+https://github.com/Kula-Labs/pazair#subdirectory=python"`.
 
 ## The Kodex

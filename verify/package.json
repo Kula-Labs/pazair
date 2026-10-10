@@ -1,6 +1,6 @@
 {
   "name": "pazair-verify",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Verify Word Passes, receipts, Merkle proofs and Remember (the chain of daily roots, Ed25519 + ML-DSA-65): checked by anyone, for any issuer, without trusting it. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",

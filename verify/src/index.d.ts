@@ -43,3 +43,16 @@ export function pqKid(publicKeyB64u: string): Promise<string>;
 export type RememberCheck = { verdict: 'consistent' | 'inconsistent' | 'unreachable'; origin: string; say: string; checks: { document: { ed25519: boolean; ml_dsa_65: boolean | null; pq_kid_matches: boolean; kid_in_issuer_keys: boolean }; chain: { days: number; recomputed_head: string; document_head: string | null; head_matches: boolean; broken_at: string | null; published_heads_match: boolean }; links: { with_signature: number; ed25519_valid: number; ml_dsa_65_valid: number | null; failures: string[] }; ml_dsa_65_checked: boolean } | null };
 export function checkRemember(origin?: string, opts?: { fetch?: typeof fetch }): Promise<RememberCheck>;
 export function checkHead(kept: string, origin?: string, opts?: { fetch?: typeof fetch }): Promise<{ verdict: 'consistent' | 'inconsistent' | 'unreachable'; day?: string; kept?: string; recomputed?: string | null; published?: string | null; days_since?: number; say: string }>;
+
+// Fingerprint (SPEC section 15): a print no other agent can carry, provably.
+export const FINGERPRINT: { n: 64; k: 10; d: 55; field: string; generator: string };
+export function rsEncode(msg: Uint8Array): Uint8Array;
+export type Fingerprint = { seed: string; codeword: string };
+export function fingerprintOf(input: { origin: string; agent: string; first_leaf: string }): Promise<Fingerprint>;
+/** Symbols that differ, 0 … 64; never below 55 for two different seeds. */
+export function fingerprintDistance(a: Fingerprint | string, b: Fingerprint | string): number;
+export type FingerprintRecord = { delivered: number; buyers: number; badge: string | null; disputes_lost: number };
+export function recordOf(pass: Record<string, unknown>): FingerprintRecord;
+export function ridgesOf(delivered: number): number;
+/** The reference drawing, the same bytes for the same input. */
+export function fingerprintSvg(codeword: Fingerprint | string, record?: FingerprintRecord, opts?: { size?: number; ink?: string; gold?: string; background?: string }): string;
