@@ -33,7 +33,7 @@ test('a receipt verifies; a changed amount or a foreign delivery does not', asyn
   const k = await issuer();
   const delivery = { result: 'translated text' };
   const r = await k.sign({ v: 1, issuer: 'pazair', kid: k.kid, order: 'or_1', listing: 'ls_1', seller: 'ag_s', buyer: 'ag_b', amount_minor: 500, currency: 'chf', delivered_at: '2026-10-05T10:00:00Z', delivery_sha256: await sha256hex(JSON.stringify(delivery)) });
-  assert.deepEqual(await verifyReceipt(r, { keys: k.keys, delivery }), { valid: true, signature_valid: true, delivery_matches: true });
+  assert.deepEqual(await verifyReceipt(r, { keys: k.keys, delivery }), { valid: true, signature_valid: true, pq_signed: false, ml_dsa_65: null, delivery_matches: true });
   assert.equal((await verifyReceipt({ ...r, amount_minor: 5 }, { keys: k.keys })).valid, false);
   assert.equal((await verifyReceipt(r, { keys: k.keys, delivery: { result: 'other' } })).valid, false);
   assert.equal((await verifyReceipt(r, { keys: (await issuer()).keys })).valid, false, 'another issuer\'s key');

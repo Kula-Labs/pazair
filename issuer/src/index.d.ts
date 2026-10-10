@@ -5,7 +5,13 @@ export function canonical(v: unknown): string;
 export function sha256hex(s: string | BufferSource): Promise<string>;
 export function generateKey(): Promise<Key>;
 export function importKey(privateJwk: JsonWebKey): Promise<Key>;
-export function keysDocument(issuer: string, keys: Pick<Key, 'kid' | 'x'>[], opts?: { stellarAnchor?: string; revoked?: Record<string, string> }): { issuer: string; alg: 'Ed25519'; canonical: string; keys: { kid: string; kty: 'OKP'; crv: 'Ed25519'; x: string; revoked_at?: string }[]; anchors?: { stellar: { account: string; network: 'mainnet' } } };
+export type PqKey = { pq_kid: string; public_key_b64url: string; seed_b64url: string; signPq(body: object): string };
+/** Section 16: an ML-DSA-65 key from a 32-byte seed (base64url or bytes); random when omitted. Needs @noble/post-quantum. */
+export function importPqKey(secret?: string | Uint8Array): Promise<PqKey>;
+export function generatePqKey(): Promise<PqKey>;
+/** A key that signs twice (ML-DSA-65 first, then Ed25519); use it wherever a Key is expected. */
+export function withSecondSignature(key: Key, pqKey: Pick<PqKey, 'pq_kid' | 'signPq'>): Key & { pq_kid: string };
+export function keysDocument(issuer: string, keys: Pick<Key, 'kid' | 'x'>[], opts?: { stellarAnchor?: string; revoked?: Record<string, string>; pqKeys?: Pick<PqKey, 'pq_kid' | 'public_key_b64url'>[] }): { issuer: string; alg: 'Ed25519'; canonical: string; keys: { kid: string; kty: 'OKP'; crv: 'Ed25519'; x: string; revoked_at?: string }[]; pq_keys?: { pq_kid: string; alg: 'ML-DSA-65'; public_key_b64url: string; revoked_at?: string }[]; anchors?: { stellar: { account: string; network: 'mainnet' } } };
 export function signHolderProof(key: Key, issuer: string, agent: string, nonce: string, opts?: { aud?: string | null; now?: Date; seconds?: number }): Promise<Record<string, unknown>>;
 export function word(asSeller: Side, disputesLost?: number): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
 export function signPass(key: Key, issuer: string, a: { agent: string; name: string; since: string; as_seller: Side; as_buyer?: { paid_orders: number; sellers: number }; disputes_lost?: number; verified_name?: string | null; day?: string }, now?: Date): Promise<Record<string, unknown>>;

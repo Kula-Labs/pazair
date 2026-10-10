@@ -38,7 +38,7 @@ function web(memo = V.stellar_memo.memo_base64, pass = V.passes[0], { source = '
 test('"May I see your Word Pass?": one URL, checked against the issuer key, the proof and Stellar', async () => {
   const ok = await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web() });
   assert.equal(ok.trust, 'kept_its_word');
-  assert.deepEqual(ok.checks, { signature: true, in_root: true, day: '2026-10-05', stellar: true, stellar_account_bound: true, bitcoin_ots: true, bitcoin: true, bitcoin_block: { height: V.bitcoin.height, hash: V.bitcoin.block_hash, time: new Date(V.bitcoin.block_time * 1000).toISOString() }, holder: null, word: true });
+  assert.deepEqual(ok.checks, { signature: true, ml_dsa_65: null, in_root: true, day: '2026-10-05', stellar: true, stellar_account_bound: true, bitcoin_ots: true, bitcoin: true, bitcoin_block: { height: V.bitcoin.height, hash: V.bitcoin.block_hash, time: new Date(V.bitcoin.block_time * 1000).toISOString() }, holder: null, word: true });
   assert.match(ok.say, /^Alpha .* Checked: signature of issuer\.example valid, in the Merkle root of 2026-10-05, found on Stellar from the issuer's anchor account, confirmed in Bitcoin block 915102 \(2026-10-05\)\. To be sure it is theirs/);
   // The same memo written from someone else's account is not the issuer's anchor.
   assert.equal((await checkWordPass('https://issuer.example/v1/agents/ag_alpha/pass', { fetch: web(undefined, undefined, { source: 'GOTHER' }) })).trust, 'invalid');

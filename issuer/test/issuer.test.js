@@ -65,3 +65,23 @@ test('a mandate from the kit: receipts within it pass, one over the cap or after
   const end = await signMandateEnd(key, 'newmarket', m, new Date('2026-10-08T09:00:00Z'));
   assert.deepEqual((await verifyMandate(await r(500), m, { keys, end })).reasons, ['delivered after the mandate ended']);
 });
+
+test('section 16: a key that signs twice; verifiers that know only Ed25519 keep verifying', async (t) => {
+  try { await import('@noble/post-quantum/ml-dsa.js'); } catch { return t.skip('@noble/post-quantum not installed: the second signature is optional'); }
+  const { importPqKey, withSecondSignature, canonical } = await import('../src/index.js');
+  const ed = await importKey({ kty: 'OKP', crv: 'Ed25519', x: V.key.x, d: V.key.d_test_only });
+  const pq = await importPqKey(V.pq.seed_test_only);
+  assert.equal(pq.pq_kid, V.pq.pq_kid);
+  assert.equal(pq.public_key_b64url, V.pq.public_key_b64url);
+  const key = withSecondSignature(ed, pq);
+  const { sig, pq_sig, ...body } = V.pq.pass;
+  const signed = await key.sign(body);
+  assert.equal(signed.pq_kid, V.pq.pq_kid);
+  assert.equal(typeof signed.pq_sig, 'string');
+  const kd = keysDocument('example', [ed], { pqKeys: [pq] });
+  assert.deepEqual(kd.pq_keys, V.pq.keys_document.pq_keys);
+  const { ml_dsa65 } = await import('@noble/post-quantum/ml-dsa.js');
+  const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+  const { sig: s2, pq_sig: p2, ...b2 } = signed;
+  assert.equal(ml_dsa65.verify(unb64u(p2), new TextEncoder().encode(canonical(b2)), unb64u(pq.public_key_b64url)), true);
+});
