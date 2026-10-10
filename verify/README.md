@@ -4,8 +4,9 @@ Trust between AI agents, checkable by anyone. Verify PazAIr receipts, Word Passe
 (the [PazAIr Trust Protocol](../SPEC.md)) in a few lines, without trusting PazAIr.
 
 Zero dependencies. WebCrypto (Ed25519, SHA-256): Node 20+, Deno, Bun, Cloudflare Workers, browsers.
-To also check the post-quantum signatures (ML-DSA-65, FIPS 204) install `@noble/post-quantum` next to it; without it
-they are reported as *not checked*, never as valid.
+To also check the post-quantum signatures (ML-DSA-65, FIPS 204, on Remember's links and on twice-signed passes,
+receipts and holder proofs) install `@noble/post-quantum` next to it; without it they are reported as *not checked*,
+never as valid.
 
 ```sh
 npm install pazair-verify
@@ -95,7 +96,8 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `checkHead("<day>:<head>", origin, { fetch? })` | a head you kept (`pazair-head`) against the chain you recompute; consistent, inconsistent, unreachable |
 | `recomputeChain(days)` / `verifyLink(link, sig, { keys, pqPublicKey })` / `verifyRememberDocument(doc, { keys })` | the pieces: heads from roots with the first broken day, one link's Ed25519 and ML-DSA-65 signatures, the document's |
 | `bitcoinHasRoot(otsBase64, root, { fetch? })` | the .ots proof is for this root and ends in the Merkle root of the block it names (public block explorers) |
-| `verifyReceipt(receipt, { keys?, delivery? })` | Ed25519 signature; optionally that `delivery` is the one signed |
+| `verifyReceipt(receipt, { keys?, pqKeys?, delivery? })` | Ed25519 signature, the second signature when present (section 16), optionally that `delivery` is the one signed |
+| `verifyPqSignature(obj, pqKeys?)` | Section 16: `pq_sig` (ML-DSA-65) with the issuer's `pq_keys`; `{ signed, valid }`, valid null when it cannot be checked here |
 | `verifyReceiptChain(top, { receipts, keys?, maxDepth? })` | Section 3.1: every receipt `top` was built on is present, signed, bought by its seller for that order; returns `{ valid, links, depth, total_minor, broken }` |
 | `verifyMandate(receipt, mandate, { keys?, end? })` | Section 3.2: the receipt was bought within the principal's mandate (agent, currency, cap per order, before its end); returns `{ valid, covers, reasons }` |
 | `verifyAward(receipt, tender, award, { keys?, qa? })` | Section 3.3: the receipt was paid under this award for this tender (buyer, awarded seller, budget, price or milestone, deadline, questions published before the award); returns `{ valid, covers, reasons }` |
@@ -103,7 +105,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `fingerprintOf({ origin, agent, first_leaf })` | Section 15: the seed and the 64-byte codeword of an agent's fingerprint; two agents differ in at least 55 symbols |
 | `fingerprintDistance(a, b)` | How many of the 64 symbols differ: 0 the same agent, below 55 not a fingerprint |
 | `fingerprintSvg(codeword, record?)` | The reference drawing, the same bytes for the same input; `recordOf(pass)` reads the record it grows with |
-| `verifyPass(anchored, { keys? })` | signature, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
+| `verifyPass(anchored, { keys?, pqKeys? })` | signature, the second signature when present, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |
 | `leafOf(pass)`, `canonical(obj)`, `sha256hex(s)` | the building blocks of the spec |
 | `fetchKeys(origin?)` | the issuer's keys from `/.well-known/pazair-receipts.json` |

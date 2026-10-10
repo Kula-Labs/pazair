@@ -1,12 +1,14 @@
 export type Jwk = { kid: string; kty?: string; crv?: string; x: string; revoked_at?: string };
+/** Section 16: an ML-DSA-65 public key as the keys document lists it under pq_keys. */
+export type PqKey = { pq_kid: string; alg?: 'ML-DSA-65'; public_key_b64url: string; revoked_at?: string };
 export type Step = { side: 'L' | 'R'; hash: string };
 export function canonical(v: unknown): string;
 export function sha256hex(s: string): Promise<string>;
 export function fetchKeys(origin?: string, f?: typeof fetch): Promise<Jwk[]>;
 export function verifySignature(obj: { sig?: string; kid?: string } & Record<string, unknown>, keys: Jwk[], opts?: { anchoredBefore?: string }): Promise<boolean>;
-export function fetchKeysDocument(origin?: string, f?: typeof fetch): Promise<{ keys: Jwk[]; anchors?: { stellar?: { account: string; network: string } } }>;
-export function verifyHolderProof(proof: unknown, opts: { keys?: Jwk[]; agent: string; nonce: string; aud?: string; now?: number }): Promise<{ ok: boolean; reason: string }>;
-export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; delivery_matches: boolean | null }>;
+export function fetchKeysDocument(origin?: string, f?: typeof fetch): Promise<{ keys: Jwk[]; pq_keys?: PqKey[]; anchors?: { stellar?: { account: string; network: string } } }>;
+export function verifyHolderProof(proof: unknown, opts: { keys?: Jwk[]; pqKeys?: PqKey[]; agent: string; nonce: string; aud?: string; now?: number }): Promise<{ ok: boolean; reason: string }>;
+export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; pqKeys?: PqKey[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; pq_signed: boolean; ml_dsa_65: boolean | null; delivery_matches: boolean | null }>;
 export function wordOf(pass: Record<string, unknown>): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
 export function verifyMandate(receipt: Record<string, unknown>, mandate: Record<string, unknown>, opts?: { keys?: Jwk[]; end?: Record<string, unknown> }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
 export function verifyAward(receipt: Record<string, unknown>, tender: Record<string, unknown>, award: Record<string, unknown>, opts?: { keys?: Jwk[]; qa?: Record<string, unknown>[] }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
@@ -14,11 +16,11 @@ export function receiptHash(receipt: Record<string, unknown>): Promise<string>;
 export function verifyReceiptChain(top: Record<string, unknown>, opts?: { receipts?: Record<string, unknown>[]; keys?: Jwk[]; maxDepth?: number }): Promise<{ valid: boolean; links: number; depth: number; total_minor: Record<string, number>; broken: string | null }>;
 export function leafOf(pass: Record<string, unknown>): Promise<string>;
 export function verifyProof(leaf: string, proof: Step[], root: string): Promise<boolean>;
-export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jwk[]; anchoredBefore?: string }): Promise<{ valid: boolean; signature_valid: boolean; word_consistent: boolean; in_root: boolean | null; word: unknown; anchors: { root: string; day: string; bitcoin_ots: string | null; stellar_tx: string | null } | null }>;
+export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jwk[]; pqKeys?: PqKey[]; anchoredBefore?: string }): Promise<{ valid: boolean; signature_valid: boolean; pq_signed: boolean; ml_dsa_65: boolean | null; word_consistent: boolean; in_root: boolean | null; word: unknown; anchors: { root: string; day: string; bitcoin_ots: string | null; stellar_tx: string | null } | null }>;
 export type PassCheck = {
   trust: 'kept_its_word' | 'signed_unanchored' | 'no_badge_yet' | 'invalid' | 'unreachable';
   say: string; issuer: string | null;
-  checks: { signature: boolean; in_root: boolean | null; day: string | null; stellar: boolean | null; stellar_account_bound: boolean; bitcoin_ots: boolean; bitcoin: boolean | null; bitcoin_block?: BitcoinBlock; holder: boolean | null; word: boolean } | null;
+  checks: { signature: boolean; ml_dsa_65: boolean | null; in_root: boolean | null; day: string | null; stellar: boolean | null; stellar_account_bound: boolean; bitcoin_ots: boolean; bitcoin: boolean | null; bitcoin_block?: BitcoinBlock; holder: boolean | null; word: boolean } | null;
   pass: Record<string, unknown> | null;
 };
 export type BitcoinBlock = { height: number; hash: string; time: string };
@@ -56,3 +58,7 @@ export function recordOf(pass: Record<string, unknown>): FingerprintRecord;
 export function ridgesOf(delivered: number): number;
 /** The reference drawing, the same bytes for the same input. */
 export function fingerprintSvg(codeword: Fingerprint | string, record?: FingerprintRecord, opts?: { size?: number; ink?: string; gold?: string; background?: string }): string;
+
+// The second signature (SPEC section 16).
+/** { signed: false } without pq_sig; valid true / false, or null when it cannot be checked here (library missing, key not published). */
+export function verifyPqSignature(obj: Record<string, unknown>, pqKeys?: PqKey[], opts?: { anchoredBefore?: string }): Promise<{ signed: boolean; valid: boolean | null }>;

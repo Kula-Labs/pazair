@@ -22,7 +22,7 @@ __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf
            "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
            "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award",
            "FINGERPRINT", "rs_encode", "fingerprint_of", "fingerprint_distance", "fingerprint_svg", "record_of", "ridges_of"]
-__version__ = "1.8.0"
+__version__ = "1.9.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -88,11 +88,12 @@ def verify_signature(obj: dict, keys: list[dict], anchored_before: Optional[str]
 
 def verify_receipt(receipt: dict, keys: list[dict], delivery: Any = None) -> dict:
     signature_valid = isinstance(receipt.get("issuer"), str) and verify_signature(receipt, keys)
+    pq_signed = isinstance(receipt.get("pq_sig"), str)  # section 16: ML-DSA-65 is not checked in Python (None), never reported valid
     matches = None
     if delivery is not None:
         text = delivery if isinstance(delivery, str) else json.dumps(delivery, separators=(",", ":"), ensure_ascii=False)
         matches = sha256hex(text) == receipt.get("delivery_sha256")
-    return {"valid": signature_valid and matches is not False, "signature_valid": signature_valid, "delivery_matches": matches}
+    return {"valid": signature_valid and matches is not False, "signature_valid": signature_valid, "pq_signed": pq_signed, "ml_dsa_65": None, "delivery_matches": matches}
 
 
 def receipt_hash(receipt: dict) -> str:
@@ -241,12 +242,13 @@ def verify_pass(anchored: dict, keys: list[dict], anchored_before: Optional[str]
     root = (anchored.get("root") or {}).get("root")
     in_root = verify_proof(leaf_of(p), anchored["proof"], root) if anchored.get("proof") is not None and root else None
     sig = p.get("kind") == "word_pass" and verify_signature(p, keys, anchored_before if in_root else None)
+    pq_signed = isinstance(p.get("pq_sig"), str)  # section 16: ML-DSA-65 is not checked in Python (None), never reported valid
     w, pw = word_of(p), p.get("word")
     if pw is None:  # no word, no claim
-        return {"valid": sig and in_root is not False, "signature_valid": sig, "in_root": in_root, "word_consistent": True, "word": None}
+        return {"valid": sig and in_root is not False, "signature_valid": sig, "pq_signed": pq_signed, "ml_dsa_65": None, "in_root": in_root, "word_consistent": True, "word": None}
     pk = pw.get("kept_pct")
     consistent = (pk is None) == (w["kept_pct"] is None) and (pk is None or (isinstance(pk, (int, float)) and float(pk) == w["kept_pct"])) and pw.get("badge") == w["badge"]
-    return {"valid": sig and in_root is not False and consistent, "signature_valid": sig, "in_root": in_root, "word_consistent": consistent, "word": p.get("word")}
+    return {"valid": sig and in_root is not False and consistent, "signature_valid": sig, "pq_signed": pq_signed, "ml_dsa_65": None, "in_root": in_root, "word_consistent": consistent, "word": p.get("word")}
 
 
 def _get_json(url: str) -> Any:
@@ -501,7 +503,7 @@ def _check_doc(url, u, doc, fetch, proof, nonce, fetch_text, aud=None) -> dict:
     if not v["signature_valid"] and btc and btc.get("ok") and (btc.get("block") or {}).get("time"):
         v = verify_pass(anchored, keys, btc["block"]["time"][:10])  # revoked key: only a Bitcoin block proves "before"
     held = verify_holder_proof(proof, keys, p.get("agent"), nonce or "", aud=aud) if proof is not None else None
-    checks = {"signature": v["signature_valid"], "in_root": v["in_root"], "day": root.get("day"), "stellar": stellar, "stellar_account_bound": bool(stellar and account),
+    checks = {"signature": v["signature_valid"], "ml_dsa_65": None, "in_root": v["in_root"], "day": root.get("day"), "stellar": stellar, "stellar_account_bound": bool(stellar and account),
               "bitcoin_ots": bool(v["in_root"] and root.get("bitcoin_ots")), "bitcoin": btc["ok"] if btc else None, "holder": held["ok"] if held else None, "word": v["word_consistent"]}
     if btc and btc.get("block"):
         checks["bitcoin_block"] = btc["block"]

@@ -72,7 +72,7 @@ class Vectors(unittest.TestCase):
         url = "https://issuer.example/v1/agents/ag_alpha/pass"
         ok = cwp(url, web())
         self.assertEqual(ok["trust"], "kept_its_word")
-        self.assertEqual(ok["checks"], {"signature": True, "in_root": True, "day": "2026-10-05", "stellar": True, "stellar_account_bound": True, "bitcoin_ots": True, "bitcoin": True,
+        self.assertEqual(ok["checks"], {"signature": True, "ml_dsa_65": None, "in_root": True, "day": "2026-10-05", "stellar": True, "stellar_account_bound": True, "bitcoin_ots": True, "bitcoin": True,
                                        "bitcoin_block": {"height": B["height"], "hash": B["block_hash"], "time": "2026-10-05T00:00:00.000Z"}, "holder": None, "word": True})
         self.assertIn("found on Stellar from the issuer's anchor account, confirmed in Bitcoin block 915102 (2026-10-05). To be sure it is theirs", ok["say"])
         self.assertEqual(cwp(url, web(source="GOTHER"))["trust"], "invalid")

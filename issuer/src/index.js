@@ -1,5 +1,6 @@
 // word-pass-issuer: issue Word Passes and receipts for your own marketplace, the same way PazAIr does.
 // Zero dependencies. WebCrypto Ed25519 + SHA-256: Node 20+, Deno, Bun, Cloudflare Workers.
+// The second signature (ML-DSA-65, section 16) needs the optional package @noble/post-quantum.
 // Specification: https://github.com/Kula-Labs/pazair/blob/main/SPEC.md (sections 1 to 5 and 9).
 //
 // What you do with it, once a day:
@@ -24,6 +25,7 @@ export async function sha256hex(s) {
 
 const b64u = (b) => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const hexBytes = (h) => Uint8Array.from(h.match(/../g), (x) => parseInt(x, 16));
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
 
 /** A new issuer key. Keep privateJwk secret (a secret store, never a repository); publish only keysDocument(). */
 export async function generateKey() {
@@ -41,11 +43,37 @@ export async function importKey(privateJwk) {
   };
 }
 
+/**
+ * Section 16, the second signature: an ML-DSA-65 key (FIPS 204). Needs the optional package @noble/post-quantum.
+ * `secret` is the 32-byte seed as base64url (keep it as secret as the Ed25519 key). Returns
+ * { pq_kid, public_key_b64url, seed_b64url, signPq(body) }; pair it with an Ed25519 key through withSecondSignature().
+ */
+export async function importPqKey(secret) {
+  const m = (await import('@noble/post-quantum/ml-dsa.js')).ml_dsa65;
+  const seed = typeof secret === 'string' ? unb64u(secret) : secret ?? crypto.getRandomValues(new Uint8Array(32));
+  const { publicKey, secretKey } = m.keygen(seed);
+  const public_key_b64url = b64u(publicKey);
+  return {
+    pq_kid: (await sha256hex([...publicKey].map((x) => x.toString(16).padStart(2, '0')).join(''))).slice(0, 16), public_key_b64url, seed_b64url: b64u(seed),
+    signPq(body) { return b64u(m.sign(enc.encode(canonical(body)), secretKey)); },
+  };
+}
+export const generatePqKey = () => importPqKey();
+
+/**
+ * A key that signs twice: first ML-DSA-65 over the body (`pq_kid`, `pq_sig`), then Ed25519 over everything but `sig`,
+ * so verifiers that know only Ed25519 keep verifying. Use it wherever a Key is expected: signPass, signReceipt, …
+ */
+export function withSecondSignature(key, pqKey) {
+  return { ...key, pq_kid: pqKey.pq_kid, async sign(body) { const b = { ...body, pq_kid: pqKey.pq_kid }; return key.sign({ ...b, pq_sig: pqKey.signPq(b) }); } };
+}
+
 /** The document for GET <origin>/.well-known/pazair-receipts.json (section 2). List old keys too while their objects are in use. */
-export function keysDocument(issuer, keys, { stellarAnchor, revoked = {} } = {}) {
+export function keysDocument(issuer, keys, { stellarAnchor, revoked = {}, pqKeys = [] } = {}) {
   return {
     issuer, alg: 'Ed25519', canonical: 'JSON with sorted keys, without "sig"',
     keys: keys.map((k) => ({ kid: k.kid, kty: 'OKP', crv: 'Ed25519', x: k.x, ...(revoked[k.kid] ? { revoked_at: revoked[k.kid] } : {}) })),
+    ...(pqKeys.length ? { pq_keys: pqKeys.map((k) => ({ pq_kid: k.pq_kid, alg: 'ML-DSA-65', public_key_b64url: k.public_key_b64url, ...(revoked[k.pq_kid] ? { revoked_at: revoked[k.pq_kid] } : {}) })) } : {}),
     // Declare the account that writes your roots on Stellar: checkers then ignore the same memo from anyone else.
     ...(stellarAnchor ? { anchors: { stellar: { account: stellarAnchor, network: 'mainnet' } } } : {}),
   };

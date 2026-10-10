@@ -49,6 +49,9 @@ A verifier keeps the keys it trusts. A rotated key stays listed while objects si
 - **Revocation.** A key that may be compromised gets `"revoked_at": "<ISO time>"` and a new key is added. From then
   on it signs nothing valid: a pass signed with it counts only if its proof leads to a root of a day *before*
   `revoked_at` (the anchor proves it is older); receipts and holder proofs signed with it are invalid.
+- **Second key.** An issuer that signs twice (section 16) lists its ML-DSA-65 keys as
+  `"pq_keys": [{ "pq_kid": "…", "alg": "ML-DSA-65", "public_key_b64url": "…" }]`, where `pq_kid` is the first 16 hex
+  characters of `sha256hex(hex(public key))` (as in section 14). Revocation works as for `keys`.
 
 ## 3. Receipt
 
@@ -273,8 +276,9 @@ nobody else, not even the issuer later, can change what it signed.
 [`vectors/word-pass-1.json`](./vectors/word-pass-1.json): canonical JSON, a test key (private half included,
 for tests only), three signed passes, a signed receipt, a chain of two receipts (section 3.1) with its walk, a mandate and a receipt within it (section 3.2), their leaves, the tree, every proof, the Stellar memo
 of the root, an OpenTimestamps proof of the root with the block Merkle root it leads to, a holder proof with the
-times it is valid and expired, the sentence a verifier says, and a fingerprint (section 15) with its seed, codeword, the distance
-to another agent's and the hash of the reference drawing. An implementation is conformant when it reproduces all of them.
+times it is valid and expired, the sentence a verifier says, a fingerprint (section 15) with its seed, codeword, the distance
+to another agent's and the hash of the reference drawing, and a pass, a receipt and a holder proof signed twice (section 16)
+with the ML-DSA-65 test key, its seed and the keys document that lists it. An implementation is conformant when it reproduces all of them.
 
 ## 11. Governance
 
@@ -326,6 +330,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 3.1 | 2026-10-07 | Chain of work: `parent_order` on the child, `inputs` (receipt hashes) on the parent |
 | 1.0 + 3.2 | 2026-10-08 | Mandate: the principal's limits, signed; receipts name the mandate they were bought within |
 | 1.0 + 15 | 2026-10-10 | Fingerprint: a print per agent from a Reed-Solomon codeword over the seed; any two differ in at least 55 of 64 symbols |
+| 1.0 + 16 | 2026-10-10 | Second signature: `pq_sig` (ML-DSA-65) on passes, receipts and holder proofs, `pq_keys` in the keys document |
 
 ## 14. Remember: the chain of daily roots
 
@@ -385,3 +390,27 @@ What it does not claim: that a person tells trillions of pictures apart. The eye
 to a pass; a machine counts the 64 symbols. And a fingerprint is only as durable as the signatures around it: an
 issuer that wants the chain to outlive Ed25519 adds the second signature of section 14 (`ml_dsa_65`) to passes and
 receipts as well.
+
+## 16. The second signature
+
+Ed25519 is what every verifier can check today with nothing installed. It is also what a large quantum computer
+breaks. An issuer that wants its passes, receipts and holder proofs to outlive that day signs each of them twice,
+the way Remember (section 14) already signs its links.
+
+- **`pq_sig`.** ML-DSA-65 (FIPS 204) over `canonical(object without "sig" and "pq_sig")`, base64url without padding,
+  with the key named by `pq_kid` (section 2, `pq_keys`). It is made first.
+- **`sig`.** Ed25519 as in section 1, over `canonical(object without "sig")`: `pq_kid` and `pq_sig` are inside the
+  bytes it signs. So a verifier that knows only Ed25519 verifies a twice-signed object exactly as before, and the
+  leaf of a twice-signed pass (section 5) is the hash of the whole pass, both signatures included.
+- **Checking.** A verifier that can check ML-DSA-65 checks both; `pq_sig` that does not verify makes the object
+  invalid, whatever `sig` says. A verifier that cannot check it reports the second signature as not checked, never
+  as valid (`ml_dsa_65: null` in `pazair-verify`). An object without `pq_sig` is not signed twice, which is not a
+  failure; a verifier MAY require it. A revoked `pq_kid` counts only as a revoked `kid` does (section 2).
+- **Why both.** One broken scheme breaks nothing: forging `sig` alone fails the ML-DSA-65 check, forging `pq_sig`
+  alone fails Ed25519. Hashes, the Merkle tree, the anchors and the fingerprint (section 15) need no change.
+- **Cost.** An ML-DSA-65 signature is 3309 bytes and the public key 1952 bytes, so a twice-signed pass is about
+  4.4 KB larger. The issuer decides whether that is worth it; PazAIr signs twice.
+
+Reference: `verifyPqSignature`, and the `ml_dsa_65` field of `verifyPass`, `verifyReceipt` and `checkWordPass` in
+`pazair-verify` (checked when `@noble/post-quantum` is installed next to it); `importPqKey` and
+`withSecondSignature` in `word-pass-issuer`.

@@ -8,7 +8,6 @@ import { canonical, fetchKeysDocument, sha256hex, verifySignature } from './inde
 export const GENESIS = '0'.repeat(64);
 const enc = new TextEncoder();
 const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
-const hex = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
 
 /** One link of the chain. */
 export const headOf = (prev, root) => sha256hex(prev + root);
@@ -30,22 +29,8 @@ export async function recomputeChain(days) {
   return { head, days: sorted.length, last_day: sorted.length ? sorted[sorted.length - 1].day : null, broken_at, heads };
 }
 
-let mlDsa; // the optional ML-DSA-65 implementation, loaded once
-/** ML-DSA-65 when @noble/post-quantum is installed; null otherwise. */
-export async function loadMlDsa() {
-  if (mlDsa !== undefined) return mlDsa;
-  try { mlDsa = (await import('@noble/post-quantum/ml-dsa.js')).ml_dsa65 ?? null; } catch { mlDsa = null; }
-  return mlDsa;
-}
-
-/** true / false, or null when ML-DSA-65 cannot be checked here. */
-export async function verifyMlDsa(sigB64u, msgBytes, publicKeyB64u) {
-  const m = await loadMlDsa(); if (!m) return null;
-  try { return m.verify(unb64u(sigB64u), msgBytes, unb64u(publicKeyB64u)); } catch { return false; }
-}
-
-/** kid of an ML-DSA key: sha256hex(hex(public key))[0:16], like the Ed25519 kid is built from x. */
-export const pqKid = async (publicKeyB64u) => (await sha256hex(hex(unb64u(publicKeyB64u)))).slice(0, 16);
+export { loadMlDsa, verifyMlDsa, pqKid } from './pq.js';
+import { loadMlDsa, verifyMlDsa, pqKid } from './pq.js';
 
 async function ed25519(jwk, sigB64u, msgBytes) {
   if (!jwk || typeof jwk.x !== 'string') return false;

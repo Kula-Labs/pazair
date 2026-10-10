@@ -7,7 +7,7 @@ this repository).
 | Tag | Publishes |
 |---|---|
 | `verify-v1.6.1` | npm `pazair-verify` from `verify/` |
-| `issuer-v1.1.0` | npm `word-pass-issuer` from `issuer/` |
+| `issuer-v1.4.0` | npm `word-pass-issuer` from `issuer/` |
 | `python-v1.6.1` | PyPI `pazair-verify` from `python/` |
 
 ## Once: connect the registries

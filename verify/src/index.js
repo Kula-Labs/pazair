@@ -51,11 +51,12 @@ export async function verifySignature(obj, keys, { anchoredBefore } = {}) {
 }
 
 /** A delivery receipt: signed by the issuer; optionally, the delivery you hold is the one that was signed. */
-export async function verifyReceipt(receipt, { keys, delivery } = {}) {
+export async function verifyReceipt(receipt, { keys, pqKeys, delivery } = {}) {
   keys ??= await fetchKeys();
   const signature_valid = typeof receipt?.issuer === 'string' && (await verifySignature(receipt, keys));
+  const pq = await verifyPqSignature(receipt, pqKeys);
   const delivery_matches = delivery === undefined ? null : (await sha256hex(typeof delivery === 'string' ? delivery : JSON.stringify(delivery))) === receipt?.delivery_sha256;
-  return { valid: signature_valid && delivery_matches !== false, signature_valid, delivery_matches };
+  return { valid: signature_valid && pq.valid !== false && delivery_matches !== false, signature_valid, pq_signed: pq.signed, ml_dsa_65: pq.valid, delivery_matches };
 }
 
 /** SPEC section 4: kept_pct and badge as they follow from the pass's own counts. */
@@ -177,15 +178,18 @@ export async function verifyProof(leaf, proof, root) {
  * A revoked key counts only with { anchoredBefore }: a day you proved yourself (a Bitcoin block time), never the
  * root.day the document claims, which whoever holds the stolen key can write.
  */
-export async function verifyPass(anchored, { keys, anchoredBefore } = {}) {
+export async function verifyPass(anchored, { keys, pqKeys, anchoredBefore } = {}) {
   keys ??= await fetchKeys();
   const pass = anchored?.pass ?? anchored;
   const in_root = anchored?.proof && anchored?.root?.root ? await verifyProof(await leafOf(pass), anchored.proof, anchored.root.root) : null;
   const signature_valid = pass?.kind === 'word_pass' && (await verifySignature(pass, keys, { anchoredBefore: in_root ? anchoredBefore : undefined }));
+  const pq = await verifyPqSignature(pass, pqKeys, { anchoredBefore: in_root ? anchoredBefore : undefined });
   const w = wordOf(pass), word_consistent = pass?.word == null || ((pass.word.kept_pct ?? null) === w.kept_pct && (pass.word.badge ?? null) === w.badge); // no word, no claim
   return {
-    valid: signature_valid && in_root !== false && word_consistent,
+    valid: signature_valid && pq.valid !== false && in_root !== false && word_consistent,
     signature_valid,
+    pq_signed: pq.signed,
+    ml_dsa_65: pq.valid,
     word_consistent,
     in_root,
     word: pass?.word ?? null,
@@ -301,10 +305,11 @@ export async function bitcoinHasRoot(otsBase64, root, { fetch: f = fetch, explor
  * A holder proof (section 9): the issuer signed { agent, nonce } for the agent showing the pass. Proves the pass
  * is theirs and not a copied URL. Check it against the nonce you gave and the pass's agent.
  */
-export async function verifyHolderProof(proof, { keys, agent, nonce, aud, now = Date.now() } = {}) {
+export async function verifyHolderProof(proof, { keys, pqKeys, agent, nonce, aud, now = Date.now() } = {}) {
   keys ??= await fetchKeys();
   if (proof?.kind !== 'word_pass_proof') return { ok: false, reason: 'not a holder proof' };
   if (!(await verifySignature(proof, keys))) return { ok: false, reason: "signature does not match the issuer's key" };
+  if ((await verifyPqSignature(proof, pqKeys)).valid === false) return { ok: false, reason: "second signature (ML-DSA-65) does not match the issuer's key" };
   if (proof.agent !== agent) return { ok: false, reason: 'the proof is for another agent' };
   if (typeof nonce !== 'string' || nonce.length < 8 || proof.nonce !== nonce) return { ok: false, reason: 'the proof is not for the nonce you gave' };
   if (aud != null && proof.aud !== aud) return { ok: false, reason: 'the proof was made for another checker' };
@@ -329,16 +334,17 @@ export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce,
   const pass = anchored?.pass ?? (doc?.current?.kind === 'word_pass' ? doc.current : doc?.kind === 'word_pass' ? doc : null);
   if (!pass) return none(`The document at ${u.href} is not a Word Pass.`);
   try { kd = keys ? { keys } : await fetchKeysDocument(u.origin, f); } catch { return none(`${u.host} publishes no keys at /.well-known/pazair-receipts.json.`); }
-  let v = await verifyPass(anchored ?? pass, { keys: kd.keys });
+  let v = await verifyPass(anchored ?? pass, { keys: kd.keys, pqKeys: kd.pq_keys });
   const a = kd.anchors?.stellar, account = a?.network === 'mainnet' && typeof a.account === 'string' ? a.account : undefined;
   const stellar = v.in_root && anchored.root.stellar_tx && account ? await stellarHasRoot(anchored.root.stellar_tx, anchored.root.root, { fetch: f, account }) : null;
   const btc = v.in_root && anchored.root.bitcoin_ots ? await bitcoinHasRoot(anchored.root.bitcoin_ots, anchored.root.root, { fetch: f }) : null;
   // Revoked key: only a Bitcoin block older than the revocation proves the pass was signed before the theft.
-  if (!v.signature_valid && btc?.ok && btc.block?.time) v = await verifyPass(anchored, { keys: kd.keys, anchoredBefore: btc.block.time.slice(0, 10) });
-  const held = proof != null ? await verifyHolderProof(proof, { keys: kd.keys, agent: pass.agent, nonce, aud }) : null;
-  const checks = { signature: v.signature_valid, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, stellar_account_bound: !!(stellar && account), bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots), bitcoin: btc ? btc.ok : null, ...(btc?.block ? { bitcoin_block: btc.block } : {}), holder: held ? held.ok : null, word: v.word_consistent };
+  if ((!v.signature_valid || v.ml_dsa_65 === false) && btc?.ok && btc.block?.time) v = await verifyPass(anchored, { keys: kd.keys, pqKeys: kd.pq_keys, anchoredBefore: btc.block.time.slice(0, 10) });
+  const held = proof != null ? await verifyHolderProof(proof, { keys: kd.keys, pqKeys: kd.pq_keys, agent: pass.agent, nonce, aud }) : null;
+  const checks = { signature: v.signature_valid, ml_dsa_65: v.pq_signed ? v.ml_dsa_65 : null, in_root: v.in_root, day: v.anchors?.day ?? null, stellar, stellar_account_bound: !!(stellar && account), bitcoin_ots: !!(v.in_root && anchored.root.bitcoin_ots), bitcoin: btc ? btc.ok : null, ...(btc?.block ? { bitcoin_block: btc.block } : {}), holder: held ? held.ok : null, word: v.word_consistent };
   const issuer = u.host;
   if (!checks.signature) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its signature does not match ${issuer}'s published key.` };
+  if (checks.ml_dsa_65 === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its second signature (ML-DSA-65) does not match ${issuer}'s published key.` };
   if (checks.in_root === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: its Merkle proof does not lead to the root of ${checks.day}.` };
   if (stellar === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the Stellar transaction it names does not carry the root of ${checks.day} from ${issuer}'s anchor account.` };
   if (btc?.ok === false) return { trust: 'invalid', issuer, checks, pass, say: `Do not rely on this pass: the Bitcoin proof it names for the root of ${checks.day} is not for that root or not in the block it claims.` };
@@ -347,7 +353,7 @@ export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce,
   const where = checks.in_root ? `in the Merkle root of ${checks.day}${stellar ? (account ? ", found on Stellar from the issuer's anchor account" : ', found on Stellar') : ''}${btc?.block ? `, confirmed in Bitcoin block ${btc.block.height} (${btc.block.time.slice(0, 10)})` : checks.bitcoin_ots ? ', stamped in Bitcoin (block confirmation pending)' : ''}` : 'not anchored yet';
   const whose = held?.ok ? ' The agent showing it proved it is this agent.' : ' To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass).';
   const anchored_ok = stellar === true || btc?.ok === true;
-  return { trust: !pass.word?.badge ? 'no_badge_yet' : anchored_ok ? 'kept_its_word' : 'signed_unanchored', issuer, checks, pass, say: `${sayPass(pass, issuer)} Checked: signature of ${issuer} valid, ${where}.${whose}` };
+  return { trust: !pass.word?.badge ? 'no_badge_yet' : anchored_ok ? 'kept_its_word' : 'signed_unanchored', issuer, checks, pass, say: `${sayPass(pass, issuer)} Checked: signature of ${issuer} valid${checks.ml_dsa_65 ? ' (Ed25519 and ML-DSA-65)' : ''}, ${where}.${whose}` };
 }
 
 /** One plain sentence about a pass. */
@@ -359,7 +365,11 @@ export function sayPass(p, by = p.issuer) {
 }
 
 // Remember: the chain of daily roots, checked without the issuer (SPEC section 14).
-export { GENESIS, headOf, recomputeChain, verifyLink, verifyRememberDocument, checkRemember, checkHead, loadMlDsa, verifyMlDsa, pqKid } from './remember.js';
+export { GENESIS, headOf, recomputeChain, verifyLink, verifyRememberDocument, checkRemember, checkHead } from './remember.js';
+
+// The second signature (SPEC section 16): ML-DSA-65 on passes, receipts and holder proofs; checked when @noble/post-quantum is installed.
+export { loadMlDsa, verifyMlDsa, pqKid, verifyPqSignature } from './pq.js';
+import { verifyPqSignature } from './pq.js';
 
 // Fingerprint (SPEC section 15): a print no other agent can carry, provably; the reference drawing.
 export { FINGERPRINT, rsEncode, fingerprintOf, fingerprintDistance, fingerprintSvg, recordOf, ridgesOf } from './fingerprint.js';
