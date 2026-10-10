@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 from decimal import Decimal
 import hashlib
+import math
 import json
 import urllib.request
 from typing import Any, Callable, Optional
@@ -19,8 +20,9 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
-           "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award"]
-__version__ = "1.6.1"
+           "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award",
+           "FINGERPRINT", "rs_encode", "fingerprint_of", "fingerprint_distance", "fingerprint_svg", "record_of", "ridges_of"]
+__version__ = "1.8.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -523,6 +525,144 @@ def _check_doc(url, u, doc, fetch, proof, nonce, fetch_text, aud=None) -> dict:
     trust = "no_badge_yet" if not (p.get("word") or {}).get("badge") else "kept_its_word" if anchored_ok else "signed_unanchored"
     return {"trust": trust, "issuer": issuer, "checks": checks, "pass": p,
             "say": f"{say_pass(p, issuer)} Checked: signature of {issuer} valid, {where}.{whose}"}
+
+
+
+# Fingerprint (SPEC section 15): a print no other agent can carry, provably.
+# seed = sha256(origin "\n" agent "\n" first_leaf); its first 10 bytes are the message of a Reed-Solomon code over
+# GF(256) with n = 64, k = 10, so any two prints differ in at least 55 of 64 symbols. Same drawing as pazair-verify (JS).
+_N, _K, _POLY = 64, 10, 0x11D
+_EXP, _LOG = [0] * 512, [0] * 256
+_x = 1
+for _i in range(255):
+    _EXP[_i], _LOG[_x] = _x, _i
+    _x <<= 1
+    if _x & 256:
+        _x ^= _POLY
+for _i in range(255, 512):
+    _EXP[_i] = _EXP[_i - 255]
+
+
+def _mul(a: int, b: int) -> int:
+    return _EXP[_LOG[a] + _LOG[b]] if a and b else 0
+
+
+def _gen() -> list[int]:
+    g = [1]
+    for i in range(_N - _K):
+        r, ng = _EXP[i], [0] * (len(g) + 1)
+        for j, c in enumerate(g):
+            ng[j] ^= c
+            ng[j + 1] ^= _mul(c, r)
+        g = ng
+    return g
+
+
+_GEN = _gen()
+FINGERPRINT = {"n": _N, "k": _K, "d": _N - _K + 1, "field": "GF(256), polynomial 0x11d", "generator": "roots α^0 … α^53"}
+
+
+def rs_encode(msg: bytes) -> bytes:
+    """Systematic Reed-Solomon encoding: the first 10 bytes of msg, then 54 parity bytes."""
+    buf = bytearray(_N)
+    buf[:_K] = msg[:_K]
+    for i in range(_K):
+        c = buf[i]
+        if not c:
+            continue
+        for j in range(1, len(_GEN)):
+            buf[i + j] ^= _mul(_GEN[j], c)
+    return bytes(msg[:_K]) + bytes(buf[_K:])
+
+
+def fingerprint_of(origin: str, agent: str, first_leaf: str) -> dict:
+    """The seed and the codeword (lowercase hex) of an agent: the issuer's origin, the agent id, the leaf of its first anchored pass."""
+    for k, v in (("origin", origin), ("agent", agent), ("first_leaf", first_leaf)):
+        if not isinstance(v, str) or not v:
+            raise TypeError(f"fingerprint_of: {k} must be a non-empty string")
+    seed = sha256hex(f"{origin.rstrip('/')}\n{agent}\n{first_leaf}")
+    return {"seed": seed, "codeword": rs_encode(bytes.fromhex(seed)).hex()}
+
+
+def _cw(x: Any) -> bytes:
+    b = bytes.fromhex(x["codeword"] if isinstance(x, dict) else x)
+    if len(b) != _N:
+        raise TypeError("a codeword has 64 bytes")
+    return b
+
+
+def fingerprint_distance(a: Any, b: Any) -> int:
+    """How many of the 64 symbols differ; never below 55 for two different seeds."""
+    return sum(1 for x, y in zip(_cw(a), _cw(b)) if x != y)
+
+
+def record_of(p: dict) -> dict:
+    s = (p or {}).get("as_seller") or {}
+    return {"delivered": int(s.get("delivered") or 0), "buyers": int(s.get("buyers") or 0), "badge": ((p or {}).get("word") or {}).get("badge"), "disputes_lost": int((p or {}).get("disputes_lost") or 0)}
+
+
+def ridges_of(delivered: int) -> int:
+    return min(5 + max(0, int(delivered)) // 3, 26)
+
+
+def fingerprint_svg(codeword: Any, record: Optional[dict] = None, size: int = 360, ink: str = "currentColor", gold: str = "#d1a04a", background: str = "none") -> str:
+    """The reference drawing (SVG), byte for byte the same as pazair-verify (JS) for the same input."""
+    cw = _cw(codeword)
+    rec = {"delivered": 0, "buyers": 0, "badge": None, "disputes_lost": 0, **(record or {})}
+    W = 360
+    cx, cy, total = W / 2, W * 0.52, ridges_of(rec["delivered"])
+    gap, r0 = (W * 0.40) / (total + 1), W * 0.06
+    raw = [((s >> 5) - 3.5) / 3.5 for s in cw]
+    sm = [(raw[(j + _N - 1) % _N] + 2 * raw[j] + raw[(j + 1) % _N]) / 4 for j in range(_N)]
+    tau = math.pi * 2
+
+    def bulge_at(th: float) -> float:
+        u = ((th / tau) * _N + _N) % _N
+        j = int(math.floor(u))
+        f = (1 - math.cos((u - j) * math.pi)) / 2
+        return sm[j] * (1 - f) + sm[(j + 1) % _N] * f
+
+    p1, p2 = (cw[0] / 255) * tau, (cw[1] / 255) * tau
+    e1, e2 = 0.06 + (cw[2] / 255) * 0.08, 0.04 + (cw[3] / 255) * 0.06
+
+    def radius_at(i: int, th: float) -> float:
+        return (r0 + i * gap) * (1 + e1 * math.cos(th - p1) * (i / total) + e2 * math.cos(2 * th - p2)) * (1 + 0.06 * bulge_at(th) * min(1, i / 3))
+
+    def f1(x: float) -> str:
+        return "%.1f" % (math.floor(x * 10 + 0.5) / 10)
+
+    paths = []
+    for i in range(total):
+        last = i == total - 1 and bool(rec["badge"])
+        closed_core = rec["buyers"] >= 5 if i < 2 else True
+        width = 2.8 if last else 1.6 + ((cw[i % _N] >> 6) & 3) * 0.2
+        d, pen = "", False
+        for k in range(257):
+            th = (k / 256) * tau - math.pi / 2
+            sector = int(math.floor((((th / tau) * _N) + _N) % _N))
+            s = cw[sector]
+            ending = (s & 31) % total == i
+            open_gap = (not closed_core) and th > math.pi * 0.12 and th < math.pi * 0.5
+            r = radius_at(i, th)
+            x, y = cx + math.cos(th) * r * 0.84, cy + math.sin(th) * r
+            if ending or open_gap:
+                pen = False
+                continue
+            d += f"{'L' if pen else 'M'}{f1(x)} {f1(y)}"
+            pen = True
+        paths.append(f'<path d="{d}" stroke="{gold if last else ink}" stroke-width="{f1(width)}"/>')
+    scars = ""
+    for dd in range(rec["disputes_lost"]):
+        th = ((cw[(dd * 11) % _N] / 255) * tau) - math.pi / 2
+        ra, rb = r0 + gap * 2.5, r0 + gap * min(total - 0.5, 7.5)
+        scars += f'<path d="M{f1(cx + math.cos(th) * ra * 0.84)} {f1(cy + math.sin(th) * ra)}L{f1(cx + math.cos(th + 0.08) * rb * 0.84)} {f1(cy + math.sin(th + 0.08) * rb)}" stroke="#000" stroke-width="7.2" stroke-linecap="round"/>'
+    mask = f'<mask id="scars"><rect width="{W}" height="{W}" fill="#fff"/>{scars}</mask>' if scars else ""
+    desc = f"Word Pass fingerprint: {total} ridges from {rec['delivered']} delivered orders; core {'closed' if rec['buyers'] >= 5 else 'open'} ({rec['buyers']} buyers); {rec['disputes_lost']} disputes lost; {('badge ' + rec['badge']) if rec['badge'] else 'no badge yet'}. Codeword {cw.hex()}."
+    bg = "" if background == "none" else f'<rect width="{W}" height="{W}" fill="{background}"/>'
+    g_mask = ' mask="url(#scars)"' if scars else ""
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {W}" width="{size}" height="{size}" role="img" aria-label="Word Pass fingerprint">'
+            f"<title>Word Pass fingerprint</title><desc>{desc}</desc>{bg}{mask}"
+            f'<g fill="none" stroke-linecap="round" stroke-linejoin="round"{g_mask}>{"".join(paths)}</g></svg>')
 
 
 def main() -> None:

@@ -315,5 +315,25 @@
       ],
       "reasons": []
     }
+  },
+  "fingerprint": {
+    "about": "SPEC section 15. seed = sha256hex(origin + \"\\n\" + agent + \"\\n\" + first_leaf); codeword = Reed-Solomon over GF(256) (polynomial 0x11d, generator roots α^0 … α^53, systematic), n = 64, k = 10, of the first 10 bytes of the seed, lowercase hex. Any two codewords from different seeds differ in at least 55 of 64 symbols. The SVG is the reference drawing of the codeword with the record below; a conformant drawing is byte for byte this file (sha256hex of the UTF-8 text).",
+    "origin": "https://issuer.example",
+    "agent": "ag_alpha",
+    "first_leaf": "40778db736daa23eb315bae5b9698905fc4463187e1bf4865da701a4ee66684c",
+    "seed": "ebaf80d96022712055eb37c289354275969540711ba7b0fa6dda20dc0dcd2612",
+    "codeword": "ebaf80d96022712055eb1685c059847bd975f047e0132c8e87b45217161cea927b2e4bb86ee2c1a668c4833cb598074b6058bdef073cc3ac994af0f045d1cb86",
+    "other": {
+      "agent": "ag_beta",
+      "first_leaf": "79e2c5eeb16d2956a22ff8756a8cc553ac37facb961a6aba63d5c77c627bdb3c",
+      "distance": 64
+    },
+    "record": {
+      "delivered": 12,
+      "buyers": 6,
+      "badge": "word_kept_99",
+      "disputes_lost": 1
+    },
+    "svg_sha256": "57bc7477846ad3ff3deca5609bff1d015d5fcc2900baad026d4549853b1410c1"
   }
 }

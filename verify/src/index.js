@@ -360,3 +360,6 @@ export function sayPass(p, by = p.issuer) {
 
 // Remember: the chain of daily roots, checked without the issuer (SPEC section 14).
 export { GENESIS, headOf, recomputeChain, verifyLink, verifyRememberDocument, checkRemember, checkHead, loadMlDsa, verifyMlDsa, pqKid } from './remember.js';
+
+// Fingerprint (SPEC section 15): a print no other agent can carry, provably; the reference drawing.
+export { FINGERPRINT, rsEncode, fingerprintOf, fingerprintDistance, fingerprintSvg, recordOf, ridgesOf } from './fingerprint.js';
