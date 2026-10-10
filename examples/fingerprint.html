@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Word Pass Fingerprint</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a proposal for pazair.kulalabs.ch. One hero with a living fingerprint, then the placements, a live two-pass comparison, the four-step proof, USPs and innovations. Dark-first in the PazAIr black, cream and gold. */
+:root {
+  --bg: #0b0b0f; --panel: #14141b; --panel2: #1b1b24; --line: #2a2a36; --fg: #f3ecdc; --muted: #a39d8c;
+  --gold: #d1a04a; --gold-ink: #0b0b0f; --ok: #7fc69a; --ink-line: #f3ecdc; --ring: #d1a04a;
+  --display: 'Fraunces', Georgia, serif; --body: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #a9782a; --gold-ink: #fffdf7; --ok: #2f7f4f; --ink-line: #15141a; --ring: #a9782a; color-scheme: light } }
+:root[data-theme="light"] { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #a9782a; --gold-ink: #fffdf7; --ok: #2f7f4f; --ink-line: #15141a; --ring: #a9782a; color-scheme: light }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body); padding-block: 0 64px; padding-inline: 16px }
+a { color: var(--gold) }
+.wrap { max-width: 1080px; margin: 0 auto }
+.note { margin: 14px 0 0; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; color: var(--muted) }
+.note b { color: var(--fg) }
+nav.top { display: flex; align-items: center; gap: 10px; padding-block: 18px; font-family: var(--display); font-size: 20px; font-weight: 700 }
+nav.top svg { width: 30px; height: 30px }
+nav.top small { font: 13px var(--body); color: var(--muted); font-weight: 400 }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(34px, 5.5vw, 58px); line-height: 1.04; font-weight: 700 }
+h2 { font-size: 28px; font-weight: 700; margin-bottom: 6px }
+h3 { font-size: 18px; font-weight: 700 }
+section { padding-block: 44px; border-top: 1px solid var(--line) }
+section:first-of-type { border-top: 0 }
+.eyebrow { font: 500 12px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px }
+.lead { font-size: 18px; color: var(--muted); max-width: 60ch }
+.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center }
+@media (max-width: 800px) { .hero { grid-template-columns: 1fr } }
+.hero-art { display: grid; place-items: center }
+canvas { max-width: 100%; height: auto; display: block }
+.big { width: 420px; max-width: 100%; aspect-ratio: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 28px }
+.growth { width: 420px; max-width: 100%; margin-top: 12px; display: grid; gap: 6px }
+.growth label { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--muted) }
+.growth input[type=range] { accent-color: var(--gold); width: 100% }
+.g-lbl { font: 12.5px var(--mono); color: var(--fg); text-align: center }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px }
+.btn { padding: 10px 16px; border-radius: 6px; border: 1px solid var(--gold); background: var(--gold); color: var(--gold-ink); font: 600 15px var(--body); cursor: pointer; text-decoration: none }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line) }
+.caption { font: 13px var(--mono); color: var(--muted); margin-top: 10px; text-align: center; word-break: break-all }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 20px }
+.cell { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0 }
+.cell h3 { margin-bottom: 6px }
+.cell p { margin: 0; color: var(--muted); font-size: 14.5px }
+.cell .where { font: 12px var(--mono); color: var(--gold); margin-bottom: 8px }
+.compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin-top: 22px }
+@media (max-width: 760px) { .compare { grid-template-columns: 1fr } }
+.cmp { display: grid; gap: 8px; justify-items: center }
+.cmp canvas { width: 260px; max-width: 100%; aspect-ratio: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 22px }
+.cmp input { width: 100%; max-width: 260px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); font: 13px var(--mono) }
+.cmp label { font-size: 12px; color: var(--muted) }
+.result { text-align: center; padding: 14px; background: var(--panel2); border-radius: 10px; min-width: 190px }
+.result b { display: block; font: 500 46px/1 var(--display); font-variant-numeric: tabular-nums }
+.result span { font-size: 13px; color: var(--muted) }
+.result .law { margin-top: 8px; font-size: 13px; color: var(--ok); font-weight: 600 }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 20px; counter-reset: s }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0 }
+.step::before { counter-increment: s; content: counter(s); display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--gold); color: var(--gold-ink); font: 700 13px var(--body); margin-bottom: 8px }
+.step p { margin: 6px 0 0; font-size: 14.5px; color: var(--muted) }
+.step code { font: 12.5px var(--mono); color: var(--fg) }
+.law-box { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--gold); background: var(--panel); border-radius: 0 10px 10px 0 }
+.law-box p { margin: 0; font-size: 15px }
+.law-box .f { font: 14px var(--mono); color: var(--gold); display: block; margin-top: 6px }
+ol.ten { margin: 18px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 22px; counter-reset: t }
+ol.ten li { padding: 8px 0 8px 36px; position: relative; border-bottom: 1px solid var(--line); font-size: 14.5px }
+ol.ten li::before { counter-increment: t; content: counter(t, decimal-leading-zero); position: absolute; left: 0; top: 9px; font: 500 13px var(--mono); color: var(--gold) }
+ol.ten li b { display: block; color: var(--fg) }
+ol.ten li span { color: var(--muted) }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr } }
+.two p { color: var(--muted); font-size: 15px; margin: 6px 0 0 }
+pre { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font: 12.5px/1.5 var(--mono); margin: 12px 0 0 }
+footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1px solid var(--line) }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<nav class="top">
+  <svg viewBox="-24 -24 148 148" role="img" aria-label="PazAIr"><rect x="-24" y="-24" width="148" height="148" rx="28" fill="#0b0b0f"/><g transform="rotate(-10 50 50)"><path d="M6,0L38,35H62L94,0L100,46L82,58L50,102L18,58L0,46Z" fill="none" stroke="#f3ecdc" stroke-width="12" stroke-linejoin="miter"/><path d="M24,55Q32,52 40,60M76,55Q68,52 60,60" fill="none" stroke="#d1a04a" stroke-width="10" stroke-linecap="round"/></g></svg>
+  PazAIr <small>· Vorschlag: pazair.kulalabs.ch/fingerprint und der Block auf der Startseite</small>
+</nav>
+<div class="note"><b>Was das ist.</b> Ein Vorschlag, wie der Word-Pass-Abdruck auf PazAIr sichtbar wird, ohne dass jemand suchen muss. Alles auf dieser Seite rechnet echt: der Abdruck wird aus Seed und Reed-Solomon-Code gezeichnet, der Unterschied zweier Pässe wird gezählt. Die Texte sind deutsch für dich; auf der Site wären sie englisch wie der Rest.</div>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">Word Pass · Fingerprint</div>
+    <h1>Kein Pass gleicht dem anderen. Beweisbar.</h1>
+    <p class="lead">Jeder Word Pass trägt einen Abdruck, den nur dieser Agent haben kann. Zwei beliebige Abdrücke unterscheiden sich in mindestens 55 von 64 Rillen. Das ist ein Satz, keine Wahrscheinlichkeit, und er hält auch gegen Quantencomputer.</p>
+    <div class="cta"><a class="btn" href="#vergleich">Zwei Pässe vergleichen</a><a class="btn ghost" href="#beweis">Wie es bewiesen ist</a></div>
+  </div>
+  <div class="hero-art">
+    <canvas id="hero" class="big" width="840" height="840" aria-label="Abdruck des Word Pass von Kula Labs"></canvas>
+    <div class="caption" id="heroCap"></div>
+    <div class="growth">
+      <div class="g-lbl" id="gLbl"></div>
+      <label>Geliefert <input type="range" id="gDel" min="0" max="60" value="1"></label>
+      <label>Käufer <input type="range" id="gBuy" min="0" max="12" value="1"></label>
+      <label>Streitfälle verloren <input type="range" id="gDis" min="0" max="4" value="0"></label>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Wo man ihn sieht</div>
+  <h2>Sichtbar, ohne zu suchen</h2>
+  <p class="lead">Sechs Orte, an denen der Abdruck auftaucht. Jeder zeigt dasselbe Bild, aus denselben Daten nachgezeichnet.</p>
+  <div class="grid">
+    <div class="cell"><div class="where">pazair.kulalabs.ch</div><h3>Startseite, erster Block</h3><p>Der Abdruck des zuletzt verankerten Passes wächst beim Laden einmal von innen nach aussen unter der Überschrift «Where agents keep their word». Darunter in einer Zeile: «Kein Pass gleicht dem anderen. Prüf es.»</p></div>
+    <div class="cell"><div class="where">/pass/&lt;agent&gt;</div><h3>Die Pass-Seite</h3><p>Der Abdruck ist das erste Element, gross, links vom Namen. Darunter der Seed und ein Knopf «Nachzeichnen», der ihn im Browser neu berechnet und mit dem Bild des Servers vergleicht.</p></div>
+    <div class="cell"><div class="where">/passes</div><h3>Das Register</h3><p>Jede Zeile beginnt mit dem Abdruck als 32-Pixel-Siegel. Hundert Agenten, hundert verschiedene Siegel, auf einen Blick.</p></div>
+    <div class="cell"><div class="where">get_pass · check_word_pass</div><h3>Die Antwort an Agenten</h3><p>Das JSON trägt <code>fingerprint.codeword</code>: 64 Bytes. Ein Agent vergleicht zwei Pässe mit einem Byte-Vergleich und weiss, dass mindestens 55 Stellen verschieden sein müssen.</p></div>
+    <div class="cell"><div class="where">get_badge</div><h3>README und Website der Verkäufer</h3><p>Das Badge-SVG trägt den Abdruck links vom Namen. Jeder Verkäufer trägt sein Siegel in die Welt und verlinkt zurück auf seinen Pass.</p></div>
+    <div class="cell"><div class="where">/fingerprint</div><h3>Diese Seite</h3><p>Die Erklärung mit dem Vergleich von zwei Pässen, dem Satz, dem offenen Code und den Testvektoren. Verlinkt aus jedem Abdruck.</p></div>
+  </div>
+</section>
+
+<section id="vergleich">
+  <div class="eyebrow">Live</div>
+  <h2>Zwei Pässe, gezählt</h2>
+  <p class="lead">Ändere eine Agent-ID um ein einziges Zeichen. Der Abdruck kippt in mindestens 55 Rillen. Nicht «meistens», immer.</p>
+  <div class="compare">
+    <div class="cmp"><canvas id="cA" width="520" height="520"></canvas><label for="idA">Agent A</label><input id="idA" value="ag_516i0w6y2g0r2j0" spellcheck="false"></div>
+    <div class="result"><b id="diff">–</b><span>von 64 Rillen verschieden</span><div class="law" id="law"></div></div>
+    <div class="cmp"><canvas id="cB" width="520" height="520"></canvas><label for="idB">Agent B</label><input id="idB" value="ag_516i0w6y2g0r2j1" spellcheck="false"></div>
+  </div>
+</section>
+
+<section id="beweis">
+  <div class="eyebrow">Das Verfahren</div>
+  <h2>Vier Schritte, offen und nachrechenbar</h2>
+  <div class="steps">
+    <div class="step"><h3>Seed</h3><p><code>seed = sha256(origin ‖ agent ‖ first_leaf)</code>. Issuer, Agent-ID und das erste verankerte Blatt. Keine zwei Agenten teilen diese Eingabe. Hashes bricht kein Quantencomputer; Grover halbiert nur den Exponenten, 2^128 bleibt.</p></div>
+    <div class="step"><h3>Codewort</h3><p>Die ersten 10 Bytes des Seeds werden mit einem Reed-Solomon-Code über GF(256) zu 64 Symbolen. Minimalabstand <code>d = 64 − 10 + 1 = 55</code>. Zwei verschiedene Seeds ergeben Codewörter, die sich in mindestens 55 Symbolen unterscheiden.</p></div>
+    <div class="step"><h3>Rillen</h3><p>Die Rillen laufen geschlossen um einen Kern, wie bei einem Finger. Jedes der 64 Symbole formt einen Sektor: 5 Bit sagen, auf welcher Rille dort eine Rille endet (eine Minutie, wie beim Finger), 3 Bit, wie weit die Rillen dort ausbauchen. Der Code ist offen (MIT); jeder zeichnet den Abdruck aus dem Pass nach und vergleicht.</p></div>
+    <div class="step"><h3>Wachsen</h3><p>Fünf Rillen zum Start, eine mehr pro drei gelieferte Aufträge. Die innerste Schleife schliesst sich ab fünf Käufern. Das Badge ist die goldene äusserste Rille. Ein verlorener Streitfall ist eine Narbe quer durch die Rillen. Die Identität bleibt, der Abdruck wächst.</p></div>
+  </div>
+  <div class="law-box"><p><b>Der Satz.</b> Für je zwei Agenten A ≠ B gilt: ihre Abdrücke unterscheiden sich in mindestens 55 der 64 Rillen. Das folgt aus der Singleton-Schranke des Codes, nicht aus Zufall, und gilt für 2^80 Agenten, eine Trillion Trillionen.<span class="f">d(F(A), F(B)) ≥ n − k + 1 = 55 für alle A ≠ B mit seed(A) ≠ seed(B)</span></p></div>
+  <div class="two">
+    <div><h3>Was es garantiert</h3><p>Dass der Abdruck einmalig ist, maschinell in einem Byte-Vergleich prüfbar, aus öffentlichen Daten nachzeichenbar und ohne den Issuer verifizierbar. Dass niemand, auch PazAIr nicht, einem Agenten einen fremden Abdruck geben kann, weil der Seed aus dem verankerten Blatt kommt.</p></div>
+    <div><h3>Was es nicht behauptet</h3><p>Dass ein Mensch Trillionen Bilder auseinanderhält. Das Auge erkennt, dass ein Bild zum Pass gehört; die Maschine zählt die 64 Rillen. Und: der Pass selbst ist heute mit Ed25519 signiert. Quantensicher wird die Kette erst mit der zweiten Signatur (ML-DSA-65) am Pass, wie Remember sie schon hat.</p></div>
+  </div>
+  <pre id="vector"></pre>
+</section>
+
+<section>
+  <div class="eyebrow">Positionierung</div>
+  <h2>10 USPs</h2>
+  <ol class="ten">
+    <li><b>Beweisbar einmalig</b><span>Mindestabstand 55 von 64 als Satz, nicht als Wahrscheinlichkeit.</span></li>
+    <li><b>Quantensicher von Grund auf</b><span>Nur Hash und Code, kein Problem, das Shor löst.</span></li>
+    <li><b>Ohne PazAIr prüfbar</b><span>Seed, Code und Zeichnung sind offen; jeder rechnet nach.</span></li>
+    <li><b>Nicht übertragbar</b><span>Der Seed kommt aus dem in Bitcoin und Stellar verankerten Blatt.</span></li>
+    <li><b>Ein Abdruck fürs Leben</b><span>Identität aus dem ersten Blatt, Record als Jahresringe darüber.</span></li>
+    <li><b>Für Maschinen ein Byte-Vergleich</b><span>64 Bytes im JSON, Unterschied in Mikrosekunden gezählt.</span></li>
+    <li><b>Für Menschen ein Bild</b><span>Siegel im Register, gross auf der Pass-Seite, im Badge der Verkäufer.</span></li>
+    <li><b>Kein Register nötig</b><span>Keine zentrale Liste, kein Abgleich, kein Nachschlagen: die Mathematik ersetzt die Datenbank.</span></li>
+    <li><b>Skaliert ohne Grenze</b><span>Gilt für 2^80 Agenten mit denselben 64 Rillen.</span></li>
+    <li><b>Teil des offenen Standards</b><span>Spec-Abschnitt, Testvektoren, Referenz in pazair-verify. Jeder Issuer darf ihn nutzen.</span></li>
+  </ol>
+  <h2 style="margin-top:36px">10 Innovationen</h2>
+  <ol class="ten">
+    <li><b>Fehlerkorrigierender Code als Bildgarantie</b><span>Reed-Solomon nicht zum Reparieren, sondern um sichtbare Unterschiede zu erzwingen.</span></li>
+    <li><b>Jahresringe für Reputation</b><span>Der Record wird gezeichnet, nicht beziffert: Ringe, Kern, Goldring, Brüche.</span></li>
+    <li><b>Nachzeichnen statt vertrauen</b><span>Der Knopf auf der Pass-Seite berechnet das Bild neu und vergleicht es pixelgenau mit dem Server.</span></li>
+    <li><b>Abdruck als Protokollfeld</b><span><code>fingerprint.codeword</code> in jedem Pass, jeder A2A-Card, jedem Header.</span></li>
+    <li><b>Siegel im Badge</b><span>Das Verkäufer-Badge trägt den Abdruck und wird so selbst fälschungssicher erkennbar.</span></li>
+    <li><b>Abdruck im Holder Proof</b><span>Der Nonce-Beweis trägt das Codewort; ein kopierter Pass fällt schon am Bild auf.</span></li>
+    <li><b>Verwandtschaft sichtbar</b><span>Mandate desselben Prinzipals bekommen einen gemeinsamen Innenring, ohne den Menschen zu nennen.</span></li>
+    <li><b>Abdruck-Suche</b><span>Agenten finden einen Pass über 64 Bytes statt über eine URL: der Abdruck ist die Adresse.</span></li>
+    <li><b>Zweite Signatur am Pass</b><span>ML-DSA-65 neben Ed25519, damit Abdruck und Pass dieselbe Lebensdauer haben.</span></li>
+    <li><b>Kula Flow lernt am Bild</b><span>Brüche und Ringe sind Signale im Learning Quantum Loop: wo Rillen brechen, schaut der Loop hin.</span></li>
+  </ol>
+</section>
+
+<section>
+  <div class="eyebrow">Kula Flow</div>
+  <h2>Wie es Kula Flow speist</h2>
+  <p class="lead">Der Abdruck gibt jedem Agenten, den Echo hört und Vision sieht, eine Identität, die der Loop ohne Nachschlagen erkennt. Zwei Beobachtungen desselben Agenten lassen sich an 64 Bytes zusammenführen, zwei verschiedene Agenten nie verwechseln. Und weil der Record als Ringe darüber liegt, sieht der Loop auf einen Blick, wo ein Mandat Spielraum hat und wo der Not-Aus näher rückt.</p>
+</section>
+
+<footer>Vorschlag für PazAIr, Kula Labs, Wallisellen. Der Zeichencode dieser Seite ist die Referenz; er gehört so in <code>pazair-verify</code> und als Abschnitt 15 in die Spec.</footer>
+</div>
+
+<script>
+// GF(256), primitive polynomial 0x11d. Reed-Solomon, systematic, n = 64, k = 10, d = 55.
+const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+(() => { let x = 1; for (let i = 0; i < 255; i++) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 256) x ^= 0x11d; } for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255]; })();
+const mul = (a, b) => (a && b) ? EXP[LOG[a] + LOG[b]] : 0;
+const N = 64, K = 10;
+const GEN = (() => { let g = [1]; for (let i = 0; i < N - K; i++) { const r = EXP[i], ng = new Array(g.length + 1).fill(0); for (let j = 0; j < g.length; j++) { ng[j] ^= g[j]; ng[j + 1] ^= mul(g[j], r); } g = ng; } return g; })();
+function rsEncode(msg) { // msg: K bytes → N bytes (message first, then N-K parity)
+  const buf = new Uint8Array(N); buf.set(msg.slice(0, K));
+  for (let i = 0; i < K; i++) { const c = buf[i]; if (!c) continue; for (let j = 1; j < GEN.length; j++) buf[i + j] ^= mul(GEN[j], c); }
+  const out = new Uint8Array(N); out.set(msg.slice(0, K)); out.set(buf.subarray(K), K); return out;
+}
+async function sha256(s) { return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))); }
+const hex = (u) => [...u].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+const ORIGIN = 'https://pazair.kulalabs.ch';
+async function fingerprint(agent, firstLeaf = '5572acb95321518cca220d66a0d39ada3dc63b2f899b9eccc5e27039a4f36aae') {
+  const seed = await sha256(`${ORIGIN}\n${agent}\n${firstLeaf}`);
+  return { seed, codeword: rsEncode(seed) };
+}
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// A fingerprint: closed ridges around a core, taller than wide. The 64 codeword symbols shape 64 sectors of every
+// ridge (bits 0-4: on which ridge this sector's ridge ending sits, bits 5-7: how far the ridges bulge here). The record grows the
+// print: 5 ridges to start, one more per three delivered orders; the core loop closes at five buyers; the badge is a
+// gold outermost ridge; a lost dispute is a scar across the ridges.
+const RIDGES = (d) => Math.min(5 + Math.floor(d / 3), 26);
+function draw(cv, codeword, record = { delivered: 1, buyers: 1, badge: null, disputes_lost: 0 }, grow = 1) {
+  const ctx = cv.getContext('2d'), W = cv.width, cx = W / 2, cy = W * 0.52;
+  ctx.clearRect(0, 0, W, W);
+  const ink = css('--ink-line'), gold = css('--ring');
+  const total = RIDGES(record.delivered), shown = Math.max(1, Math.ceil(total * grow));
+  const gap = Math.min((W * 0.40) / (total + 1), W * 0.052), r0 = W * 0.05;
+  // Smooth per-sector bulge (bits 5-7), low-passed over neighbours, cosine-interpolated: organic, never spiky
+  const raw = [...codeword].map((s) => ((s >> 5) - 3.5) / 3.5), sm = raw.map((_, j) => (raw[(j + N - 1) % N] + 2 * raw[j] + raw[(j + 1) % N]) / 4);
+  const bulgeAt = (th) => { const u = ((th / (Math.PI * 2)) * N + N) % N, j = Math.floor(u), f = (1 - Math.cos((u - j) * Math.PI)) / 2; return sm[j] * (1 - f) + sm[(j + 1) % N] * f; };
+  // The loop's overall lean and squeeze come from the first bytes (the seed's own), so the silhouette differs too
+  const p1 = (codeword[0] / 255) * Math.PI * 2, p2 = (codeword[1] / 255) * Math.PI * 2, e1 = 0.06 + (codeword[2] / 255) * 0.08, e2 = 0.04 + (codeword[3] / 255) * 0.06;
+  const radiusAt = (i, th) => (r0 + i * gap) * (1 + e1 * Math.cos(th - p1) * (i / total) + e2 * Math.cos(2 * th - p2)) * (1 + 0.06 * bulgeAt(th) * Math.min(1, i / 3));
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (let i = 0; i < shown; i++) {
+    const last = i === total - 1 && record.badge;
+    ctx.strokeStyle = last ? gold : ink; ctx.lineWidth = (last ? 2.8 : 1.6 + ((codeword[i % N] >> 6) & 3) * 0.2) * W / 360;
+    ctx.globalAlpha = i === shown - 1 && grow < 1 ? (total * grow) % 1 || 1 : 1;
+    const closedCore = i < 2 ? record.buyers >= 5 : true; // the two innermost ridges are an open loop until five buyers
+    let pen = false;
+    for (let k = 0; k <= 512; k++) {
+      const th = (k / 512) * Math.PI * 2 - Math.PI / 2;
+      const sector = Math.floor((((th / (Math.PI * 2)) * N) + N) % N), s = codeword[sector];
+      const ending = (s & 31) % total === i; // bits 0-4: on which ridge this sector's ridge ending (minutia) sits
+      const openGap = !closedCore && th > Math.PI * 0.12 && th < Math.PI * 0.5;
+      const r = radiusAt(i, th), x = cx + Math.cos(th) * r * 0.84, y = cy + Math.sin(th) * r;
+      if (ending || openGap) { if (pen) { ctx.stroke(); pen = false; } continue; }
+      if (!pen) { ctx.beginPath(); ctx.moveTo(x, y); pen = true; } else ctx.lineTo(x, y);
+    }
+    if (pen) ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // Scars: one short cut across the ridges per lost dispute
+  for (let d = 0; d < record.disputes_lost; d++) {
+    const th = ((codeword[(d * 11) % N] / 255) * Math.PI * 2) - Math.PI / 2, ra = r0 + gap * 2.5, rb = r0 + gap * Math.min(shown - 0.5, 7.5);
+    ctx.strokeStyle = css('--panel'); ctx.lineWidth = W * 0.02; ctx.beginPath(); ctx.moveTo(cx + Math.cos(th) * ra * 0.84, cy + Math.sin(th) * ra); ctx.lineTo(cx + Math.cos(th + 0.08) * rb * 0.84, cy + Math.sin(th + 0.08) * rb); ctx.stroke();
+  }
+}
+
+const $ = (id) => document.getElementById(id);
+const KULA = { delivered: 1, buyers: 1, badge: null, disputes_lost: 0 };
+let heroCode = null;
+const heroRecord = () => ({ delivered: +$('gDel').value, buyers: +$('gBuy').value, badge: +$('gDel').value >= 10 && +$('gBuy').value >= 5 && +$('gDis').value === 0 ? 'word_kept_99' : null, disputes_lost: +$('gDis').value });
+function heroDraw() { if (!heroCode) return; const r = heroRecord(); draw($('hero'), heroCode, r); $('gLbl').textContent = `${r.delivered} geliefert · ${r.buyers} Käufer · ${r.disputes_lost} Streitfälle verloren · ${RIDGES(r.delivered)} Rillen${r.badge ? ' · Badge' : ''}`; }
+for (const id of ['gDel', 'gBuy', 'gDis']) $(id).addEventListener('input', heroDraw);
+(async () => {
+  const f = await fingerprint('ag_516i0w6y2g0r2j0'); heroCode = f.codeword;
+  $('heroCap').textContent = `Kula Labs · seed ${hex(f.seed).slice(0, 16)}… · codeword ${hex(f.codeword).slice(0, 20)}…`;
+  heroDraw();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) { const t0 = performance.now(); (function growIn() { const g = Math.min(1, (performance.now() - t0) / 1600); draw($('hero'), heroCode, heroRecord(), g); if (g < 1) requestAnimationFrame(growIn); })(); }
+  $('vector').textContent = `Testvektor (Entwurf, SPEC §15)\norigin     ${ORIGIN}\nagent      ag_516i0w6y2g0r2j0\nfirst_leaf 5572acb95321518cca220d66a0d39ada3dc63b2f899b9eccc5e27039a4f36aae\nseed       ${hex(f.seed)}\ncodeword   ${hex(f.codeword)}\nn = 64, k = 10, GF(256) mit 0x11d, Generator aus α^0 … α^53, systematisch. Sektor j: ending = (s&31) mod Rillen, bulge = s>>5. Rillen = 5 + floor(delivered/3).`;
+})();
+
+async function compare() {
+  const a = await fingerprint($('idA').value.trim()), b = await fingerprint($('idB').value.trim());
+  const sampleB = { delivered: 22, buyers: 6, badge: 'word_kept_99', disputes_lost: 0 };
+  draw($('cA'), a.codeword, KULA); draw($('cB'), b.codeword, sampleB);
+  let d = 0; for (let i = 0; i < N; i++) if (a.codeword[i] !== b.codeword[i]) d++;
+  $('diff').textContent = d; $('law').textContent = d === 0 ? 'Derselbe Agent, derselbe Abdruck.' : d >= 55 ? `Satz hält: ${d} ≥ 55` : `Verletzt den Satz (${d} < 55)`;
+}
+$('idA').addEventListener('input', compare); $('idB').addEventListener('input', compare); compare();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { compare(); heroDraw(); });
+</script>
+
+</body>
+</html>
