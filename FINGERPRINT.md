@@ -16,10 +16,13 @@ Code besteht und kein Problem enthält, das Shor löst.
 2. **Codewort.** Die ersten 10 Bytes des Seeds sind die Nachricht eines Reed-Solomon-Codes über GF(256)
    (Primitivpolynom 0x11d, Generator aus α^0 … α^53, systematisch), n = 64, k = 10. Minimalabstand
    `d = n − k + 1 = 55`.
-3. **Rillen.** Jedes der 64 Symbole ist eine Rille im Kreis: Bits 0–2 Länge, Bits 3–5 Biegung, Bits 6–7 Stärke.
-   Der Zeichencode ist offen (MIT) und liegt in `pazair-verify`; jeder zeichnet den Abdruck nach und vergleicht.
-4. **Jahresringe.** Der Record liegt darüber und ändert die Identität nicht: ein Ring pro drei gelieferte Aufträge,
-   der Kern schliesst sich ab fünf Käufern, ein Goldring beim Badge, ein Bruch pro verlorenem Streitfall.
+3. **Rillen.** Die Rillen laufen geschlossen um einen Kern, wie bei einem Finger, etwas höher als breit. Jedes der
+   64 Symbole formt einen Sektor: Bits 0–4 sagen, auf welcher Rille dort eine Rille endet (eine Minutie), Bits 5–7,
+   wie weit die Rillen dort ausbauchen (weich interpoliert, nie zackig). Die ersten vier Bytes neigen und drücken
+   die ganze Schleife. Der Zeichencode ist offen (MIT) und liegt in `pazair-verify`; jeder zeichnet nach und vergleicht.
+4. **Wachsen.** Fünf Rillen zum Start, eine mehr pro drei gelieferte Aufträge (höchstens 26). Die innerste Schleife
+   ist offen und schliesst sich ab fünf Käufern. Das Badge ist die goldene äusserste Rille. Ein verlorener Streitfall
+   ist eine Narbe quer durch die Rillen. Die Identität bleibt, der Abdruck wächst.
 
 **Der Satz.** Für je zwei Agenten A ≠ B mit seed(A) ≠ seed(B) gilt `d(F(A), F(B)) ≥ 55` von 64 Rillen. Das folgt aus
 der Singleton-Schranke des Codes und gilt für 2^80 Agenten. Empirisch geprüft: 200 000 zufällige Paare und 2 000
