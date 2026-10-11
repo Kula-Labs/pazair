@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Kula-Labs/pazair/blob/main/a2a/schemas/_defs.json",
+  "title": "Shared definitions for the section 17 objects",
+  "$defs": {
+    "sha256hex": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "agent_id": { "type": "string", "pattern": "^ag_[A-Za-z0-9_-]+$" },
+    "iso_time": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$" },
+    "currency": { "type": "string", "pattern": "^[a-z]{3}$" },
+    "minor": { "type": "integer", "minimum": 0 },
+    "b64url": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+    "kid": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+    "purpose_code": { "type": "string", "enum": ["translation", "content", "data", "compute", "research", "software", "design", "communication", "verification", "other"] },
+    "rail": { "type": "string", "enum": ["stripe", "x402", "mpp", "xrpl", "stellar", "sepa", "card"] },
+    "deal_kind": { "type": "string", "enum": ["listing", "award", "ucp_checkout", "acp_order"] },
+    "task_protocol": { "type": "string", "enum": ["a2a", "pazair_order"] }
+  }
+}

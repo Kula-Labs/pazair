@@ -1,0 +1,498 @@
+{
+  "about": "SPEC section 17: one agent-to-agent transfer through the gate, start to evidence. Keys: the Ed25519 test key of word-pass-1.json signs as the issuer; runtime_key and principal_key are test-only pairs. An implementation is conformant when it reproduces every signature, hash and decision here.",
+  "issuer": "example",
+  "key": {
+    "kid": "a1171dbbeb4c3fc2",
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "yreuvsFyxyZbnuEv1ICMF0__gVhSDHTWgfdDW7nFVGU",
+    "d_test_only": "BsTsYSn3J2UC1-c4bNtHwG796uD3WFcGEhzQiFNsSOc"
+  },
+  "runtime_key": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+    "d_test_only": "l-w2OsfuETTHJWNQIUdVjfutKQyaBk5FLlH4WRWOKV0"
+  },
+  "principal_key": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+    "d_test_only": "V9ytQ2JBcrAdas3OjhZ_UCEzjCQit5cXd-LyrVu96lg"
+  },
+  "policy": {
+    "v": 1,
+    "kind": "gateway_policy",
+    "id": "gp_reference_1",
+    "issuer": "pazair",
+    "about": "Reference policy of SPEC section 17. A gateway loads it, parses A2A and MCP, and calls decide() before any tool that moves value runs. Change a value here and the policy hash in every decision and evidence object changes with it.",
+    "require": {
+      "runtime_proof": true,
+      "mandate_expiry": true,
+      "counterparty_allowlist": false,
+      "principal_signature": false,
+      "counterparty_identity": false,
+      "evidence_before_next": true
+    },
+    "tasks": {
+      "protocols": [
+        "a2a"
+      ]
+    },
+    "deals": {
+      "kinds": [
+        "listing",
+        "award",
+        "ucp_checkout",
+        "acp_order"
+      ]
+    },
+    "rails": {
+      "allowed": [
+        "stripe",
+        "x402",
+        "mpp",
+        "xrpl",
+        "stellar"
+      ],
+      "max_fee_ratio": 0.25
+    },
+    "rbac": [
+      {
+        "agent": "*",
+        "tools": [
+          "buy",
+          "accept_bid",
+          "create_project",
+          "message/send",
+          "tasks/send"
+        ],
+        "effect": "allow"
+      }
+    ],
+    "clock_skew_seconds": 120
+  },
+  "policy_hash": "3226622b5272d8fab08cc36ce7723c85090a30a3894307cf11aba2328d3474fd",
+  "card": {
+    "protocolVersion": "1.0",
+    "name": "Gamma",
+    "url": "https://gamma.example/a2a",
+    "skills": [
+      {
+        "id": "translate",
+        "name": "Translate"
+      }
+    ]
+  },
+  "identity": {
+    "v": 1,
+    "kind": "agent_identity",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "agent": "ag_gamma",
+    "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+    "principal_kind": "company",
+    "runtime": {
+      "kind": "key",
+      "alg": "Ed25519",
+      "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+      "kid": "32a4da838e4af766"
+    },
+    "card": {
+      "url": "https://gamma.example/.well-known/agent-card.json",
+      "sha256": "c9fa5d89438eba11d85da6bfb4525bcc77ba667e1bfc7f503f4bd5e4dadea2bb"
+    },
+    "pass": "https://example.test/v1/agents/ag_gamma/pass",
+    "issued_at": "2026-10-11T08:00:00.000Z",
+    "expires_at": "2027-10-11T08:00:00.000Z",
+    "sig": "gxmlcupc1xWZP4e_mzt4XmtfahHBbjJ6NNR-0pBqotGjtr3uAMvfdpyQlmb8ZqRruuifPuZdeC30rAUafIZ_Dg"
+  },
+  "identity_hash": "437d393a73d2411c0df94bc09b419854589fb6b333e722e4b51dfa3023b7d4f3",
+  "mandate": {
+    "v": 1,
+    "kind": "mandate",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "id": "md_17",
+    "agent": "ag_gamma",
+    "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+    "how": "card_saved",
+    "scope": {
+      "currency": "chf",
+      "max_order_minor": 1000,
+      "monthly_minor": 5000,
+      "counterparties": [
+        "ag_alpha",
+        "ag_beta"
+      ],
+      "purpose_codes": [
+        "translation"
+      ],
+      "step_up_above_minor": 800,
+      "unattended": true
+    },
+    "purpose": "translations for our shop",
+    "issued_at": "2026-10-11T08:05:00.000Z",
+    "expires_at": "2026-12-31T23:59:59.000Z",
+    "principal_sig": {
+      "kid": "a95eb5c653efe6e7",
+      "x": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+      "sig": "Zp02U2l2Vqh3RkIkuELYp9ZMQ3jHCU6ulR4qamc-TtEZSyE5LpKO-yMofO_OBO-5ChZj1HbgEVJzVe61B3x-BQ"
+    },
+    "sig": "OBiVzt4jzEZjXmMsYipvuTg-h4eHdHzJTTgzcKKme3qRLAbeYVPKPsBrEmsT6RvC9N1qaCfo9R6QPXC8Eae1Ag"
+  },
+  "mandate_hash": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+  "listing": {
+    "id": "ls_translate",
+    "seller": "ag_alpha",
+    "price": {
+      "amount_minor": 500,
+      "currency": "chf"
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "task_message": {
+    "role": "user",
+    "parts": [
+      {
+        "kind": "text",
+        "text": "Translate \"Grüezi mitenand\" into French."
+      }
+    ]
+  },
+  "runtime_proof_over": "{\"agent\":\"ag_gamma\",\"aud\":\"gw_example\",\"transfer\":\"tr_1\"}",
+  "request": {
+    "v": 1,
+    "kind": "transfer_request",
+    "transfer": "tr_1",
+    "at": "2026-10-11T09:00:00.000Z",
+    "tool": "buy",
+    "aud": "gw_example",
+    "human_present": false,
+    "identity": {
+      "v": 1,
+      "kind": "agent_identity",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_gamma",
+      "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+      "principal_kind": "company",
+      "runtime": {
+        "kind": "key",
+        "alg": "Ed25519",
+        "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+        "kid": "32a4da838e4af766"
+      },
+      "card": {
+        "url": "https://gamma.example/.well-known/agent-card.json",
+        "sha256": "c9fa5d89438eba11d85da6bfb4525bcc77ba667e1bfc7f503f4bd5e4dadea2bb"
+      },
+      "pass": "https://example.test/v1/agents/ag_gamma/pass",
+      "issued_at": "2026-10-11T08:00:00.000Z",
+      "expires_at": "2027-10-11T08:00:00.000Z",
+      "sig": "gxmlcupc1xWZP4e_mzt4XmtfahHBbjJ6NNR-0pBqotGjtr3uAMvfdpyQlmb8ZqRruuifPuZdeC30rAUafIZ_Dg"
+    },
+    "runtime_proof": {
+      "kind": "key",
+      "sig": "e7MtGLcjS86SR-1_UEnWdc2nscXMSkSEhjMVM90bbzEREeNoxOLsDCjnqMQA0wJJWZADT3Fk0F6OY6OUP63kCA"
+    },
+    "task": {
+      "protocol": "a2a",
+      "version": "1.0",
+      "task_id": "task_1",
+      "context_id": null,
+      "agreed_sha256": "9508696ff76dbbf577f9c2be441c82636aec702a5600dbc8c5b38c8e743314d5"
+    },
+    "deal": {
+      "kind": "listing",
+      "ref": "ls_translate",
+      "hash": "12db82b2e5d20fe865cec9e8041d97f90123eabb9cfebe3be8144e04e59fd2f4",
+      "seller": "ag_alpha",
+      "amount_minor": 500,
+      "currency": "chf",
+      "purpose_code": "translation",
+      "output_schema_sha256": "bfcba292825c11bcdc991c377e42f44e22ebb8a40db25e8e8b16204f08b7cf2a"
+    },
+    "mandate": {
+      "v": 1,
+      "kind": "mandate",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "id": "md_17",
+      "agent": "ag_gamma",
+      "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+      "how": "card_saved",
+      "scope": {
+        "currency": "chf",
+        "max_order_minor": 1000,
+        "monthly_minor": 5000,
+        "counterparties": [
+          "ag_alpha",
+          "ag_beta"
+        ],
+        "purpose_codes": [
+          "translation"
+        ],
+        "step_up_above_minor": 800,
+        "unattended": true
+      },
+      "purpose": "translations for our shop",
+      "issued_at": "2026-10-11T08:05:00.000Z",
+      "expires_at": "2026-12-31T23:59:59.000Z",
+      "principal_sig": {
+        "kid": "a95eb5c653efe6e7",
+        "x": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+        "sig": "Zp02U2l2Vqh3RkIkuELYp9ZMQ3jHCU6ulR4qamc-TtEZSyE5LpKO-yMofO_OBO-5ChZj1HbgEVJzVe61B3x-BQ"
+      },
+      "sig": "OBiVzt4jzEZjXmMsYipvuTg-h4eHdHzJTTgzcKKme3qRLAbeYVPKPsBrEmsT6RvC9N1qaCfo9R6QPXC8Eae1Ag"
+    },
+    "mandate_end": null,
+    "step_up": null,
+    "counterparty_identity": null,
+    "settlement": {
+      "rail": "stripe",
+      "amount_minor": 500,
+      "currency": "chf",
+      "fee_minor": 45
+    },
+    "history": [
+      {
+        "transfer": "tr_0",
+        "at": "2026-10-11T08:30:00.000Z",
+        "amount_minor": 300,
+        "currency": "chf",
+        "settlement_id": "pi_0",
+        "evidence": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  "decision": {
+    "v": 1,
+    "kind": "gate_decision",
+    "transfer": "tr_1",
+    "decision": "allow",
+    "reasons": [],
+    "answered": {
+      "identity": true,
+      "task": true,
+      "deal": true,
+      "mandate": true,
+      "settlement": "after_evidence"
+    },
+    "gaps": [
+      "counterparty_identity"
+    ],
+    "chain": "c77ebe64e59c07707a20499db742e82f93056837b84bf0adfc84d5c83d6ec1cb",
+    "policy": "3226622b5272d8fab08cc36ce7723c85090a30a3894307cf11aba2328d3474fd",
+    "decided_at": "2026-10-11T09:00:00.000Z"
+  },
+  "say": "Allowed: all four questions answered; the fifth comes with the evidence.",
+  "step_up": {
+    "v": 1,
+    "kind": "step_up",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "transfer": "tr_1",
+    "agent": "ag_gamma",
+    "mandate": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+    "amount_minor": 900,
+    "how": "passkey",
+    "iat": "2026-10-11T09:00:00.000Z",
+    "exp": "2026-10-11T09:05:00.000Z",
+    "sig": "YhREVPd5Lho0SnXFm4xGxEkiWwBu5Msdb8j6Uag9ztozQkBQh92VCHacx-VH5FqwXGMH5CzpORqgGXN9goGeCQ"
+  },
+  "receipt": {
+    "v": 1,
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_17",
+    "listing": "ls_translate",
+    "seller": "ag_alpha",
+    "buyer": "ag_gamma",
+    "amount_minor": 500,
+    "currency": "chf",
+    "delivered_at": "2026-10-11T09:00:04.000Z",
+    "delivery_sha256": "a692ec524c1a8223a9e1ffafd9ee88adb89e122fb8825b86825cbf78493fdb32",
+    "mandate": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+    "sig": "_T5D5F8OkfQreMt3CwijMSgx9lC1bTX6xG5SK_3NcihXpgJaZ2Hzr8Hqd01Srh4LtkQgVjUHpAq4_6Mq_o5QBw"
+  },
+  "evidence": {
+    "v": 1,
+    "kind": "evidence",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "id": "ev_1",
+    "transfer": "tr_1",
+    "identity": "437d393a73d2411c0df94bc09b419854589fb6b333e722e4b51dfa3023b7d4f3",
+    "agent": "ag_gamma",
+    "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+    "task": {
+      "protocol": "a2a",
+      "task_id": "task_1",
+      "agreed_sha256": "9508696ff76dbbf577f9c2be441c82636aec702a5600dbc8c5b38c8e743314d5"
+    },
+    "deal": {
+      "kind": "listing",
+      "ref": "ls_translate",
+      "hash": "12db82b2e5d20fe865cec9e8041d97f90123eabb9cfebe3be8144e04e59fd2f4"
+    },
+    "mandate": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+    "counterparty": {
+      "agent": "ag_alpha",
+      "identity": null
+    },
+    "price": {
+      "amount_minor": 500,
+      "currency": "chf"
+    },
+    "settlement": {
+      "rail": "stripe",
+      "id": "pi_17",
+      "amount_minor": 500,
+      "currency": "chf",
+      "fee_minor": 45,
+      "final": true,
+      "finalized_at": "2026-10-11T09:00:04.000Z"
+    },
+    "result": {
+      "status": "delivered",
+      "delivery_sha256": "a692ec524c1a8223a9e1ffafd9ee88adb89e122fb8825b86825cbf78493fdb32",
+      "receipt": "16258b24e1ab86c72b129353d1dc7d7ea7ac7d790a4046d958a9d248746234f1"
+    },
+    "gate": {
+      "policy": "3226622b5272d8fab08cc36ce7723c85090a30a3894307cf11aba2328d3474fd",
+      "decision": "allow",
+      "decided_at": "2026-10-11T09:00:00.000Z"
+    },
+    "issued_at": "2026-10-11T09:00:05.000Z",
+    "sig": "YsmltDVz3L0DFAUGA1w3pMOiXAo_8nobJz242uhERRl11gE3oJ8UVqnNq36YBy2d-Hi3zQwMGDObfLa3oQfnBw"
+  },
+  "evidence_hash": "3564926a522f9207be816dc6a903871e6c9080852a5519c164a7fe9e64b0179c",
+  "evidence_check": {
+    "valid": true,
+    "covers": [
+      "evidence signed",
+      "settlement final with an id",
+      "settled what was priced",
+      "result stated",
+      "identity, mandate and deal named by hash",
+      "names this identity",
+      "names this mandate",
+      "names this deal and counterparty",
+      "follows an allow of this gate",
+      "names this receipt"
+    ],
+    "reasons": []
+  },
+  "variants": {
+    "no_mandate": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_MISSING"
+      ],
+      "say": "Rejected: no mandate: no wallet without authority."
+    },
+    "no_identity": {
+      "decision": "reject",
+      "reasons": [
+        "IDENTITY_MISSING"
+      ],
+      "say": "Rejected: no signed agent identity."
+    },
+    "mandate_expired": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_EXPIRED"
+      ],
+      "say": "Rejected: the mandate has expired."
+    },
+    "counterparty_not_allowed": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_COUNTERPARTY_NOT_ALLOWED"
+      ],
+      "say": "Rejected: the seller is not on the mandate's counterparty allowlist."
+    },
+    "over_cap": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_OVER_ORDER_CAP",
+        "STEP_UP_AMOUNT"
+      ],
+      "say": "Rejected: the amount is over the cap per order; the amount is above the step-up band: the principal confirms this transfer individually."
+    },
+    "over_monthly_cap": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_OVER_MONTHLY_CAP"
+      ],
+      "say": "Rejected: the amount exceeds the monthly cap together with what was already settled."
+    },
+    "step_up": {
+      "decision": "step_up",
+      "reasons": [
+        "STEP_UP_AMOUNT"
+      ],
+      "say": "Step-up needed: the amount is above the step-up band: the principal confirms this transfer individually."
+    },
+    "step_up_confirmed": {
+      "decision": "allow",
+      "reasons": [],
+      "say": "Allowed: all four questions answered; the fifth comes with the evidence."
+    },
+    "fee_eats_call": {
+      "decision": "reject",
+      "reasons": [
+        "FEE_EATS_CALL"
+      ],
+      "say": "Rejected: the fee eats the call: a defect, not a price."
+    },
+    "mcp_as_task": {
+      "decision": "reject",
+      "reasons": [
+        "TASK_PROTOCOL_NOT_ALLOWED"
+      ],
+      "say": "Rejected: the task protocol is not allowed (MCP carries tools, never payment)."
+    },
+    "free_text_deal": {
+      "decision": "reject",
+      "reasons": [
+        "DEAL_NO_TERMS"
+      ],
+      "say": "Rejected: the deal has no machine-readable terms (output_schema or terms)."
+    },
+    "prior_without_evidence": {
+      "decision": "reject",
+      "reasons": [
+        "EVIDENCE_MISSING_PRIOR"
+      ],
+      "say": "Rejected: an earlier transfer on this chain was settled without an evidence object: an incident, no second payment."
+    },
+    "wrong_runtime_key": {
+      "decision": "reject",
+      "reasons": [
+        "RUNTIME_MISMATCH"
+      ],
+      "say": "Rejected: the runtime proof does not match the identity's runtime."
+    },
+    "tool_not_allowed": {
+      "decision": "reject",
+      "reasons": [
+        "RBAC_DENIED"
+      ],
+      "say": "Rejected: no rule allows this agent this tool."
+    },
+    "forged_mandate": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_SIGNATURE"
+      ],
+      "say": "Rejected: the mandate's signature does not verify."
+    }
+  }
+}

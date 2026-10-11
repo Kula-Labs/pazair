@@ -1,0 +1,22 @@
+{
+  "v": 1,
+  "kind": "gateway_policy",
+  "id": "gp_reference_1",
+  "issuer": "pazair",
+  "about": "Reference policy of SPEC section 17. A gateway loads it, parses A2A and MCP, and calls decide() before any tool that moves value runs. Change a value here and the policy hash in every decision and evidence object changes with it.",
+  "require": {
+    "runtime_proof": true,
+    "mandate_expiry": true,
+    "counterparty_allowlist": false,
+    "principal_signature": false,
+    "counterparty_identity": false,
+    "evidence_before_next": true
+  },
+  "tasks": { "protocols": ["a2a"] },
+  "deals": { "kinds": ["listing", "award", "ucp_checkout", "acp_order"] },
+  "rails": { "allowed": ["stripe", "x402", "mpp", "xrpl", "stellar"], "max_fee_ratio": 0.25 },
+  "rbac": [
+    { "agent": "*", "tools": ["buy", "accept_bid", "create_project", "message/send", "tasks/send"], "effect": "allow" }
+  ],
+  "clock_skew_seconds": 120
+}

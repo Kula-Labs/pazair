@@ -331,6 +331,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 3.2 | 2026-10-08 | Mandate: the principal's limits, signed; receipts name the mandate they were bought within |
 | 1.0 + 15 | 2026-10-10 | Fingerprint: a print per agent from a Reed-Solomon codeword over the seed; any two differ in at least 55 of 64 symbols |
 | 1.0 + 16 | 2026-10-10 | Second signature: `pq_sig` (ML-DSA-65) on passes, receipts and holder proofs, `pq_keys` in the keys document |
+| 1.0 + 17 | 2026-10-11 | The gate: `agent_identity`, mandate expiry, counterparties, purpose codes and step-up, `gateway_policy`, `evidence`; five questions before a transfer, one evidence object after |
 
 ## 14. Remember: the chain of daily roots
 
@@ -414,3 +415,93 @@ the way Remember (section 14) already signs its links.
 Reference: `verifyPqSignature`, and the `ml_dsa_65` field of `verifyPass`, `verifyReceipt` and `checkWordPass` in
 `pazair-verify` (checked when `@noble/post-quantum` is installed next to it); `importPqKey` and
 `withSecondSignature` in `word-pass-issuer`.
+
+## 17. The gate: five questions, one transfer
+
+Sections 3 to 4 say what happened. This section says what must be in hand *before* an agent pays another agent,
+and what one object says afterwards. A transfer is valid only when five questions are answered with checkable
+objects; a missing answer is a rejection with a reason, never a guess. Schemas, a reference policy, every reason
+and a reference implementation (`decide`, `verifyEvidence`) are in [`a2a/`](./a2a); the test vector is
+[`vectors/a2a-transfer-1.json`](./vectors/a2a-transfer-1.json). All objects follow section 1 (canonical JSON,
+Ed25519 over the object without `sig`, `kid`); a hash of an object is `sha256hex(canonical(object))`, `sig` included.
+
+| # | Question | Object | Named by |
+|---|---|---|---|
+| 1 | Who is the agent, and whom does it belong to? | `agent_identity` (17.1) | its hash |
+| 2 | Which task was agreed? | `task`: `protocol`, `task_id`, `agreed_sha256` | the hash of the agreed message |
+| 3 | What exactly is traded, at which price? | `deal`: a listing, an award (3.3), a UCP checkout or an ACP order | `hash`, plus `output_schema_sha256` or `terms_sha256` |
+| 4 | May this agent spend this amount? | `mandate` (3.2 with 17.2), `step_up` | the mandate's hash |
+| 5 | Did the value arrive, and is there a receipt? | `evidence` (17.4) | the settlement's own id |
+
+### 17.1 Agent identity
+
+```json
+{ "v": 1, "kind": "agent_identity", "issuer": "pazair", "kid": "3f1c…", "agent": "ag_…",
+  "principal": "<sha256hex, as in the mandate>", "principal_kind": "company",
+  "runtime": { "kind": "spiffe", "id": "spiffe://…" }  |  { "kind": "key", "alg": "Ed25519", "x": "…", "kid": "…" },
+  "card": { "url": "https://…/.well-known/agent-card.json", "sha256": "<sha256hex(canonical(card))>" },
+  "pass": "<pass URL or null>", "issued_at": "…", "expires_at": "…", "sig": "…" }
+```
+
+Signed by the issuer that onboarded the agent and saw its principal. The agent card (A2A) carries it under
+`capabilities.extensions[]` with `uri` `…/SPEC.md#17-the-gate-five-questions-one-transfer` and
+`params: { "identity": <object> }`. A changed card is a new identity. At run time the agent proves it is the one
+named: with SPIFFE, the gateway compares the mTLS peer's SPIFFE ID with `runtime.id`; with a key, the agent signs
+`canonical({ transfer, agent, aud })` per request (`runtime_proof.sig`). An identity without a principal, or
+without an expiry, is rejected.
+
+### 17.2 Mandate, continued
+
+A mandate of section 3.2 gains, fields only added: `expires_at` (required by a gate), `scope.counterparties`
+(agent ids the agent may pay; `["*"]` is the principal's explicit choice to allow any), `scope.purpose_codes`
+(codes, matched against the deal's `purpose_code`; the free-text `purpose` is for people and is never evaluated),
+`scope.step_up_above_minor` (above it every transfer needs a `step_up`), `scope.unattended` (false: every transfer
+is a step-up unless a human is present), and optionally `principal_sig`: the principal's own Ed25519 signature
+over the mandate without `sig` and `principal_sig`, which the issuer's `sig` then covers. `verifyMandate` keeps
+verifying these mandates.
+
+A step-up is a signed confirmation for exactly one transfer, valid for minutes:
+`{ "v": 1, "kind": "step_up", "issuer": "…", "kid": "…", "transfer": "tr_…", "agent": "ag_…",
+"mandate": "<hash>", "amount_minor": 900, "how": "passkey", "iat": "…", "exp": "…", "sig": "…" }`.
+It counts only for that transfer, at least that amount, before `exp`.
+
+### 17.3 The gate
+
+A gateway that parses A2A and MCP holds, for one transfer, a `transfer_request`: the tool name, the identity and
+its runtime proof, the task, the deal, the mandate (and its end, if any), a step-up if given, the counterparty's
+identity if it has one, the planned settlement (`rail`, `amount_minor`, `currency`, `fee_minor`) and its own
+ledger of this chain (`history`: every settled transfer with its evidence hash or `null`). A `gateway_policy`
+says what is required, which task protocols, deal kinds and rails are allowed, the fee ratio above which a fee
+is a defect, and RBAC rules on agent id and tool name, never on an address; no matching rule is deny.
+
+`decide(request, policy)` answers `{ decision, reasons, answered, gaps, chain, policy, decided_at }`:
+`allow`, `step_up` or `reject`; every reason is a code of [`rejection-reasons.json`](./a2a/policy/rejection-reasons.json)
+with its question, layer and one sentence in German and English; `answered` says per question whether it held,
+the fifth always `after_evidence`; `gaps` names the layers the counterparty does not speak
+(`counterparty_identity`, `task_not_a2a`, `principal_signature`): a missing layer is marked, never silent;
+`chain` is `sha256hex("<mandate hash>:<seller>")`; `policy` the hash of the policy that decided.
+A settled transfer on the chain without an evidence object rejects the next one (`EVIDENCE_MISSING_PRIOR`).
+MCP is a tool protocol: as the task protocol it is rejected.
+
+### 17.4 Evidence
+
+One object per transfer, issued once the value arrived:
+
+```json
+{ "v": 1, "kind": "evidence", "issuer": "pazair", "kid": "…", "id": "ev_…", "transfer": "tr_…",
+  "identity": "<hash>", "agent": "ag_…", "principal": "<hash>",
+  "task": { "protocol": "a2a", "task_id": "…", "agreed_sha256": "…" },
+  "deal": { "kind": "listing", "ref": "ls_…", "hash": "…" }, "mandate": "<hash>",
+  "counterparty": { "agent": "ag_…", "identity": "<hash or null>" },
+  "price": { "amount_minor": 500, "currency": "chf" },
+  "settlement": { "rail": "stripe", "id": "pi_…", "amount_minor": 500, "currency": "chf", "fee_minor": 45, "final": true, "finalized_at": "…" },
+  "result": { "status": "delivered", "delivery_sha256": "…", "receipt": "<receipt hash>" },
+  "gate": { "policy": "<policy hash>", "decision": "allow", "decided_at": "…" }, "issued_at": "…", "sig": "…" }
+```
+
+`verifyEvidence` checks the signature, that the settlement is final with the rail's own id, that what was settled
+is the deal's price, that a result is stated, and, for every object the verifier holds, that the evidence names
+exactly it (identity, mandate, deal and counterparty, the gate's allow, the receipt). An executed payment without
+this object is an incident, not a feature. What evidence does not claim: that the purchase was wise, only that
+every question had its answer and the value arrived.
+

@@ -1,0 +1,15 @@
+{
+  "name": "pazair-a2a",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The gate and the evidence of an agent-to-agent transfer (Word Pass SPEC section 17): five questions, answered with signed objects before anything moves, one evidence object after. Zero dependencies.",
+  "type": "module",
+  "main": "./src/index.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "vector": "node scripts/make-vector.mjs"
+  },
+  "author": "Kula Labs (https://kulalabs.ch)",
+  "license": "MIT"
+}

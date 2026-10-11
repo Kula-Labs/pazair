@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Kula-Labs/pazair/blob/main/a2a/schemas/evidence.schema.json",
+  "title": "evidence (SPEC 17.4): one object per transfer that answers all five questions",
+  "description": "Issued after the value arrived. Law 2: a settled payment without this object is an incident, not a feature; the gate refuses the next transfer on the chain until it exists. Everything it names is a hash of a signed object that anyone can fetch and check: identity, mandate, deal, receipt, policy.",
+  "type": "object",
+  "required": ["v", "kind", "issuer", "kid", "id", "transfer", "identity", "agent", "principal", "task", "deal", "mandate", "counterparty", "price", "settlement", "result", "gate", "issued_at", "sig"],
+  "properties": {
+    "v": { "const": 1 },
+    "kind": { "const": "evidence" },
+    "issuer": { "type": "string", "minLength": 1 },
+    "kid": { "$ref": "_defs.json#/$defs/kid" },
+    "id": { "type": "string", "pattern": "^ev_" },
+    "transfer": { "type": "string", "pattern": "^tr_" },
+    "identity": { "$ref": "_defs.json#/$defs/sha256hex" },
+    "agent": { "$ref": "_defs.json#/$defs/agent_id" },
+    "principal": { "$ref": "_defs.json#/$defs/sha256hex" },
+    "task": { "type": "object", "required": ["protocol", "task_id", "agreed_sha256"], "properties": { "protocol": { "$ref": "_defs.json#/$defs/task_protocol" }, "task_id": { "type": "string" }, "agreed_sha256": { "$ref": "_defs.json#/$defs/sha256hex" } } },
+    "deal": { "type": "object", "required": ["kind", "ref", "hash"], "properties": { "kind": { "$ref": "_defs.json#/$defs/deal_kind" }, "ref": { "type": "string" }, "hash": { "$ref": "_defs.json#/$defs/sha256hex" } } },
+    "mandate": { "$ref": "_defs.json#/$defs/sha256hex" },
+    "counterparty": { "type": "object", "required": ["agent", "identity"], "properties": { "agent": { "$ref": "_defs.json#/$defs/agent_id" }, "identity": { "oneOf": [{ "$ref": "_defs.json#/$defs/sha256hex" }, { "type": "null" }] } } },
+    "price": { "type": "object", "required": ["amount_minor", "currency"], "properties": { "amount_minor": { "$ref": "_defs.json#/$defs/minor" }, "currency": { "$ref": "_defs.json#/$defs/currency" } } },
+    "settlement": {
+      "type": "object", "required": ["rail", "id", "amount_minor", "currency", "fee_minor", "final", "finalized_at"],
+      "properties": {
+        "rail": { "$ref": "_defs.json#/$defs/rail" },
+        "id": { "type": "string", "minLength": 1, "description": "The rail's own id: Stripe charge or payment intent, x402 or MPP payment id, XRPL or Stellar transaction hash." },
+        "amount_minor": { "$ref": "_defs.json#/$defs/minor" }, "currency": { "$ref": "_defs.json#/$defs/currency" }, "fee_minor": { "$ref": "_defs.json#/$defs/minor" },
+        "final": { "type": "boolean", "description": "true only when the rail cannot reverse it by itself. A card capture is final for this object; a chargeback later is a dispute object, never a silent edit." },
+        "finalized_at": { "$ref": "_defs.json#/$defs/iso_time" }
+      }
+    },
+    "result": { "type": "object", "required": ["status", "delivery_sha256", "receipt"], "properties": { "status": { "type": "string", "enum": ["delivered", "not_delivered", "refunded", "disputed"] }, "delivery_sha256": { "oneOf": [{ "$ref": "_defs.json#/$defs/sha256hex" }, { "type": "null" }] }, "receipt": { "oneOf": [{ "$ref": "_defs.json#/$defs/sha256hex" }, { "type": "null" }], "description": "sha256hex(canonical(receipt)) of the SPEC 3 receipt, when one exists." } } },
+    "gate": { "type": "object", "required": ["policy", "decision", "decided_at"], "properties": { "policy": { "$ref": "_defs.json#/$defs/sha256hex" }, "decision": { "const": "allow" }, "decided_at": { "$ref": "_defs.json#/$defs/iso_time" } } },
+    "issued_at": { "$ref": "_defs.json#/$defs/iso_time" },
+    "sig": { "$ref": "_defs.json#/$defs/b64url" },
+    "pq_sig": { "$ref": "_defs.json#/$defs/b64url" },
+    "pq_kid": { "$ref": "_defs.json#/$defs/kid" }
+  }
+}

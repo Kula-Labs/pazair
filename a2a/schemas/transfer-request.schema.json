@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Kula-Labs/pazair/blob/main/a2a/schemas/transfer-request.schema.json",
+  "title": "transfer_request (SPEC 17.3): what a gateway holds when it decides one transfer, before anything moves",
+  "description": "The gateway assembles it from the parsed A2A or MCP call, the agent's identity, the mandate it holds for the agent, the deal the call names, the planned settlement and its own ledger of this chain. decide() answers with a gate_decision.",
+  "type": "object",
+  "required": ["v", "kind", "transfer", "at", "tool", "identity", "runtime_proof", "task", "deal", "mandate", "settlement", "history"],
+  "properties": {
+    "v": { "const": 1 },
+    "kind": { "const": "transfer_request" },
+    "transfer": { "type": "string", "pattern": "^tr_" },
+    "at": { "$ref": "_defs.json#/$defs/iso_time" },
+    "tool": { "type": "string", "minLength": 1, "description": "The A2A method or MCP tool that would move value; RBAC is on identity and this name." },
+    "aud": { "type": ["string", "null"], "description": "The gateway's own id; a key runtime proof is bound to it." },
+    "human_present": { "type": "boolean" },
+    "identity": { "$ref": "agent-identity.schema.json" },
+    "runtime_proof": {
+      "oneOf": [
+        { "type": "object", "required": ["kind", "peer_id"], "additionalProperties": false, "properties": { "kind": { "const": "spiffe" }, "peer_id": { "type": "string" } } },
+        { "type": "object", "required": ["kind", "sig"], "additionalProperties": false, "properties": { "kind": { "const": "key" }, "sig": { "$ref": "_defs.json#/$defs/b64url" } } }
+      ]
+    },
+    "task": {
+      "type": "object", "required": ["protocol", "task_id", "agreed_sha256"],
+      "properties": {
+        "protocol": { "$ref": "_defs.json#/$defs/task_protocol" },
+        "version": { "type": "string" },
+        "task_id": { "type": "string", "minLength": 1 },
+        "context_id": { "type": ["string", "null"] },
+        "agreed_sha256": { "$ref": "_defs.json#/$defs/sha256hex", "description": "sha256hex of the agreed task message (A2A Message) or, for a PazAIr order, of the order input as sent." }
+      }
+    },
+    "deal": {
+      "type": "object", "required": ["kind", "ref", "hash", "seller", "amount_minor", "currency", "purpose_code"],
+      "properties": {
+        "kind": { "$ref": "_defs.json#/$defs/deal_kind" },
+        "ref": { "type": "string", "minLength": 1, "description": "ls_… for a listing, the award hash for an award, the checkout or order id for UCP and ACP." },
+        "hash": { "$ref": "_defs.json#/$defs/sha256hex", "description": "sha256hex(canonical(deal object as served)): the listing, the signed award, the UCP checkout or ACP order." },
+        "seller": { "$ref": "_defs.json#/$defs/agent_id" },
+        "amount_minor": { "$ref": "_defs.json#/$defs/minor" },
+        "currency": { "$ref": "_defs.json#/$defs/currency" },
+        "purpose_code": { "$ref": "_defs.json#/$defs/purpose_code" },
+        "output_schema_sha256": { "$ref": "_defs.json#/$defs/sha256hex", "description": "The delivery contract (SPEC: output_schema), hashed. One of output_schema_sha256 or terms_sha256 is required: no free text as a contract." },
+        "terms_sha256": { "$ref": "_defs.json#/$defs/sha256hex" }
+      }
+    },
+    "mandate": { "$ref": "mandate.schema.json" },
+    "mandate_end": { "type": ["object", "null"] },
+    "step_up": { "type": ["object", "null"], "description": "A step_up object (SPEC 17.2) when the mandate asks for one." },
+    "counterparty_identity": { "oneOf": [{ "$ref": "agent-identity.schema.json" }, { "type": "null" }] },
+    "settlement": {
+      "type": "object", "required": ["rail", "amount_minor", "currency", "fee_minor"],
+      "properties": {
+        "rail": { "$ref": "_defs.json#/$defs/rail" },
+        "amount_minor": { "$ref": "_defs.json#/$defs/minor" },
+        "currency": { "$ref": "_defs.json#/$defs/currency" },
+        "fee_minor": { "$ref": "_defs.json#/$defs/minor", "description": "The rail's fee for this transfer. Above max_fee_ratio of the amount it is a defect (FEE_EATS_CALL)." }
+      }
+    },
+    "history": {
+      "type": "array",
+      "description": "The gateway's ledger for this chain (mandate × counterparty) and, for the monthly cap, every settled transfer of this mandate. A settled entry without evidence blocks the next transfer.",
+      "items": {
+        "type": "object", "required": ["transfer", "at", "amount_minor", "currency", "settlement_id", "evidence"],
+        "properties": {
+          "transfer": { "type": "string" }, "at": { "$ref": "_defs.json#/$defs/iso_time" },
+          "amount_minor": { "$ref": "_defs.json#/$defs/minor" }, "currency": { "$ref": "_defs.json#/$defs/currency" },
+          "settlement_id": { "type": ["string", "null"] }, "evidence": { "oneOf": [{ "$ref": "_defs.json#/$defs/sha256hex" }, { "type": "null" }] }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+#!/usr/bin/env node
+// Writes ../../vectors/a2a-transfer-1.json: one transfer through the gate, start to evidence, with the test key of
+// vectors/word-pass-1.json. Deterministic: Ed25519 signatures are deterministic, every time is fixed.
+import { readFileSync, writeFileSync } from 'node:fs';
+import { importKey, signReceipt } from '../../issuer/src/index.js';
+import { canonical, sha256hex } from '../../verify/src/index.js';
+import { decide, verifyEvidence, hashOf, say } from '../src/gate.js';
+import { signAgentIdentity, signMandate17, signStepUp, signEvidence } from '../src/issue.js';
+
+const W = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
+const policy = JSON.parse(readFileSync(new URL('../policy/gateway-policy.json', import.meta.url), 'utf8'));
+const issuer = await importKey({ kty: 'OKP', crv: 'Ed25519', x: W.key.x, d: W.key.d_test_only });
+const keys = [{ kid: issuer.kid, kty: 'OKP', crv: 'Ed25519', x: issuer.x }];
+
+// Fixed Ed25519 test pairs (generated once, kept here; test only).
+const RUNTIME = { kty: 'OKP', crv: 'Ed25519', x: 'MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA', d: 'l-w2OsfuETTHJWNQIUdVjfutKQyaBk5FLlH4WRWOKV0' };
+const PRINCIPAL = { kty: 'OKP', crv: 'Ed25519', x: '1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME', d: 'V9ytQ2JBcrAdas3OjhZ_UCEzjCQit5cXd-LyrVu96lg' };
+const runtime = await importKey(RUNTIME);
+const principalKey = await importKey(PRINCIPAL);
+
+const T = { identity: '2026-10-11T08:00:00.000Z', mandate: '2026-10-11T08:05:00.000Z', at: '2026-10-11T09:00:00.000Z', settled: '2026-10-11T09:00:04.000Z', evidence: '2026-10-11T09:00:05.000Z' };
+const card = { protocolVersion: '1.0', name: 'Gamma', url: 'https://gamma.example/a2a', skills: [{ id: 'translate', name: 'Translate' }] };
+const identity = await signAgentIdentity(issuer, 'example', {
+  agent: 'ag_gamma', principal: 'principal-ref-7', principal_kind: 'company',
+  runtime: { kind: 'key', alg: 'Ed25519', x: runtime.x, kid: runtime.kid },
+  card: { url: 'https://gamma.example/.well-known/agent-card.json', card }, pass: 'https://example.test/v1/agents/ag_gamma/pass',
+  issued_at: T.identity, expires_at: '2027-10-11T08:00:00.000Z',
+});
+const mandate = await signMandate17(issuer, 'example', {
+  id: 'md_17', agent: 'ag_gamma', principal: identity.principal, currency: 'chf', max_order_minor: 1000, monthly_minor: 5000,
+  counterparties: ['ag_alpha', 'ag_beta'], purpose_codes: ['translation'], step_up_above_minor: 800, unattended: true, how: 'card_saved',
+  purpose: 'translations for our shop', issued_at: T.mandate, expires_at: '2026-12-31T23:59:59.000Z',
+}, { principalKey });
+
+const listing = { id: 'ls_translate', seller: 'ag_alpha', price: { amount_minor: 500, currency: 'chf' }, output_schema: { type: 'object', required: ['text'] } };
+const deal = { kind: 'listing', ref: listing.id, hash: await hashOf(listing), seller: 'ag_alpha', amount_minor: 500, currency: 'chf', purpose_code: 'translation', output_schema_sha256: await hashOf(listing.output_schema) };
+const taskMessage = { role: 'user', parts: [{ kind: 'text', text: 'Translate "Grüezi mitenand" into French.' }] };
+const task = { protocol: 'a2a', version: '1.0', task_id: 'task_1', context_id: null, agreed_sha256: await hashOf(taskMessage) };
+const transfer = 'tr_1', aud = 'gw_example';
+const runtimeProof = { kind: 'key', sig: (await runtime.sign({ transfer, agent: 'ag_gamma', aud })).sig };
+const request = {
+  v: 1, kind: 'transfer_request', transfer, at: T.at, tool: 'buy', aud, human_present: false,
+  identity, runtime_proof: runtimeProof, task, deal, mandate, mandate_end: null, step_up: null, counterparty_identity: null,
+  settlement: { rail: 'stripe', amount_minor: 500, currency: 'chf', fee_minor: 45 },
+  history: [{ transfer: 'tr_0', at: '2026-10-11T08:30:00.000Z', amount_minor: 300, currency: 'chf', settlement_id: 'pi_0', evidence: 'a'.repeat(64) }],
+};
+const decision = await decide(request, policy, { keys });
+
+const delivery = { text: 'Bonjour à tous' };
+const receipt = await signReceipt(issuer, 'example', { order: 'or_17', listing: listing.id, seller: 'ag_alpha', buyer: 'ag_gamma', amount_minor: 500, currency: 'chf', delivered_at: T.settled, delivery, mandate });
+const evidence = await signEvidence(issuer, 'example', {
+  id: 'ev_1', transfer, identity, agent: 'ag_gamma', principal: identity.principal, task, deal, mandate,
+  counterparty: { agent: 'ag_alpha', identity: null }, price: { amount_minor: 500, currency: 'chf' },
+  settlement: { rail: 'stripe', id: 'pi_17', amount_minor: 500, currency: 'chf', fee_minor: 45, final: true, finalized_at: T.settled },
+  result: { status: 'delivered', delivery_sha256: receipt.delivery_sha256, receipt }, gate: { policy: decision.policy, decision: decision.decision, decided_at: decision.decided_at },
+  issued_at: T.evidence,
+});
+const evidenceCheck = await verifyEvidence(evidence, { keys, identity, mandate, deal, decision, receipt });
+
+// Variants: the same request, one thing wrong each. The gate names it.
+const variants = {};
+const v = async (name, patch) => { const r = patch(structuredClone(request)); const d = await decide(r, policy, { keys }); variants[name] = { decision: d.decision, reasons: d.reasons, say: say(d) }; };
+await v('no_mandate', (r) => ({ ...r, mandate: null }));
+await v('no_identity', (r) => ({ ...r, identity: null }));
+await v('mandate_expired', (r) => ({ ...r, at: '2027-01-02T00:00:00.000Z' }));
+await v('counterparty_not_allowed', (r) => ({ ...r, deal: { ...r.deal, seller: 'ag_delta' } }));
+await v('over_cap', (r) => ({ ...r, deal: { ...r.deal, amount_minor: 1200 }, settlement: { ...r.settlement, amount_minor: 1200 } }));
+await v('over_monthly_cap', (r) => ({ ...r, history: [{ transfer: 'tr_0', at: '2026-10-02T08:30:00.000Z', amount_minor: 4600, currency: 'chf', settlement_id: 'pi_0', evidence: 'a'.repeat(64) }] }));
+await v('step_up', (r) => ({ ...r, deal: { ...r.deal, amount_minor: 900 }, settlement: { ...r.settlement, amount_minor: 900 } }));
+const stepUp = await signStepUp(issuer, 'example', { transfer, agent: 'ag_gamma', mandate, amount_minor: 900 }, { now: new Date(T.at) });
+await v('step_up_confirmed', (r) => ({ ...r, deal: { ...r.deal, amount_minor: 900 }, settlement: { ...r.settlement, amount_minor: 900 }, step_up: stepUp }));
+await v('fee_eats_call', (r) => ({ ...r, settlement: { ...r.settlement, fee_minor: 200 } }));
+await v('mcp_as_task', (r) => ({ ...r, task: { ...r.task, protocol: 'pazair_order' } }));
+await v('free_text_deal', (r) => { const d = { ...r.deal }; delete d.output_schema_sha256; return { ...r, deal: d }; });
+await v('prior_without_evidence', (r) => ({ ...r, history: [{ transfer: 'tr_0', at: '2026-10-11T08:30:00.000Z', amount_minor: 300, currency: 'chf', settlement_id: 'pi_0', evidence: null }] }));
+await v('wrong_runtime_key', (r) => ({ ...r, runtime_proof: { kind: 'key', sig: runtimeProof.sig.slice(0, -4) + 'AAAA' } }));
+await v('tool_not_allowed', (r) => ({ ...r, tool: 'export_my_data' }));
+await v('forged_mandate', (r) => ({ ...r, mandate: { ...r.mandate, scope: { ...r.mandate.scope, max_order_minor: 100000 } } }));
+
+const out = {
+  about: 'SPEC section 17: one agent-to-agent transfer through the gate, start to evidence. Keys: the Ed25519 test key of word-pass-1.json signs as the issuer; runtime_key and principal_key are test-only pairs. An implementation is conformant when it reproduces every signature, hash and decision here.',
+  issuer: 'example', key: W.key, runtime_key: { ...RUNTIME, d_test_only: RUNTIME.d, d: undefined }, principal_key: { ...PRINCIPAL, d_test_only: PRINCIPAL.d, d: undefined },
+  policy, policy_hash: decision.policy,
+  card, identity, identity_hash: await hashOf(identity), mandate, mandate_hash: await hashOf(mandate),
+  listing, task_message: taskMessage, runtime_proof_over: canonical({ transfer, agent: 'ag_gamma', aud }),
+  request, decision, say: say(decision), step_up: stepUp, receipt, evidence, evidence_hash: await hashOf(evidence), evidence_check: evidenceCheck, variants,
+};
+const clean = JSON.parse(JSON.stringify(out));
+writeFileSync(new URL('../../vectors/a2a-transfer-1.json', import.meta.url), JSON.stringify(clean, null, 2) + '\n');
+console.log(`decision: ${decision.decision} ${JSON.stringify(decision.reasons)}; evidence ${evidenceCheck.valid}; ${Object.keys(variants).length} variants`);
+for (const [k, x] of Object.entries(variants)) console.log(`  ${k}: ${x.decision} ${x.reasons.join(',')}`);

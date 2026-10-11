@@ -25,6 +25,16 @@ jobs:
       - run: npm install   # dev only: @noble/post-quantum, so the second signature (section 16) is tested; the published package has no dependencies
       - run: npm test
       - run: rm -rf node_modules && npm test   # and without it: the twice-signing test is skipped, everything else holds
+  a2a:
+    runs-on: ubuntu-latest
+    strategy: { matrix: { node: [20, 22, 24] } }
+    defaults: { run: { working-directory: a2a } }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: { node-version: '${{ matrix.node }}' }
+      - run: npm test   # no dependencies; the gate, the evidence object and the vector of SPEC 17
+      - run: node scripts/make-vector.mjs && git diff --exit-code ../vectors/a2a-transfer-1.json   # the vector reproduces byte for byte
   python:
     runs-on: ubuntu-latest
     strategy: { matrix: { python: ['3.9', '3.13'] } }
