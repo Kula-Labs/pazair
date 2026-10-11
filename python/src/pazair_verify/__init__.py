@@ -30,7 +30,8 @@ Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 def _num(v: float) -> str:
     # As JavaScript's JSON.stringify writes numbers: 1.0 -> 1, shortest round-trip otherwise.
     if v != v or v in (float("inf"), float("-inf")):
-        return "null"
+        # JSON.stringify writes them as null, so a signed null could be read back as a number: never canonical.
+        raise ValueError("canonical: number out of range")
     if v == 0:
         return "0"
     sign, digits, exp = Decimal(repr(abs(v))).normalize().as_tuple()
@@ -56,7 +57,12 @@ def canonical(v: Any) -> str:
         return json.dumps(v)
     if isinstance(v, (int, float)):
         # JSON.parse reads every number as a double: integers beyond 2^53 are written as JavaScript would.
-        return _num(float(v)) if isinstance(v, float) or abs(v) > 2**53 else str(v)
+        if isinstance(v, float) or abs(v) > 2**53:
+            try:
+                return _num(float(v))
+            except OverflowError:
+                raise ValueError("canonical: number out of range")
+        return str(v)
     return json.dumps(v, ensure_ascii=False)
 
 
@@ -114,6 +120,8 @@ def verify_receipt_chain(top: dict, receipts: list[dict], keys: list[dict], max_
             return None
         if not isinstance(p["inputs"], list):
             return f"{p['order']}: inputs"
+        if len(set(map(str, p["inputs"]))) != len(p["inputs"]):
+            return f"{p['order']}: an input is named twice"
         if p["inputs"] and d >= max_depth:
             return f"{p['order']}: deeper than {max_depth}"
         for h in p["inputs"]:
@@ -477,7 +485,7 @@ def check_word_pass(url: str, fetch: Fetch = _get_json, proof: Any = None, nonce
         return none(f"No Word Pass could be read at {url}.")
     try:
         return _check_doc(url, u, doc, fetch, proof, nonce, fetch_text, aud)
-    except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+    except (AttributeError, KeyError, TypeError, ValueError, IndexError, OverflowError, RecursionError):
         return none(f"The document at {url} is not a valid Word Pass.")
 
 

@@ -14,7 +14,9 @@ const ALG = { name: 'Ed25519' };
 
 export function canonical(v) {
   if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
-  if (v && typeof v === 'object') return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+  // A key whose value is undefined disappears when the document is sent as JSON: it is left out of the signed bytes too.
+  if (v && typeof v === 'object') return `{${Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+  if (typeof v === 'number' && !Number.isFinite(v)) throw new TypeError('canonical: number out of range');
   return JSON.stringify(v);
 }
 
