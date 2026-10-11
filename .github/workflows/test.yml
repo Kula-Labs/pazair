@@ -34,7 +34,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version: '${{ matrix.node }}' }
       - run: npm test   # no dependencies; the gate, the evidence object and the vector of SPEC 17
-      - run: node scripts/make-vector.mjs && git diff --exit-code ../vectors/a2a-transfer-1.json   # the vector reproduces byte for byte
+      - run: node scripts/build-reasons.mjs && node scripts/make-vector.mjs && git diff --exit-code ../vectors/a2a-transfer-1.json src/reasons.js   # vector and generated reasons reproduce byte for byte
+      - run: node ../examples/gate.mjs
   python:
     runs-on: ubuntu-latest
     strategy: { matrix: { python: ['3.9', '3.13'] } }

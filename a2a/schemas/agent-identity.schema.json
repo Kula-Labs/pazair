@@ -1,35 +1,149 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Kula-Labs/pazair/blob/main/a2a/schemas/agent-identity.schema.json",
+  "$id": "https://raw.githubusercontent.com/Kula-Labs/pazair/main/a2a/schemas/agent-identity.schema.json",
   "title": "agent_identity (SPEC 17.1): who the agent is, whom it belongs to, how it proves itself at run time",
   "description": "Signed by the issuer that onboarded the agent and saw its principal (the same hash as in the mandate). Carried in the A2A agent card under capabilities.extensions[].params.identity. Its hash, sha256hex(canonical(object)) with sig, is what a mandate, a decision and an evidence object name. Ed25519 over canonical JSON without sig, as every object of this specification.",
   "type": "object",
-  "required": ["v", "kind", "issuer", "kid", "agent", "principal", "principal_kind", "runtime", "card", "pass", "issued_at", "expires_at", "sig"],
+  "required": [
+    "v",
+    "kind",
+    "issuer",
+    "kid",
+    "agent",
+    "principal",
+    "principal_kind",
+    "principal_key",
+    "runtime",
+    "card",
+    "pass",
+    "issued_at",
+    "expires_at",
+    "sig"
+  ],
   "properties": {
-    "v": { "const": 1 },
-    "kind": { "const": "agent_identity" },
-    "issuer": { "type": "string", "minLength": 1 },
-    "kid": { "$ref": "_defs.json#/$defs/kid" },
-    "agent": { "$ref": "_defs.json#/$defs/agent_id" },
-    "principal": { "$ref": "_defs.json#/$defs/sha256hex", "description": "sha256hex of the issuer's own reference to the principal. A hash, never a name: two identities of one principal are recognisable, nobody learns who it is. An agent without a principal has no identity (law 3)." },
-    "principal_kind": { "type": "string", "enum": ["person", "company"] },
-    "runtime": {
-      "description": "The strong run-time identity. SPIFFE: the gateway terminates mTLS and compares the peer's SPIFFE ID. Key: the agent signs { transfer, agent, aud } per request with this Ed25519 key.",
+    "v": {
+      "const": 1
+    },
+    "kind": {
+      "const": "agent_identity"
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kid": {
+      "$ref": "_defs.json#/$defs/kid"
+    },
+    "agent": {
+      "$ref": "_defs.json#/$defs/agent_id"
+    },
+    "principal": {
+      "$ref": "_defs.json#/$defs/sha256hex",
+      "description": "sha256hex of the issuer's own reference to the principal. A hash, never a name: two identities of one principal are recognisable, nobody learns who it is. An agent without a principal has no identity (law 3)."
+    },
+    "principal_kind": {
+      "type": "string",
+      "enum": [
+        "person",
+        "company"
+      ]
+    },
+    "principal_key": {
       "oneOf": [
-        { "type": "object", "required": ["kind", "id"], "additionalProperties": false, "properties": { "kind": { "const": "spiffe" }, "id": { "type": "string", "pattern": "^spiffe://[^/]+/.+" } } },
-        { "type": "object", "required": ["kind", "alg", "x", "kid"], "additionalProperties": false, "properties": { "kind": { "const": "key" }, "alg": { "const": "Ed25519" }, "x": { "$ref": "_defs.json#/$defs/b64url" }, "kid": { "$ref": "_defs.json#/$defs/kid" } } }
+        {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The principal's Ed25519 public key (base64url x) as the issuer attested it, or null. With it, a mandate's principal_sig must be made with this key (MANDATE_PRINCIPAL_KEY_MISMATCH); without it, a principal signature is a marked gap (principal_key_unattested)."
+    },
+    "runtime": {
+      "description": "The strong run-time identity. SPIFFE: the gateway terminates mTLS against the SPIFFE trust bundle of the ID's trust domain, takes the single URI SAN of the leaf and compares it with runtime.id, exactly. Key: the agent signs the runtime proof body (transfer, agent, aud, deal hash, amount, currency) per request with this Ed25519 key.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "spiffe"
+            },
+            "id": {
+              "$ref": "_defs.json#/$defs/spiffe_id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "alg",
+            "x",
+            "kid"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "key"
+            },
+            "alg": {
+              "const": "Ed25519"
+            },
+            "x": {
+              "$ref": "_defs.json#/$defs/b64url"
+            },
+            "kid": {
+              "$ref": "_defs.json#/$defs/kid"
+            }
+          }
+        }
       ]
     },
     "card": {
-      "type": "object", "required": ["url", "sha256"], "additionalProperties": false,
-      "description": "The A2A agent card this identity is for: endpoint and skills are fixed by its hash (sha256hex(canonical(card))). A changed card is a new identity.",
-      "properties": { "url": { "type": "string", "pattern": "^https://" }, "sha256": { "$ref": "_defs.json#/$defs/sha256hex" } }
+      "type": "object",
+      "required": [
+        "url",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "description": "The A2A agent card this identity is for. sha256 = sha256hex(canonical(card with the gate extension removed from capabilities.extensions)), so the identity can name the card without naming itself (cardHash in pazair-a2a). A changed card is a new identity.",
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "sha256": {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        }
+      }
     },
-    "pass": { "type": ["string", "null"], "description": "The agent's Word Pass URL (SPEC 9), or null." },
-    "issued_at": { "$ref": "_defs.json#/$defs/iso_time" },
-    "expires_at": { "$ref": "_defs.json#/$defs/iso_time", "description": "Required. An identity without expiry is rejected (IDENTITY_EXPIRED)." },
-    "sig": { "$ref": "_defs.json#/$defs/b64url" },
-    "pq_sig": { "$ref": "_defs.json#/$defs/b64url" },
-    "pq_kid": { "$ref": "_defs.json#/$defs/kid" }
+    "pass": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The agent's Word Pass URL (SPEC 9), or null."
+    },
+    "issued_at": {
+      "$ref": "_defs.json#/$defs/iso_time"
+    },
+    "expires_at": {
+      "$ref": "_defs.json#/$defs/iso_time",
+      "description": "Required. An identity without expiry is rejected (IDENTITY_EXPIRED)."
+    },
+    "sig": {
+      "$ref": "_defs.json#/$defs/b64url"
+    },
+    "pq_sig": {
+      "$ref": "_defs.json#/$defs/b64url"
+    },
+    "pq_kid": {
+      "$ref": "_defs.json#/$defs/kid"
+    }
   }
 }

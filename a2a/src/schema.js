@@ -1,9 +1,8 @@
-// A small JSON Schema checker for the schemas in ../schemas (draft 2020-12 subset). Zero dependencies.
+// A small JSON Schema checker for the schemas in ../schemas (draft 2020-12 subset). Zero dependencies, no file system
+// (loadSchemas, which reads the folder, is in ./node.js).
 // Supports: type, required, properties, additionalProperties (boolean), enum, const, pattern, minimum, maximum,
-// minLength, minItems, maxItems, items, oneOf, anyOf, $ref within a file and to another file of the registry (loadSchemas). Enough to check every object this package
+// exclusiveMinimum, minLength, minItems, maxItems, items, oneOf, anyOf, $ref within a file and to another file of the registry (loadSchemas). Enough to check every object this package
 // defines; a full validator (ajv and others) accepts the same schemas.
-
-import { readFileSync, readdirSync } from 'node:fs';
 
 function typeOf(v) {
   if (v === null) return 'null';
@@ -24,20 +23,20 @@ function resolve(ref, root, registry) {
   return { schema: target, root: base };
 }
 
-/** Load every schema of a folder (default: ../schemas) into a registry keyed by file name, for cross-file $ref. */
-export function loadSchemas(dir = new URL('../schemas/', import.meta.url)) {
-  const registry = {};
-  for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) registry[f] = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
-  return registry;
-}
 
 /** Returns a list of problems as "<path>: <what>"; empty when the value conforms. */
 export function problems(value, schema, registry = {}, root = schema, path = '$') {
   const out = [];
+  if (path === '$') { try { return problemsInner(value, schema, registry, root, path); } catch (e) { return [`$: schema error: ${e.message}`]; } }
+  return problemsInner(value, schema, registry, root, path);
+}
+
+function problemsInner(value, schema, registry, root, path) {
+  const out = [];
   if (schema === true) return out;
   if (schema === false) return [`${path}: not allowed`];
-  if (schema.$ref) { const r = resolve(schema.$ref, root, registry); return problems(value, r.schema, registry, r.root, path); }
-  const sub = (v, s, p) => problems(v, s, registry, root, p);
+  if (schema.$ref) { const r = resolve(schema.$ref, root, registry); return problemsInner(value, r.schema, registry, r.root, path); }
+  const sub = (v, s, p) => problemsInner(v, s, registry, root, p);
   const t = typeOf(value);
   if (schema.type) {
     const types = Array.isArray(schema.type) ? schema.type : [schema.type];
@@ -50,6 +49,7 @@ export function problems(value, schema, registry = {}, root = schema, path = '$'
   if (typeof value === 'number') {
     if (schema.minimum !== undefined && value < schema.minimum) out.push(`${path}: below ${schema.minimum}`);
     if (schema.maximum !== undefined && value > schema.maximum) out.push(`${path}: above ${schema.maximum}`);
+    if (schema.exclusiveMinimum !== undefined && value <= schema.exclusiveMinimum) out.push(`${path}: not above ${schema.exclusiveMinimum}`);
   }
   if (t === 'array') {
     if (schema.minItems !== undefined && value.length < schema.minItems) out.push(`${path}: fewer than ${schema.minItems} items`);

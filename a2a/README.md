@@ -1,77 +1,120 @@
-# a2a: das Gate und der Beleg eines Agent-zu-Agent-Transfers
+# pazair-a2a: the gate and the evidence of an agent-to-agent transfer
 
-Referenzimplementation von [SPEC 17](../SPEC.md#17-the-gate-five-questions-one-transfer). Ohne Abhängigkeiten,
-Node 20+. Entstanden aus der [Prüfung gegen den A2A-Infra-Ziel-Prompt](../PRUEFUNG-A2A.md).
+Reference implementation of [SPEC 17](../SPEC.md#17-the-gate-five-questions-one-transfer). Zero dependencies, no
+file system at run time (Node 20+, Deno, Bun, Workers, browsers). German version with the USPs and innovations:
+[`README.de.md`](README.de.md). Where it comes from: [`PRUEFUNG-A2A.md`](../PRUEFUNG-A2A.md) (German).
 
-Ein Transfer ist gültig, wenn fünf Fragen mit je einem prüfbaren Objekt beantwortet sind. Fehlt eine Antwort:
-Ablehnung mit Grund, nie Raten.
+A transfer is valid when five questions are answered with one checkable object each. A missing answer is a
+rejection with a reason, never a guess.
 
-| # | Frage | Objekt | Schicht | Gate |
-|---|---|---|---|---|
-| 1 | Wer ist der Agent, wem gehört er? | `agent_identity` | Identität | zu |
-| 2 | Welche Aufgabe wurde vereinbart? | `task` (A2A-Task mit `agreed_sha256`) | Aufgabe | zu |
-| 3 | Was wird gehandelt, zu welchem Preis? | `deal` (Listing, Award, UCP, ACP; per Hash) | Deal | zu |
-| 4 | Darf dieser Agent diesen Betrag ausgeben? | `mandate` (SPEC 3.2 + 17.2), `step_up` | Mandat | zu |
-| 5 | Ist der Wert angekommen, gibt es einen Beleg? | `evidence` | Settlement + Beleg | zu |
+| # | Question | Object | Before or after |
+|---|---|---|---|
+| 1 | Who is the agent, and whom does it belong to? | `agent_identity` + a runtime proof | before |
+| 2 | Which task was agreed? | `task` (A2A task, `agreed_sha256`) | before |
+| 3 | What exactly is traded, at which price? | `deal` (listing, award, UCP, ACP, x402; by hash) | before |
+| 4 | May this agent spend this amount? | `mandate` (SPEC 3.2 + 17.2), `step_up` | before |
+| 5 | Did the value arrive, and is there a receipt? | `evidence` | after |
 
-Dazwischen steht das Gate: `gateway_policy` plus `decide()`, vor der Ausführung, mit RBAC auf Agent-Identität
-und Werkzeugname.
+Between them stands the gate: a `gateway_policy` and `decide()`, run before anything moves, with RBAC on agent
+identity and tool name.
 
-## Wie es Kula Flow speist
+**Status.** Not published to npm yet: it imports `pazair-verify` from this repository by path. Use it from a
+checkout (`node examples/gate.mjs`), or copy `a2a/` next to `verify/`. The objects, hashes and decisions are fixed
+by the test vector, so any other implementation can be checked against it.
 
-Kula Flow handelt eigenständig, innerhalb von Mandat und Not-Aus. Dieses Gate ist der Not-Aus in Code: Kula Flow
-ruft `decide()` vor jedem eigenen Transfer auf, und ohne eine der vier Antworten bewegt sich nichts. Das
-Evidence-Objekt ist, was Kula Flow in seinen Learning Quantum Loop zurücknimmt: pro Transfer ein Objekt mit
-Preis, Gegenpartei, Ergebnis und Settlement, prüfbar, nicht erinnert. Ein Streit wird zum dritten Objekt, das
-derselbe Loop liest. Kula Flow lernt also aus Belegen, nicht aus Chatverläufen.
+## Files
 
-## Die Dateien
-
-| Datei | Was |
+| File | What |
 |---|---|
-| `schemas/agent-identity.schema.json` | 17.1: Agent, Principal-Hash, Laufzeitidentität (SPIFFE oder Schlüssel), Agent-Card-Hash, Ablauf |
-| `schemas/mandate.schema.json` | 17.2: SPEC 3.2 plus Ablauf, Gegenpartei-Allowlist, Zweck-Codes, Step-up-Band, `unattended`, `principal_sig` |
-| `schemas/transfer-request.schema.json` | 17.3: was der Gateway hält, wenn er einen Transfer entscheidet |
-| `schemas/gateway-policy.schema.json`, `policy/gateway-policy.json` | 17.3: Policy vor Ausführung, Referenz-Policy |
-| `policy/rejection-reasons.json` | jeder Ablehnungsgrund mit Frage, Schicht, Satz auf Deutsch und Englisch |
-| `schemas/evidence.schema.json` | 17.4: ein Objekt pro Transfer, alle fünf Antworten per Hash |
-| `schemas/dispute.schema.json` | 17.5: Streit als Objekt: `dispute`, `dispute_answer`, `dispute_decision` mit Haftungspfad und Rückerstattung |
-| `policy/gateway-policy-transition.json` | Übergangs-Policy: lässt den heutigen PazAIr-Kauf (`pazair_order`) als Aufgabe zu, jede Entscheidung zeigt `gaps: ["task_not_a2a"]`; Owner-Entscheid offen |
-| `src/gate.js` | `decide()`, `verifyEvidence()`, `verifyDispute()`, `say()` |
-| `src/issue.js` | `signAgentIdentity`, `signMandate17`, `signStepUp`, `signEvidence`, `signDispute`, `signDisputeAnswer`, `signDisputeDecision` |
-| `src/schema.js` | kleiner Schema-Prüfer, damit die Tests ohne Abhängigkeit laufen |
-| `../vectors/a2a-transfer-1.json` | ein Transfer von der Identität bis zum Beleg, 16 Varianten mit je einem Grund, die Übergangs-Policy, ein Streit mit Antwort und Entscheid und 5 Varianten |
+| `schemas/agent-identity.schema.json` | 17.1: agent, principal hash, principal key, runtime identity (SPIFFE or key), agent card hash, expiry |
+| `schemas/mandate.schema.json` | 17.2: SPEC 3.2 plus expiry, counterparties, purpose codes, step-up band, `unattended`, `principal_sig` |
+| `schemas/step-up.schema.json` | 17.2: the principal confirmed one transfer, one deal, for minutes |
+| `schemas/transfer-request.schema.json` | 17.3: what the gateway holds when it decides one transfer |
+| `schemas/gateway-policy.schema.json`, `policy/gateway-policy.json` | 17.3: policy before execution; the reference policy |
+| `policy/gateway-policy-transition.json` | the same, accepting today's PazAIr order as the task; every decision then carries the gap `task_not_a2a` |
+| `schemas/gate-decision.schema.json` | 17.3: what `decide()` returns |
+| `policy/rejection-reasons.json` | every reason: question, layer, who can act, whether a retry helps, one sentence in German and English |
+| `schemas/evidence.schema.json` | 17.4: one object per transfer, all five answers by hash, the rail's id and finality |
+| `schemas/dispute.schema.json` | 17.5: `dispute`, `dispute_answer`, `dispute_decision` with the liability path and the refund |
+| `src/gate.js` | `decide()`, `verifyEvidence()`, `verifyDispute()`, `say()`, `runtimeProofBody()` |
+| `src/issue.js` | `signAgentIdentity`, `signMandate`, `signStepUp`, `signEvidence`, `signDispute*`, `cardHash`, `cardExtension` |
+| `src/schema.js`, `src/node.js` | a small JSON Schema checker (`problems`), and the Node-only loaders (`loadSchemas`, `loadPolicy`) |
+| `src/index.d.ts` | TypeScript types for everything above |
+| `../vectors/a2a-transfer-1.json` | one transfer from identity to evidence, 26 variants with one reason each, the transition policy, a dispute with 5 variants |
+| `../examples/gate.mjs` | the whole flow, offline, in 60 lines: `node examples/gate.mjs` |
 
 ```sh
-cd a2a && npm test            # 13 Tests
-node scripts/make-vector.mjs  # erzeugt den Vektor neu, byteidentisch
+cd a2a && npm test              # 13 tests
+node scripts/make-vector.mjs    # regenerates the vector, byte for byte (CI checks it)
+node scripts/build-reasons.mjs  # regenerates src/reasons.js from policy/rejection-reasons.json (CI checks it)
 ```
 
-## Ein Transfer, in Code
+## Wiring the gate into a gateway
 
 ```js
-import { decide, say, verifyEvidence } from './src/index.js';
-const d = await decide(request, policy, { keys });   // request: schemas/transfer-request.schema.json
+import { decide, say, verifyEvidence, runtimeProofBody } from 'pazair-a2a';
+import { loadPolicy } from 'pazair-a2a/node';
+import { fetchKeys } from 'pazair-verify';
+
+const policy = loadPolicy();                                   // or your own gateway_policy
+const keys = await fetchKeys('https://pazair.kulalabs.ch');    // the issuers you trust: [{ kid, kty, crv, x }], concatenate for several
+
+const d = await decide(request, policy, { keys, now: new Date() });
 d.decision   // 'allow' | 'step_up' | 'reject'
-d.reasons    // z. B. ['MANDATE_COUNTERPARTY_NOT_ALLOWED']
-d.answered   // { identity: true, task: true, deal: true, mandate: false, settlement: 'after_evidence' }
-d.gaps       // Gesetz 8: was der Partner nicht spricht, z. B. ['counterparty_identity']
-say(d)       // ein Satz für den Principal
-// nach dem Settlement:
-(await verifyEvidence(evidence, { keys, identity, mandate, deal, decision: d, receipt })).valid
+d.reasons    // e.g. ['MANDATE_COUNTERPARTY_NOT_ALLOWED']; REASONS[code] has question, layer, actor, retry, de, en
+d.answered   // { identity, task, deal, mandate: true | false, settlement: 'after_evidence' }
+d.gaps       // law 8: what the request does not carry, e.g. ['counterparty_identity']
+say(d)       // one sentence; say(d, { lang: 'de' }) in German
 ```
 
-Was `decide()` prüft, in der Reihenfolge: Policy gültig; RBAC (Agent × Werkzeug, kein Treffer ist Ablehnung);
-Identität signiert, mit Principal, nicht abgelaufen, Laufzeitnachweis passt (SPIFFE-Peer-ID oder Ed25519-Signatur
-über `{ transfer, agent, aud }`); Aufgabe mit erlaubtem Protokoll und vereinbartem Hash; Deal per Hash, mit
-maschinenlesbaren Bedingungen, Verkäufer ungleich Käufer, Preis; Mandat signiert, für diesen Agenten und
-denselben Principal wie die Identität, gültig (ausgestellt, nicht abgelaufen, nicht beendet), Währung, Limite pro
-Auftrag, Monatslimite aus dem Ledger, Gegenpartei auf der Allowlist, Zweck-Code erlaubt, Step-up-Band,
-`unattended`; Settlement-Plan mit erlaubtem Rail und Gebühr unter 25 %; kein früherer Transfer der Kette ohne
-Beleg. Ein Step-up gilt nur mit einer frischen, signierten Bestätigung für genau diesen Transfer und mindestens
-diesen Betrag.
+**Who sets what.** The gateway is trusted and is the only author of `transfer`, `at`, `tool`, `aud`,
+`human_present`, `runtime_proof.peer_id`, `deal`, `settlement`, `mandate_end` and `history`. The agent supplies its
+identity (from its agent card), the runtime proof signature and a step-up; the counterparty its identity. Everything
+from the agent or the counterparty is checked against the issuer keys in `keys`; with `keys = []` every signature
+fails (`IDENTITY_SIGNATURE`, `MANDATE_SIGNATURE`): that is not a forgery, it is a missing key.
 
-## Was ein Mandat jetzt sagt
+**Assembling a request**, in order:
+
+1. The gateway mints `transfer` (`tr_…`, one per attempt, never reused) and tells the agent `{ transfer, aud }`.
+2. The agent answers with `runtime_proof`: with a key runtime, `sig` over `runtimeProofBody(request)`, which is
+   `{ transfer, agent, aud, deal, amount_minor, currency }`; the agent knows the deal because it chose it. With a
+   SPIFFE runtime the gateway fills `peer_id` from the mTLS peer certificate's single URI SAN, validated against the
+   SPIFFE trust bundle of that trust domain.
+3. The gateway takes `identity` from the agent card's gate extension (`capabilities.extensions[]` with `uri`
+   `https://pazair.kulalabs.ch/ext/gate/v1`, `params.identity`), the `mandate` from its own store (plus a
+   `mandate_end` if it holds one), fetches the deal (the listing, award, UCP checkout, ACP checkout session or x402
+   requirements) and hashes it as served (`hashOf`), takes `task.agreed_sha256` as the hash of the agreed A2A message
+   as sent (`messageId` included), and writes its settlement plan (`rail`, `amount_minor`, `currency`, `fee_minor`;
+   with `asset`, `network` and `fx` when it settles in another asset than the deal's currency).
+4. `history` is the gateway's own ledger for this mandate: every transfer it allowed (a reservation) or settled, as
+   `{ transfer, at, amount_minor, currency, settlement_id, evidence, chain }`. The monthly cap counts every entry of
+   the month in the mandate's currency. The evidence rule looks at settled entries (`settlement_id` set) of this
+   chain (`chain === decision.chain`, which is `chainKey(await hashOf(mandate), deal.seller)`); an entry without
+   `chain` counts for both. Serialise `decide()` and the ledger write per mandate, or two concurrent calls both pass
+   the cap.
+5. `at` is the gateway's clock. Pass the same clock as `now`; a request whose `at` drifts further than
+   `clock_skew_seconds` is rejected (`REQUEST_TIME_SKEW`). Every time check runs against `at`.
+
+Validate inbound requests with `problems(request, schemas['transfer-request.schema.json'], schemas)` before
+`decide()` if you want field-level messages; `decide()` itself never throws and rejects malformed input with a code.
+
+**After settlement**, issue the evidence (`signEvidence`) or receive it from the issuer, and check it:
+
+```js
+(await verifyEvidence(evidence, { keys, identity, mandate, deal, task, decision: d, receipt })).valid
+```
+
+**What `decide()` checks**, in order: policy valid; request time readable and within skew; ledger valid; RBAC (agent
+× tool, no match is deny); identity signed, with a principal, issued, not expired, runtime proof matches; task with
+an allowed protocol and an agreed hash; deal fixed by hash, with machine-readable terms, a seller that is not the
+buyer, a price; mandate signed, for this agent and the same principal as the identity, issued, not expired, not
+ended, currency, cap per order, monthly cap from the ledger, counterparty on the allowlist, purpose code allowed,
+step-up band, `unattended`, principal signature (and its key, when the identity attests one); settlement on an
+allowed rail, same price or a bound rate, fee at most 25 % of the amount; no settled transfer of the chain without
+evidence. A step-up counts only with a fresh signed confirmation for exactly this transfer, deal, seller and at
+least this amount. A reject is never "fixable with a step-up": step-up codes appear only on a `step_up` decision.
+
+## A mandate now says
 
 ```json
 "scope": { "currency": "chf", "max_order_minor": 1000, "monthly_minor": 5000,
@@ -81,42 +124,27 @@ diesen Betrag.
 "principal_sig": { "kid": "…", "x": "…", "sig": "…" }
 ```
 
-Felder sind nur hinzugekommen: `verifyMandate` aus `pazair-verify` prüft diese Mandate unverändert (Test).
-Der Freitext `purpose` bleibt für Menschen; kein Gate liest ihn.
+Fields are only added: `verifyMandate` from `pazair-verify` keeps verifying these mandates and checks what SPEC 3.2
+defines; the gate enforces the rest. `unattended` absent means no: a human must be present, or the transfer is a
+step-up. The free-text `purpose` stays for people; no gate reads it. The mandate is AP2-shaped (who may spend, how
+much, with whom, until when); it is not an AP2 credential. `principal_sig` proves that the holder of a key signed;
+that the key is the principal's is attested by `principal_key` in the agent identity, else it is the gap
+`principal_key_unattested`.
 
-## 10 USPs
+## Rails and assets
 
-1. **Fünf Antworten, null Fragen.** Auf PazAIr kommt jeder Transfer mit allen fünf Objekten; das Gate des
-   Käufers sagt `allow` ohne Rückfrage. Anderswo sucht der Agent die Antworten aus fünf Protokollen zusammen.
-2. **Ablehnung mit Grund, nie Raten.** Jedes Nein ist ein Code mit Frage, Schicht und einem Satz in zwei Sprachen.
-3. **Limite sind Code.** Ablauf, Allowlist, Zweck-Code, Step-up-Band, unattended: im Mandat, signiert, geprüft.
-4. **Kein Agent ohne Principal.** Identität und Mandat nennen denselben Principal-Hash, sonst kein Transfer.
-5. **Kein Beleg, keine zweite Zahlung.** Gesetz 2 als Code: `EVIDENCE_MISSING_PRIOR` sperrt die Kette.
-6. **Rail-neutral.** Stripe, x402, MPP, XRPL, Stellar: das Gate und der Beleg sind für alle gleich.
-7. **Die Gebühr frisst den Call nicht.** Ab 25 % ist es ein Defekt, nicht ein Preis.
-8. **Lücken sind sichtbar.** `gaps` nennt, was der Partner nicht spricht. Kein Protokoll-Mix als Ausrede.
-9. **Offline prüfbar.** Jede Entscheidung trägt den Hash der Policy, jeder Beleg jeden Hash. Ohne PazAIr zu fragen.
-10. **Abwärtskompatibel.** Alte Mandate, alte Verifier, alte Receipts bleiben gültig. Nur hinzugefügt.
+A deal is priced in a currency (`chf`). A settlement may run in another asset (USDC on Base over x402, RLUSD on
+XRPL): then the plan names `asset`, `network` and a bound rate `fx: { rate, quoted_at }` with
+`settlement.amount_minor = round(deal.amount_minor × rate)` within 1, else `DEAL_FX_MISSING`. Evidence records the
+rail's own id and its finality (`captured` for a card, `confirmed` or `finalized` on a chain, `validated` on XRPL or
+Stellar, `booked` at a bank) and whether the rail can still reverse it; a reversal later is a `dispute_decision`
+with `bears: "rail"`. Settlement adapters (parsing x402 or MPP headers, Stripe webhooks) are not part of this
+package; the gateway brings them.
 
-## 10 Innovationen
+## Reasons for agents
 
-1. **Das Evidence-Objekt**: ein Objekt, das alle fünf Fragen eines Transfers per Hash beantwortet und vom Issuer
-   signiert ist. Der Buchhalter liest ein Objekt, nicht fünf Protokolle.
-2. **Identität mit Ablauf und Card-Hash**: eine geänderte Agent-Card ist eine neue Identität. Kein Agent kann
-   leise Fähigkeiten dazubekommen.
-3. **Laufzeitnachweis pro Request**: SPIFFE-Peer oder Ed25519-Signatur über `{ transfer, agent, aud }`; eine
-   kopierte Identität kann keinen Transfer auslösen.
-4. **Das Mandat als Verifiable Intent**: der Principal signiert den Körper, der Issuer signiert darüber. Zwei
-   Unterschriften, ein Objekt, AP2-verträglich, ohne AP2 zu brauchen.
-5. **Step-up als Objekt**: eine Bestätigung für genau einen Transfer, mit Betrag und Ablauf in Minuten. Nicht
-   übertragbar, nicht wiederverwendbar.
-6. **Die Kette hat einen Schlüssel**: `sha256(mandat:gegenpartei)`. Der Gateway führt ein Ledger pro Kette;
-   die Monatslimite wird daraus gerechnet, nicht geschätzt.
-7. **Zweck als Code statt Satz**: `purpose_codes` im Mandat gegen `purpose_code` im Deal. Der Freitext bleibt
-   für Menschen und entscheidet nie.
-8. **Das Gate antwortet mit `answered`**: pro Frage true oder false, und die fünfte ist ehrlich
-   `after_evidence`. Kein Gate behauptet Finalität, bevor sie da ist.
-9. **MCP wird als Aufgabenprotokoll abgelehnt**: `TASK_PROTOCOL_NOT_ALLOWED`. Werkzeuge ja, Zahlung nie. Das
-   Gesetz steht im Code, nicht in einem Dokument.
-10. **Ein Testvektor mit 15 Varianten**: derselbe Transfer, je ein Fehler, je ein Grund. Jede Implementation auf
-    der Welt kann prüfen, ob ihr Gate dasselbe sagt.
+Every code in `policy/rejection-reasons.json` carries `actor` (who can change the outcome: agent, principal,
+issuer, counterparty, gateway) and `retry` (`never`, `with_step_up`, `after_evidence`, `new_request`,
+`fix_policy`), so an agent can decide what to do without reading the sentence. `gaps` lists layers the request does
+not carry: `counterparty_identity`, `counterparty_not_onboarded` (the seller is a DID, URL or chain account, not an
+issuer-onboarded agent), `task_not_a2a`, `principal_signature`, `principal_key_unattested`.

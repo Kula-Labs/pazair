@@ -8,15 +8,49 @@
     "runtime_proof": true,
     "mandate_expiry": true,
     "counterparty_allowlist": false,
+    "purpose_codes": false,
     "principal_signature": false,
     "counterparty_identity": false,
     "evidence_before_next": true
   },
-  "tasks": { "protocols": ["a2a"] },
-  "deals": { "kinds": ["listing", "award", "ucp_checkout", "acp_order"] },
-  "rails": { "allowed": ["stripe", "x402", "mpp", "xrpl", "stellar"], "max_fee_ratio": 0.25 },
+  "tasks": {
+    "protocols": [
+      "a2a"
+    ]
+  },
+  "deals": {
+    "kinds": [
+      "listing",
+      "award",
+      "ucp_checkout",
+      "acp_checkout_session",
+      "x402_requirements"
+    ]
+  },
+  "rails": {
+    "allowed": [
+      "stripe",
+      "x402",
+      "mpp",
+      "xrpl",
+      "stellar"
+    ],
+    "max_fee_ratio": 0.25
+  },
   "rbac": [
-    { "agent": "*", "tools": ["buy", "accept_bid", "create_project", "message/send", "tasks/send"], "effect": "allow" }
+    {
+      "agent": "*",
+      "tools": [
+        "buy",
+        "accept_bid",
+        "create_project",
+        "SendMessage",
+        "SendStreamingMessage",
+        "message/send",
+        "message/stream"
+      ],
+      "effect": "allow"
+    }
   ],
   "clock_skew_seconds": 120
 }

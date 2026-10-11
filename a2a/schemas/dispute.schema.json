@@ -1,43 +1,268 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Kula-Labs/pazair/blob/main/a2a/schemas/dispute.schema.json",
+  "$id": "https://raw.githubusercontent.com/Kula-Labs/pazair/main/a2a/schemas/dispute.schema.json",
   "title": "dispute, dispute_answer, dispute_decision (SPEC 17.5): a dispute is an object, not a ticket",
   "description": "Three signed objects. The buyer opens (claim as hash, reason as code), the seller may answer (hash), a person decides: for the buyer with the refund and the rail's id, or for the seller. `bears` names who carries it on the liability path principal, agent, counterparty, rail. A decision for the buyer counts as disputes_lost in the seller's Word Pass (SPEC 4).",
-  "oneOf": [{ "$ref": "#/$defs/dispute" }, { "$ref": "#/$defs/dispute_answer" }, { "$ref": "#/$defs/dispute_decision" }],
+  "oneOf": [
+    {
+      "$ref": "#/$defs/dispute"
+    },
+    {
+      "$ref": "#/$defs/dispute_answer"
+    },
+    {
+      "$ref": "#/$defs/dispute_decision"
+    }
+  ],
   "$defs": {
     "dispute": {
       "type": "object",
-      "required": ["v", "kind", "issuer", "kid", "id", "order", "receipt", "evidence", "opened_by", "against", "reason_code", "claim_sha256", "opened_at", "sig"],
+      "required": [
+        "v",
+        "kind",
+        "issuer",
+        "kid",
+        "id",
+        "order",
+        "receipt",
+        "evidence",
+        "opened_by",
+        "against",
+        "reason_code",
+        "claim_sha256",
+        "opened_at",
+        "sig"
+      ],
       "properties": {
-        "v": { "const": 1 }, "kind": { "const": "dispute" }, "issuer": { "type": "string", "minLength": 1 }, "kid": { "$ref": "_defs.json#/$defs/kid" },
-        "id": { "type": "string", "pattern": "^dp_" }, "order": { "type": "string", "pattern": "^or_" },
-        "receipt": { "$ref": "_defs.json#/$defs/sha256hex" }, "evidence": { "oneOf": [{ "$ref": "_defs.json#/$defs/sha256hex" }, { "type": "null" }] },
-        "opened_by": { "$ref": "_defs.json#/$defs/agent_id" }, "against": { "$ref": "_defs.json#/$defs/agent_id" },
-        "reason_code": { "type": "string", "enum": ["not_as_promised", "not_delivered", "late", "charged_without_delivery", "other"] },
-        "claim_sha256": { "$ref": "_defs.json#/$defs/sha256hex", "description": "sha256hex of the buyer's statement. The text stays with the issuer; the hash fixes it." },
-        "opened_at": { "$ref": "_defs.json#/$defs/iso_time" }, "sig": { "$ref": "_defs.json#/$defs/b64url" }, "pq_sig": { "$ref": "_defs.json#/$defs/b64url" }, "pq_kid": { "$ref": "_defs.json#/$defs/kid" }
+        "v": {
+          "const": 1
+        },
+        "kind": {
+          "const": "dispute"
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kid": {
+          "$ref": "_defs.json#/$defs/kid"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^dp_"
+        },
+        "order": {
+          "type": "string",
+          "pattern": "^or_"
+        },
+        "receipt": {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        },
+        "evidence": {
+          "oneOf": [
+            {
+              "$ref": "_defs.json#/$defs/sha256hex"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "opened_by": {
+          "$ref": "_defs.json#/$defs/agent_id"
+        },
+        "against": {
+          "$ref": "_defs.json#/$defs/agent_id"
+        },
+        "reason_code": {
+          "type": "string",
+          "enum": [
+            "not_as_promised",
+            "not_delivered",
+            "late",
+            "charged_without_delivery",
+            "other"
+          ]
+        },
+        "claim_sha256": {
+          "$ref": "_defs.json#/$defs/sha256hex",
+          "description": "sha256hex of the buyer's statement. The text stays with the issuer; the hash fixes it."
+        },
+        "opened_at": {
+          "$ref": "_defs.json#/$defs/iso_time"
+        },
+        "sig": {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        "pq_sig": {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        "pq_kid": {
+          "$ref": "_defs.json#/$defs/kid"
+        }
       }
     },
     "dispute_answer": {
       "type": "object",
-      "required": ["v", "kind", "issuer", "kid", "dispute", "by", "answer_sha256", "at", "sig"],
+      "required": [
+        "v",
+        "kind",
+        "issuer",
+        "kid",
+        "dispute",
+        "by",
+        "answer_sha256",
+        "at",
+        "sig"
+      ],
       "properties": {
-        "v": { "const": 1 }, "kind": { "const": "dispute_answer" }, "issuer": { "type": "string", "minLength": 1 }, "kid": { "$ref": "_defs.json#/$defs/kid" },
-        "dispute": { "$ref": "_defs.json#/$defs/sha256hex" }, "by": { "$ref": "_defs.json#/$defs/agent_id" }, "answer_sha256": { "$ref": "_defs.json#/$defs/sha256hex" },
-        "at": { "$ref": "_defs.json#/$defs/iso_time" }, "sig": { "$ref": "_defs.json#/$defs/b64url" }, "pq_sig": { "$ref": "_defs.json#/$defs/b64url" }, "pq_kid": { "$ref": "_defs.json#/$defs/kid" }
+        "v": {
+          "const": 1
+        },
+        "kind": {
+          "const": "dispute_answer"
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kid": {
+          "$ref": "_defs.json#/$defs/kid"
+        },
+        "dispute": {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        },
+        "by": {
+          "$ref": "_defs.json#/$defs/agent_id"
+        },
+        "answer_sha256": {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        },
+        "at": {
+          "$ref": "_defs.json#/$defs/iso_time"
+        },
+        "sig": {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        "pq_sig": {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        "pq_kid": {
+          "$ref": "_defs.json#/$defs/kid"
+        }
       }
     },
     "dispute_decision": {
       "type": "object",
-      "required": ["v", "kind", "issuer", "kid", "dispute", "answer", "outcome", "bears", "decided_by", "refund", "decided_at", "sig"],
+      "required": [
+        "v",
+        "kind",
+        "issuer",
+        "kid",
+        "dispute",
+        "answer",
+        "outcome",
+        "bears",
+        "decided_by",
+        "refund",
+        "decided_at",
+        "sig"
+      ],
       "properties": {
-        "v": { "const": 1 }, "kind": { "const": "dispute_decision" }, "issuer": { "type": "string", "minLength": 1 }, "kid": { "$ref": "_defs.json#/$defs/kid" },
-        "dispute": { "$ref": "_defs.json#/$defs/sha256hex" }, "answer": { "oneOf": [{ "$ref": "_defs.json#/$defs/sha256hex" }, { "type": "null" }] },
-        "outcome": { "type": "string", "enum": ["for_buyer", "for_seller"] },
-        "bears": { "type": "string", "enum": ["principal", "agent", "counterparty", "rail"], "description": "Who carries the loss, on the liability path principal → agent → counterparty → rail. For the buyer: usually counterparty (the seller refunds). For the seller: principal (the buyer's principal paid for what it got)." },
-        "decided_by": { "type": "string", "enum": ["person", "rule"], "description": "person: a person at the issuer decided. rule: a rule of the policy decided without a person (for example a delivery that failed its output_schema)." },
-        "refund": { "oneOf": [{ "type": "null" }, { "type": "object", "required": ["rail", "id", "amount_minor", "currency"], "properties": { "rail": { "$ref": "_defs.json#/$defs/rail" }, "id": { "type": "string", "minLength": 1 }, "amount_minor": { "$ref": "_defs.json#/$defs/minor" }, "currency": { "$ref": "_defs.json#/$defs/currency" } } }] },
-        "decided_at": { "$ref": "_defs.json#/$defs/iso_time" }, "sig": { "$ref": "_defs.json#/$defs/b64url" }, "pq_sig": { "$ref": "_defs.json#/$defs/b64url" }, "pq_kid": { "$ref": "_defs.json#/$defs/kid" }
+        "v": {
+          "const": 1
+        },
+        "kind": {
+          "const": "dispute_decision"
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kid": {
+          "$ref": "_defs.json#/$defs/kid"
+        },
+        "dispute": {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        },
+        "answer": {
+          "oneOf": [
+            {
+              "$ref": "_defs.json#/$defs/sha256hex"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "for_buyer",
+            "for_seller"
+          ]
+        },
+        "bears": {
+          "type": "string",
+          "enum": [
+            "principal",
+            "agent",
+            "counterparty",
+            "rail"
+          ],
+          "description": "Who carries the loss, on the liability path principal → agent → counterparty → rail. For the buyer: usually counterparty (the seller refunds). For the seller: principal (the buyer's principal paid for what it got)."
+        },
+        "decided_by": {
+          "type": "string",
+          "enum": [
+            "person",
+            "rule"
+          ],
+          "description": "person: a person at the issuer decided. rule: a rule of the policy decided without a person (for example a delivery that failed its output_schema)."
+        },
+        "refund": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "rail",
+                "id",
+                "amount_minor",
+                "currency"
+              ],
+              "properties": {
+                "rail": {
+                  "$ref": "_defs.json#/$defs/rail"
+                },
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "amount_minor": {
+                  "$ref": "_defs.json#/$defs/minor"
+                },
+                "currency": {
+                  "$ref": "_defs.json#/$defs/currency"
+                }
+              }
+            }
+          ]
+        },
+        "decided_at": {
+          "$ref": "_defs.json#/$defs/iso_time"
+        },
+        "sig": {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        "pq_sig": {
+          "$ref": "_defs.json#/$defs/b64url"
+        },
+        "pq_kid": {
+          "$ref": "_defs.json#/$defs/kid"
+        }
       }
     }
   }

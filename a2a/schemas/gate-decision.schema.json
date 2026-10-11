@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "gate_decision (SPEC 17.3): what decide() returns",
+  "description": "Not signed: it is the gateway's own record, local to it. The evidence object carries its policy hash, decision and time.",
+  "type": "object",
+  "required": [
+    "v",
+    "kind",
+    "transfer",
+    "decision",
+    "reasons",
+    "answered",
+    "gaps",
+    "chain",
+    "policy",
+    "decided_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "v": {
+      "const": 1
+    },
+    "kind": {
+      "const": "gate_decision"
+    },
+    "transfer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "step_up",
+        "reject"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z_]+$"
+      },
+      "description": "Codes of policy/rejection-reasons.json. On a reject only reject codes; on a step_up only step-up codes; empty on allow."
+    },
+    "answered": {
+      "type": "object",
+      "required": [
+        "identity",
+        "task",
+        "deal",
+        "mandate",
+        "settlement"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "type": "boolean"
+        },
+        "task": {
+          "type": "boolean"
+        },
+        "deal": {
+          "type": "boolean"
+        },
+        "mandate": {
+          "type": "boolean"
+        },
+        "settlement": {
+          "const": "after_evidence"
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "counterparty_identity",
+          "counterparty_not_onboarded",
+          "task_not_a2a",
+          "principal_signature",
+          "principal_key_unattested"
+        ]
+      }
+    },
+    "chain": {
+      "oneOf": [
+        {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "policy": {
+      "oneOf": [
+        {
+          "$ref": "_defs.json#/$defs/sha256hex"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decided_at": {
+      "$ref": "_defs.json#/$defs/iso_time"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/Kula-Labs/pazair/main/a2a/schemas/gate-decision.schema.json"
+}

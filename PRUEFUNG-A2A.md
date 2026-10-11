@@ -99,9 +99,11 @@ Kette (`EVIDENCE_MISSING_PRIOR`).
 | Gate | zu | `a2a/policy/gateway-policy.json`, `gateway-policy.schema.json`, `decide()`, `rejection-reasons.json` | Einbau in den Gateway vor `buy`, `accept_bid`, `create_project` |
 | Beleg | zu | `a2a/schemas/evidence.schema.json`, `signEvidence`, `verifyEvidence` | Server stellt es noch nicht aus |
 | Streit | zu | `a2a/schemas/dispute.schema.json`, `signDispute`, `signDisputeAnswer`, `signDisputeDecision`, `verifyDispute` | Server stellt die drei Objekte noch nicht so aus |
-| Testvektor | | `vectors/a2a-transfer-1.json`: ein Transfer, Allow, Evidence, 16 Varianten mit je einem Grund, Übergangs-Policy, Streit mit 5 Varianten | |
+| Testvektor | | `vectors/a2a-transfer-1.json`: ein Transfer, Allow, Evidence, 26 Varianten mit je einem Grund, Übergangs-Policy, Streit mit 5 Varianten | |
 
-Alles in `a2a/` ist ohne Abhängigkeiten, läuft mit `npm test` (13 Tests) und steht in SPEC 17.
+Alles in `a2a/` ist ohne Abhängigkeiten, läuft mit `npm test` (13 Tests) und steht in SPEC 17. Runde 2, die
+simulierte Prüfung durch fünf Gruppen von Senior Developers mit 60 Befunden und dem Stand danach:
+[`PRUEFUNG-100.md`](PRUEFUNG-100.md).
 
 **Was es für Kula Flow heisst.** Kula Flow handelt nur mit Mandat (Positionierung, Innovation 10). Das Gate ist
 die Stelle, an der das geprüft wird, bevor Kula Flow Geld bewegt; das Evidence-Objekt ist, was sein Learning

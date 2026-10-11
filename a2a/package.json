@@ -1,15 +1,27 @@
 {
   "name": "pazair-a2a",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "The gate and the evidence of an agent-to-agent transfer (Word Pass SPEC section 17): five questions, answered with signed objects before anything moves, one evidence object after. Zero dependencies.",
+  "description": "The gate and the evidence of an agent-to-agent transfer (Word Pass SPEC section 17): five questions, answered with signed objects before anything moves, one evidence object after, a dispute as an object. Zero dependencies. Not published yet: it imports pazair-verify from this repository by path.",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": { "types": "./src/index.d.ts", "default": "./src/index.js" },
+    "./node": { "types": "./src/node.d.ts", "default": "./src/node.js" },
+    "./schemas/*": "./schemas/*",
+    "./policy/*": "./policy/*"
+  },
+  "files": ["src", "schemas", "policy", "README.md", "README.de.md", "LICENSE"],
   "engines": { "node": ">=20" },
   "scripts": {
     "test": "node --test test/*.test.js",
+    "reasons": "node scripts/build-reasons.mjs",
     "vector": "node scripts/make-vector.mjs"
   },
+  "keywords": ["word-pass", "a2a", "ap2", "x402", "mcp", "ai-agents", "agent-payments", "mandate", "evidence", "gateway", "pazair"],
   "author": "Kula Labs (https://kulalabs.ch)",
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://github.com/Kula-Labs/pazair/tree/main/a2a",
+  "repository": { "type": "git", "url": "git+https://github.com/Kula-Labs/pazair.git", "directory": "a2a" }
 }

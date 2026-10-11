@@ -8,6 +8,7 @@
     "runtime_proof": true,
     "mandate_expiry": true,
     "counterparty_allowlist": false,
+    "purpose_codes": false,
     "principal_signature": false,
     "counterparty_identity": false,
     "evidence_before_next": true
@@ -23,7 +24,8 @@
       "listing",
       "award",
       "ucp_checkout",
-      "acp_order"
+      "acp_checkout_session",
+      "x402_requirements"
     ]
   },
   "rails": {
@@ -43,8 +45,10 @@
         "buy",
         "accept_bid",
         "create_project",
+        "SendMessage",
+        "SendStreamingMessage",
         "message/send",
-        "tasks/send"
+        "message/stream"
       ],
       "effect": "allow"
     }
