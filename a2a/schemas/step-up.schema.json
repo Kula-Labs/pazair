@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "step_up (SPEC 17.2): the principal confirmed exactly one transfer",
+  "description": "Issued by the issuer after the principal confirmed (passkey, pay_url, …). Counts only for this transfer, this deal and seller, at least this amount, between iat and exp.",
+  "type": "object",
+  "required": [
+    "v",
+    "kind",
+    "issuer",
+    "kid",
+    "transfer",
+    "agent",
+    "mandate",
+    "deal",
+    "seller",
+    "amount_minor",
+    "how",
+    "iat",
+    "exp",
+    "sig"
+  ],
+  "properties": {
+    "v": {
+      "const": 1
+    },
+    "kind": {
+      "const": "step_up"
+    },
+    "issuer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kid": {
+      "$ref": "_defs.json#/$defs/kid"
+    },
+    "transfer": {
+      "type": "string",
+      "pattern": "^tr_"
+    },
+    "agent": {
+      "$ref": "_defs.json#/$defs/agent_id"
+    },
+    "mandate": {
+      "$ref": "_defs.json#/$defs/sha256hex"
+    },
+    "deal": {
+      "$ref": "_defs.json#/$defs/sha256hex"
+    },
+    "seller": {
+      "$ref": "_defs.json#/$defs/seller"
+    },
+    "amount_minor": {
+      "$ref": "_defs.json#/$defs/minor"
+    },
+    "how": {
+      "type": "string",
+      "enum": [
+        "passkey",
+        "pay_url",
+        "signed_statement"
+      ]
+    },
+    "iat": {
+      "$ref": "_defs.json#/$defs/iso_time"
+    },
+    "exp": {
+      "$ref": "_defs.json#/$defs/iso_time"
+    },
+    "sig": {
+      "$ref": "_defs.json#/$defs/b64url"
+    },
+    "pq_sig": {
+      "$ref": "_defs.json#/$defs/b64url"
+    },
+    "pq_kid": {
+      "$ref": "_defs.json#/$defs/kid"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/Kula-Labs/pazair/main/a2a/schemas/step-up.schema.json"
+}

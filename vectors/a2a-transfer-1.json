@@ -1,0 +1,878 @@
+{
+  "about": "SPEC section 17: one agent-to-agent transfer through the gate, start to evidence, then a dispute. Keys: the Ed25519 test key of word-pass-1.json signs as the issuer; runtime_key and principal_key are test-only pairs. An implementation is conformant when it reproduces every signature, hash and decision here.",
+  "issuer": "example",
+  "key": {
+    "kid": "a1171dbbeb4c3fc2",
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "yreuvsFyxyZbnuEv1ICMF0__gVhSDHTWgfdDW7nFVGU",
+    "d_test_only": "BsTsYSn3J2UC1-c4bNtHwG796uD3WFcGEhzQiFNsSOc"
+  },
+  "runtime_key": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+    "d_test_only": "l-w2OsfuETTHJWNQIUdVjfutKQyaBk5FLlH4WRWOKV0"
+  },
+  "principal_key": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+    "d_test_only": "V9ytQ2JBcrAdas3OjhZ_UCEzjCQit5cXd-LyrVu96lg"
+  },
+  "policy": {
+    "v": 1,
+    "kind": "gateway_policy",
+    "id": "gp_reference_1",
+    "issuer": "pazair",
+    "about": "Reference policy of SPEC section 17. A gateway loads it, parses A2A and MCP, and calls decide() before any tool that moves value runs. Change a value here and the policy hash in every decision and evidence object changes with it.",
+    "require": {
+      "runtime_proof": true,
+      "mandate_expiry": true,
+      "counterparty_allowlist": false,
+      "purpose_codes": false,
+      "principal_signature": false,
+      "counterparty_identity": false,
+      "evidence_before_next": true
+    },
+    "tasks": {
+      "protocols": [
+        "a2a"
+      ]
+    },
+    "deals": {
+      "kinds": [
+        "listing",
+        "award",
+        "ucp_checkout",
+        "acp_checkout_session",
+        "x402_requirements"
+      ]
+    },
+    "rails": {
+      "allowed": [
+        "stripe",
+        "x402",
+        "mpp",
+        "xrpl",
+        "stellar"
+      ],
+      "max_fee_ratio": 0.25
+    },
+    "rbac": [
+      {
+        "agent": "*",
+        "tools": [
+          "buy",
+          "accept_bid",
+          "create_project",
+          "SendMessage",
+          "SendStreamingMessage",
+          "message/send",
+          "message/stream"
+        ],
+        "effect": "allow"
+      }
+    ],
+    "clock_skew_seconds": 120
+  },
+  "policy_hash": "02afcf99379ddfac2b70ebd03e43ef37b9d10d6de93d0a4a67b369a3f25ad593",
+  "card": {
+    "protocolVersion": "1.0",
+    "name": "Gamma",
+    "description": "Buys translations for a shop.",
+    "supportedInterfaces": [
+      {
+        "url": "https://gamma.example/a2a",
+        "protocolBinding": "JSONRPC",
+        "protocolVersion": "1.0"
+      }
+    ],
+    "capabilities": {
+      "extensions": [
+        {
+          "uri": "https://pazair.kulalabs.ch/ext/gate/v1",
+          "description": "Agent identity of Word Pass SPEC 17.1: agent, principal, runtime identity, signed by its issuer.",
+          "required": false,
+          "params": {
+            "identity": {
+              "v": 1,
+              "kind": "agent_identity",
+              "issuer": "example",
+              "kid": "a1171dbbeb4c3fc2",
+              "agent": "ag_gamma",
+              "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+              "principal_kind": "company",
+              "principal_key": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+              "runtime": {
+                "kind": "key",
+                "alg": "Ed25519",
+                "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+                "kid": "32a4da838e4af766"
+              },
+              "card": {
+                "url": "https://gamma.example/.well-known/agent-card.json",
+                "sha256": "8b2654fd5d0e2e9663db3135f025651f2442d4fe3dcbfe653700c69c05e5c0fc"
+              },
+              "pass": "https://example.test/v1/agents/ag_gamma/pass",
+              "issued_at": "2026-10-11T08:00:00.000Z",
+              "expires_at": "2027-10-11T08:00:00.000Z",
+              "sig": "eCyYwZ5lilurt9xitxUBMqn1lWz3eibEGhtEw-93wSYpusyY-DLGxOx26bWx3xfMlp_XYhIlAvtjF5LBlpcKCw"
+            }
+          }
+        }
+      ]
+    },
+    "skills": [
+      {
+        "id": "translate",
+        "name": "Translate"
+      }
+    ]
+  },
+  "card_hash": "8b2654fd5d0e2e9663db3135f025651f2442d4fe3dcbfe653700c69c05e5c0fc",
+  "identity": {
+    "v": 1,
+    "kind": "agent_identity",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "agent": "ag_gamma",
+    "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+    "principal_kind": "company",
+    "principal_key": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+    "runtime": {
+      "kind": "key",
+      "alg": "Ed25519",
+      "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+      "kid": "32a4da838e4af766"
+    },
+    "card": {
+      "url": "https://gamma.example/.well-known/agent-card.json",
+      "sha256": "8b2654fd5d0e2e9663db3135f025651f2442d4fe3dcbfe653700c69c05e5c0fc"
+    },
+    "pass": "https://example.test/v1/agents/ag_gamma/pass",
+    "issued_at": "2026-10-11T08:00:00.000Z",
+    "expires_at": "2027-10-11T08:00:00.000Z",
+    "sig": "eCyYwZ5lilurt9xitxUBMqn1lWz3eibEGhtEw-93wSYpusyY-DLGxOx26bWx3xfMlp_XYhIlAvtjF5LBlpcKCw"
+  },
+  "identity_hash": "d56009fcd47b0d8fa99b2893355b57fb46a0a487bc3dd32d2330b0dc094a349e",
+  "mandate": {
+    "v": 1,
+    "kind": "mandate",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "id": "md_17",
+    "agent": "ag_gamma",
+    "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+    "how": "card_saved",
+    "scope": {
+      "currency": "chf",
+      "max_order_minor": 1000,
+      "monthly_minor": 5000,
+      "counterparties": [
+        "ag_alpha",
+        "ag_beta"
+      ],
+      "purpose_codes": [
+        "translation"
+      ],
+      "step_up_above_minor": 800,
+      "unattended": true
+    },
+    "purpose": "translations for our shop",
+    "issued_at": "2026-10-11T08:05:00.000Z",
+    "expires_at": "2026-12-31T23:59:59.000Z",
+    "principal_sig": {
+      "kid": "a95eb5c653efe6e7",
+      "x": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+      "sig": "Zp02U2l2Vqh3RkIkuELYp9ZMQ3jHCU6ulR4qamc-TtEZSyE5LpKO-yMofO_OBO-5ChZj1HbgEVJzVe61B3x-BQ"
+    },
+    "sig": "OBiVzt4jzEZjXmMsYipvuTg-h4eHdHzJTTgzcKKme3qRLAbeYVPKPsBrEmsT6RvC9N1qaCfo9R6QPXC8Eae1Ag"
+  },
+  "mandate_hash": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+  "listing": {
+    "id": "ls_translate",
+    "seller": "ag_alpha",
+    "price": {
+      "amount_minor": 500,
+      "currency": "chf"
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "task_message": {
+    "messageId": "msg_1",
+    "role": "ROLE_USER",
+    "parts": [
+      {
+        "text": "Translate \"Grüezi mitenand\" into French."
+      }
+    ]
+  },
+  "runtime_proof_over": "{\"agent\":\"ag_gamma\",\"amount_minor\":500,\"aud\":\"gw_example\",\"currency\":\"chf\",\"deal\":\"12db82b2e5d20fe865cec9e8041d97f90123eabb9cfebe3be8144e04e59fd2f4\",\"transfer\":\"tr_1\"}",
+  "request": {
+    "v": 1,
+    "kind": "transfer_request",
+    "transfer": "tr_1",
+    "at": "2026-10-11T09:00:00.000Z",
+    "tool": "buy",
+    "aud": "gw_example",
+    "human_present": false,
+    "identity": {
+      "v": 1,
+      "kind": "agent_identity",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_gamma",
+      "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+      "principal_kind": "company",
+      "principal_key": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+      "runtime": {
+        "kind": "key",
+        "alg": "Ed25519",
+        "x": "MNKcmD0FGTuC-0QRZwPVmDRg-xPgUuoljiNCUmYZIXA",
+        "kid": "32a4da838e4af766"
+      },
+      "card": {
+        "url": "https://gamma.example/.well-known/agent-card.json",
+        "sha256": "8b2654fd5d0e2e9663db3135f025651f2442d4fe3dcbfe653700c69c05e5c0fc"
+      },
+      "pass": "https://example.test/v1/agents/ag_gamma/pass",
+      "issued_at": "2026-10-11T08:00:00.000Z",
+      "expires_at": "2027-10-11T08:00:00.000Z",
+      "sig": "eCyYwZ5lilurt9xitxUBMqn1lWz3eibEGhtEw-93wSYpusyY-DLGxOx26bWx3xfMlp_XYhIlAvtjF5LBlpcKCw"
+    },
+    "task": {
+      "protocol": "a2a",
+      "version": "1.0",
+      "task_id": "task_1",
+      "context_id": null,
+      "agreed_sha256": "71bc43312258f3a5d1441bb0a019d6c56188f1d33c9a4d3153130bad643f23ce"
+    },
+    "deal": {
+      "kind": "listing",
+      "ref": "ls_translate",
+      "hash": "12db82b2e5d20fe865cec9e8041d97f90123eabb9cfebe3be8144e04e59fd2f4",
+      "seller": "ag_alpha",
+      "amount_minor": 500,
+      "currency": "chf",
+      "purpose_code": "translation",
+      "output_schema_sha256": "bfcba292825c11bcdc991c377e42f44e22ebb8a40db25e8e8b16204f08b7cf2a"
+    },
+    "mandate": {
+      "v": 1,
+      "kind": "mandate",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "id": "md_17",
+      "agent": "ag_gamma",
+      "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+      "how": "card_saved",
+      "scope": {
+        "currency": "chf",
+        "max_order_minor": 1000,
+        "monthly_minor": 5000,
+        "counterparties": [
+          "ag_alpha",
+          "ag_beta"
+        ],
+        "purpose_codes": [
+          "translation"
+        ],
+        "step_up_above_minor": 800,
+        "unattended": true
+      },
+      "purpose": "translations for our shop",
+      "issued_at": "2026-10-11T08:05:00.000Z",
+      "expires_at": "2026-12-31T23:59:59.000Z",
+      "principal_sig": {
+        "kid": "a95eb5c653efe6e7",
+        "x": "1cH91LU1oWuA8Vaq5Ws5bSmenXQCSBqklp0E2yEWHME",
+        "sig": "Zp02U2l2Vqh3RkIkuELYp9ZMQ3jHCU6ulR4qamc-TtEZSyE5LpKO-yMofO_OBO-5ChZj1HbgEVJzVe61B3x-BQ"
+      },
+      "sig": "OBiVzt4jzEZjXmMsYipvuTg-h4eHdHzJTTgzcKKme3qRLAbeYVPKPsBrEmsT6RvC9N1qaCfo9R6QPXC8Eae1Ag"
+    },
+    "mandate_end": null,
+    "step_up": null,
+    "counterparty_identity": null,
+    "settlement": {
+      "rail": "stripe",
+      "amount_minor": 500,
+      "currency": "chf",
+      "fee_minor": 45
+    },
+    "history": [
+      {
+        "transfer": "tr_0",
+        "at": "2026-10-11T08:30:00.000Z",
+        "amount_minor": 300,
+        "currency": "chf",
+        "settlement_id": "pi_0",
+        "evidence": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "chain": "c77ebe64e59c07707a20499db742e82f93056837b84bf0adfc84d5c83d6ec1cb"
+      }
+    ],
+    "runtime_proof": {
+      "kind": "key",
+      "sig": "Z0bcMJ4KnFAuyGTCCscmat7BAdF0oqrAw5U_e-H889YeGDZ9yfmBQAzkGbihu1N7gAjyPulSLmqxuzfJiuHzBQ"
+    }
+  },
+  "decision": {
+    "v": 1,
+    "kind": "gate_decision",
+    "transfer": "tr_1",
+    "decision": "allow",
+    "reasons": [],
+    "answered": {
+      "identity": true,
+      "task": true,
+      "deal": true,
+      "mandate": true,
+      "settlement": "after_evidence"
+    },
+    "gaps": [
+      "counterparty_identity"
+    ],
+    "chain": "c77ebe64e59c07707a20499db742e82f93056837b84bf0adfc84d5c83d6ec1cb",
+    "policy": "02afcf99379ddfac2b70ebd03e43ef37b9d10d6de93d0a4a67b369a3f25ad593",
+    "decided_at": "2026-10-11T09:00:00.000Z"
+  },
+  "say": "Allowed: four questions answered, the fifth comes with the evidence. Gaps: counterparty_identity.",
+  "say_de": "Erlaubt: vier Fragen beantwortet, die fünfte kommt mit dem Beleg. Lücken: counterparty_identity.",
+  "step_up": {
+    "v": 1,
+    "kind": "step_up",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "transfer": "tr_1",
+    "agent": "ag_gamma",
+    "mandate": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+    "deal": "12db82b2e5d20fe865cec9e8041d97f90123eabb9cfebe3be8144e04e59fd2f4",
+    "seller": "ag_alpha",
+    "amount_minor": 900,
+    "how": "passkey",
+    "iat": "2026-10-11T09:00:00.000Z",
+    "exp": "2026-10-11T09:05:00.000Z",
+    "sig": "vt77utpzRPTUwumVqM0Funo8PbDF9Lrs9wEYLi_w3ghXm_SsY9qrQP1yRbQHSfPIpILnckiF7SMETANulZPECQ"
+  },
+  "receipt": {
+    "v": 1,
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_17",
+    "listing": "ls_translate",
+    "seller": "ag_alpha",
+    "buyer": "ag_gamma",
+    "amount_minor": 500,
+    "currency": "chf",
+    "delivered_at": "2026-10-11T09:00:04.000Z",
+    "delivery_sha256": "a692ec524c1a8223a9e1ffafd9ee88adb89e122fb8825b86825cbf78493fdb32",
+    "mandate": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+    "sig": "_T5D5F8OkfQreMt3CwijMSgx9lC1bTX6xG5SK_3NcihXpgJaZ2Hzr8Hqd01Srh4LtkQgVjUHpAq4_6Mq_o5QBw"
+  },
+  "evidence": {
+    "v": 1,
+    "kind": "evidence",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "id": "ev_1",
+    "transfer": "tr_1",
+    "identity": "d56009fcd47b0d8fa99b2893355b57fb46a0a487bc3dd32d2330b0dc094a349e",
+    "agent": "ag_gamma",
+    "principal": "649f727a143737fdad7d84fb24cb55139e097decb3a14bd56b0eab970c657c77",
+    "task": {
+      "protocol": "a2a",
+      "task_id": "task_1",
+      "agreed_sha256": "71bc43312258f3a5d1441bb0a019d6c56188f1d33c9a4d3153130bad643f23ce"
+    },
+    "deal": {
+      "kind": "listing",
+      "ref": "ls_translate",
+      "hash": "12db82b2e5d20fe865cec9e8041d97f90123eabb9cfebe3be8144e04e59fd2f4"
+    },
+    "mandate": "e4e7619508b67fa193ec8194559db17e2664131a440c82e1232bd7d85c0bdc93",
+    "counterparty": {
+      "agent": "ag_alpha",
+      "identity": null
+    },
+    "price": {
+      "amount_minor": 500,
+      "currency": "chf"
+    },
+    "settlement": {
+      "rail": "stripe",
+      "id": "ch_17",
+      "amount_minor": 500,
+      "currency": "chf",
+      "fee_minor": 45,
+      "finality": "captured",
+      "reversible_by_rail": true,
+      "finalized_at": "2026-10-11T09:00:04.000Z"
+    },
+    "result": {
+      "status": "delivered",
+      "delivery_sha256": "a692ec524c1a8223a9e1ffafd9ee88adb89e122fb8825b86825cbf78493fdb32",
+      "receipt": "16258b24e1ab86c72b129353d1dc7d7ea7ac7d790a4046d958a9d248746234f1"
+    },
+    "gate": {
+      "policy": "02afcf99379ddfac2b70ebd03e43ef37b9d10d6de93d0a4a67b369a3f25ad593",
+      "decision": "allow",
+      "decided_at": "2026-10-11T09:00:00.000Z"
+    },
+    "issued_at": "2026-10-11T09:00:05.000Z",
+    "sig": "KWQ3rpVFE1AW7NLvkdn1-_S0PKdEHjEKrErDuje8Ijm7W8peBaIDXT8yg97wvul7TmueuVCy4xjeyocqyJI6AA"
+  },
+  "evidence_hash": "0f2700009578d5baf420a535359343074a825411b6b914c63c401b8b6e829a1c",
+  "evidence_check": {
+    "valid": true,
+    "covers": [
+      "evidence signed",
+      "settlement final with the rail's id",
+      "settled what was priced",
+      "result stated",
+      "identity, principal, task, mandate and deal named by hash",
+      "follows an allow of this gate",
+      "names this identity and principal",
+      "names this mandate",
+      "names this task",
+      "names this deal, counterparty and price",
+      "names this receipt"
+    ],
+    "reasons": []
+  },
+  "variants": {
+    "no_mandate": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_MISSING"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: no mandate: no wallet without authority. Gaps: counterparty_identity."
+    },
+    "no_identity": {
+      "decision": "reject",
+      "reasons": [
+        "IDENTITY_MISSING"
+      ],
+      "gaps": [
+        "counterparty_identity",
+        "principal_key_unattested"
+      ],
+      "say": "Rejected: no signed agent identity. Gaps: counterparty_identity, principal_key_unattested."
+    },
+    "mandate_expired": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_EXPIRED"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the mandate has expired. Gaps: counterparty_identity."
+    },
+    "counterparty_not_allowed": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_COUNTERPARTY_NOT_ALLOWED"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the seller is not on the mandate's counterparty allowlist. Gaps: counterparty_identity."
+    },
+    "over_monthly_cap": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_OVER_MONTHLY_CAP"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the amount exceeds the monthly cap together with what was already settled. Gaps: counterparty_identity."
+    },
+    "reserved_counts": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_OVER_MONTHLY_CAP"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the amount exceeds the monthly cap together with what was already settled. Gaps: counterparty_identity."
+    },
+    "over_cap": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_OVER_ORDER_CAP"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the amount is over the cap per order. Gaps: counterparty_identity."
+    },
+    "step_up": {
+      "decision": "step_up",
+      "reasons": [
+        "STEP_UP_AMOUNT"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Step-up needed: the amount is above the step-up band: the principal confirms this transfer individually. Gaps: counterparty_identity."
+    },
+    "step_up_confirmed": {
+      "decision": "allow",
+      "reasons": [],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Allowed: four questions answered, the fifth comes with the evidence. Gaps: counterparty_identity."
+    },
+    "step_up_other_deal": {
+      "decision": "step_up",
+      "reasons": [
+        "STEP_UP_AMOUNT"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Step-up needed: the amount is above the step-up band: the principal confirms this transfer individually. Gaps: counterparty_identity."
+    },
+    "fee_eats_call": {
+      "decision": "reject",
+      "reasons": [
+        "FEE_EATS_CALL"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the fee eats the call: a defect, not a price. Gaps: counterparty_identity."
+    },
+    "mcp_as_task": {
+      "decision": "reject",
+      "reasons": [
+        "TASK_PROTOCOL_NOT_ALLOWED"
+      ],
+      "gaps": [
+        "counterparty_identity",
+        "task_not_a2a"
+      ],
+      "say": "Rejected: the task protocol is not allowed (MCP carries tools, never payment). Gaps: counterparty_identity, task_not_a2a."
+    },
+    "free_text_deal": {
+      "decision": "reject",
+      "reasons": [
+        "DEAL_NO_TERMS"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the deal has no machine-readable terms (output_schema or terms). Gaps: counterparty_identity."
+    },
+    "prior_without_evidence": {
+      "decision": "reject",
+      "reasons": [
+        "EVIDENCE_MISSING_PRIOR"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: an earlier transfer on this chain was settled without an evidence object: an incident, no second payment. Gaps: counterparty_identity."
+    },
+    "other_chain_without_evidence": {
+      "decision": "allow",
+      "reasons": [],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Allowed: four questions answered, the fifth comes with the evidence. Gaps: counterparty_identity."
+    },
+    "wrong_runtime_key": {
+      "decision": "reject",
+      "reasons": [
+        "RUNTIME_MISMATCH"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the runtime proof does not match the identity's runtime. Gaps: counterparty_identity."
+    },
+    "proof_for_other_deal": {
+      "decision": "reject",
+      "reasons": [
+        "RUNTIME_MISMATCH"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the runtime proof does not match the identity's runtime. Gaps: counterparty_identity."
+    },
+    "tool_not_allowed": {
+      "decision": "reject",
+      "reasons": [
+        "RBAC_DENIED"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: no rule allows this agent this tool. Gaps: counterparty_identity."
+    },
+    "forged_mandate": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_SIGNATURE"
+      ],
+      "gaps": [
+        "counterparty_identity",
+        "principal_signature"
+      ],
+      "say": "Rejected: the mandate's signature does not verify. Gaps: counterparty_identity, principal_signature."
+    },
+    "time_unreadable": {
+      "decision": "reject",
+      "reasons": [
+        "REQUEST_TIME_INVALID"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the request states no readable transfer time: not guessed, rejected. Gaps: counterparty_identity."
+    },
+    "time_skew": {
+      "decision": "reject",
+      "reasons": [
+        "REQUEST_TIME_SKEW"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the request's transfer time is further from the gateway's clock than the policy allows. Gaps: counterparty_identity."
+    },
+    "history_invalid": {
+      "decision": "reject",
+      "reasons": [
+        "REQUEST_HISTORY_INVALID"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: the request's ledger (history) is not a list of valid entries: no ledger, no limits, no transfer. Gaps: counterparty_identity."
+    },
+    "x402_usdc_with_fx": {
+      "decision": "allow",
+      "reasons": [],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Allowed: four questions answered, the fifth comes with the evidence. Gaps: counterparty_identity."
+    },
+    "x402_usdc_without_fx": {
+      "decision": "reject",
+      "reasons": [
+        "DEAL_FX_MISSING"
+      ],
+      "gaps": [
+        "counterparty_identity"
+      ],
+      "say": "Rejected: settlement in another asset than the deal's currency without a bound exchange rate (fx). Gaps: counterparty_identity."
+    },
+    "x402_payee_not_onboarded": {
+      "decision": "reject",
+      "reasons": [
+        "MANDATE_COUNTERPARTY_NOT_ALLOWED"
+      ],
+      "gaps": [
+        "counterparty_identity",
+        "counterparty_not_onboarded"
+      ],
+      "say": "Rejected: the seller is not on the mandate's counterparty allowlist. Gaps: counterparty_identity, counterparty_not_onboarded."
+    }
+  },
+  "transition": {
+    "policy": {
+      "v": 1,
+      "kind": "gateway_policy",
+      "id": "gp_transition_1",
+      "issuer": "pazair",
+      "about": "Transition policy: like the reference policy, but it accepts the PazAIr order of today (buy, accept_bid, create_project over MCP) as the task, under the name pazair_order, with agreed_sha256 = sha256hex of the order input as sent. Every decision under it carries gaps: [\"task_not_a2a\"], so the gap stays visible until the PazAIr order is an A2A task. Not the owner's decision yet; offered for it.",
+      "require": {
+        "runtime_proof": true,
+        "mandate_expiry": true,
+        "counterparty_allowlist": false,
+        "purpose_codes": false,
+        "principal_signature": false,
+        "counterparty_identity": false,
+        "evidence_before_next": true
+      },
+      "tasks": {
+        "protocols": [
+          "a2a",
+          "pazair_order"
+        ]
+      },
+      "deals": {
+        "kinds": [
+          "listing",
+          "award",
+          "ucp_checkout",
+          "acp_checkout_session",
+          "x402_requirements"
+        ]
+      },
+      "rails": {
+        "allowed": [
+          "stripe",
+          "x402",
+          "mpp",
+          "xrpl",
+          "stellar"
+        ],
+        "max_fee_ratio": 0.25
+      },
+      "rbac": [
+        {
+          "agent": "*",
+          "tools": [
+            "buy",
+            "accept_bid",
+            "create_project",
+            "SendMessage",
+            "SendStreamingMessage",
+            "message/send",
+            "message/stream"
+          ],
+          "effect": "allow"
+        }
+      ],
+      "clock_skew_seconds": 120
+    },
+    "policy_hash": "4e2e40d4399c3409e01b9fcb0539a06acc004663bd4e1d437369bb71d433ef7d",
+    "decision": {
+      "v": 1,
+      "kind": "gate_decision",
+      "transfer": "tr_1",
+      "decision": "allow",
+      "reasons": [],
+      "answered": {
+        "identity": true,
+        "task": true,
+        "deal": true,
+        "mandate": true,
+        "settlement": "after_evidence"
+      },
+      "gaps": [
+        "counterparty_identity",
+        "task_not_a2a"
+      ],
+      "chain": "c77ebe64e59c07707a20499db742e82f93056837b84bf0adfc84d5c83d6ec1cb",
+      "policy": "4e2e40d4399c3409e01b9fcb0539a06acc004663bd4e1d437369bb71d433ef7d",
+      "decided_at": "2026-10-11T09:00:00.000Z"
+    }
+  },
+  "dispute": {
+    "dispute": {
+      "v": 1,
+      "kind": "dispute",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "id": "dp_1",
+      "order": "or_17",
+      "receipt": "16258b24e1ab86c72b129353d1dc7d7ea7ac7d790a4046d958a9d248746234f1",
+      "evidence": "0f2700009578d5baf420a535359343074a825411b6b914c63c401b8b6e829a1c",
+      "opened_by": "ag_gamma",
+      "against": "ag_alpha",
+      "reason_code": "not_as_promised",
+      "claim_sha256": "36bcebbcd834da0c5ce80299fb7e35fe40d044e3f67740de73864d9349e01153",
+      "opened_at": "2026-10-12T10:00:00.000Z",
+      "sig": "UeZu6_Z9PoujZvIubXGBc7cpNN3sbfg46_3z623Mjbgdr1lwHdbMxI9EHDXOMAYGT0r3Uo2lKMiqDft11JRaBg"
+    },
+    "dispute_hash": "504f8aa0b492a8ac437b79190040945b1a011e6fbb2f7bdb5cfe4cf3e84cbdcd",
+    "answer": {
+      "v": 1,
+      "kind": "dispute_answer",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "dispute": "504f8aa0b492a8ac437b79190040945b1a011e6fbb2f7bdb5cfe4cf3e84cbdcd",
+      "by": "ag_alpha",
+      "answer_sha256": "b931e24a41e5baa1310d1df60aa34c16c81e8ec87915980ceac3ffc7e0d8ba60",
+      "at": "2026-10-13T10:00:00.000Z",
+      "sig": "ddmmHlqH1TbGubAt2W9mTlk2FIXUjnHkOLbhVcuftJ3NESwKtKs1ZqAIk12HZaOeflGqLS4TTThixQwt9m_PAg"
+    },
+    "answer_hash": "9d02172cfc0f6fa957e078fb4c5c20cece84c97e5c1837053c1084b555abd25a",
+    "decision": {
+      "v": 1,
+      "kind": "dispute_decision",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "dispute": "504f8aa0b492a8ac437b79190040945b1a011e6fbb2f7bdb5cfe4cf3e84cbdcd",
+      "answer": "9d02172cfc0f6fa957e078fb4c5c20cece84c97e5c1837053c1084b555abd25a",
+      "outcome": "for_buyer",
+      "bears": "counterparty",
+      "decided_by": "person",
+      "refund": {
+        "rail": "stripe",
+        "id": "re_17",
+        "amount_minor": 500,
+        "currency": "chf"
+      },
+      "decided_at": "2026-10-14T09:00:00.000Z",
+      "sig": "Hl6UJc46kFk3Z_lqr8DEIRuXlPWkVGGLEUPwNVH3o3gFc9XJopQCMfItqYg5qoNeQSE0sRz5qA14N6KI6Mh_DQ"
+    },
+    "check": {
+      "valid": true,
+      "covers": [
+        "dispute signed",
+        "claim fixed by hash and reason code",
+        "dispute names this receipt",
+        "opened by the buyer against the seller",
+        "opened after the delivery",
+        "decision signed",
+        "decision names this dispute",
+        "decided after it was opened",
+        "outcome and who bears it stated",
+        "refund with the rail's id",
+        "refund within what was paid",
+        "the answer the decision saw",
+        "answered between opening and decision"
+      ],
+      "reasons": []
+    },
+    "variants": {
+      "refund_over_paid": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_REFUND_OVER_PAID"
+        ]
+      },
+      "for_seller_with_refund": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_REFUND_UNEXPECTED"
+        ]
+      },
+      "for_seller": {
+        "valid": true,
+        "reasons": []
+      },
+      "answer_hidden_from_decision": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_ANSWER_MISMATCH"
+        ]
+      },
+      "decided_before_opened": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_DECIDED_BEFORE_OPENED",
+          "DISPUTE_ANSWER_OUT_OF_ORDER"
+        ]
+      }
+    }
+  }
+}

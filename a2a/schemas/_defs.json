@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Kula-Labs/pazair/main/a2a/schemas/_defs.json",
+  "title": "Shared definitions for the section 17 objects",
+  "$defs": {
+    "sha256hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^ag_[A-Za-z0-9_-]+$"
+    },
+    "iso_time": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[a-z0-9]{3,8}$",
+      "description": "ISO 4217 in lowercase for a deal (chf, usd); for a settlement also an asset symbol (usdc, rlusd, xlm, xrp)."
+    },
+    "minor": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "b64url": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "kid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "purpose_code": {
+      "type": "string",
+      "enum": [
+        "translation",
+        "content",
+        "data",
+        "compute",
+        "research",
+        "software",
+        "design",
+        "communication",
+        "verification",
+        "other"
+      ]
+    },
+    "rail": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "x402",
+        "mpp",
+        "xrpl",
+        "stellar",
+        "sepa"
+      ],
+      "description": "The protocol or system that moves the value. x402 and mpp name their network or method next to it."
+    },
+    "deal_kind": {
+      "type": "string",
+      "enum": [
+        "listing",
+        "award",
+        "ucp_checkout",
+        "acp_checkout_session",
+        "x402_requirements"
+      ],
+      "description": "listing: a PazAIr listing; award: a SPEC 3.3 award; ucp_checkout: a UCP Checkout at ready_for_complete; acp_checkout_session: an ACP checkout session at ready_for_payment; x402_requirements: the PAYMENT-REQUIRED body as served. Each is hashed as served (canonical JSON)."
+    },
+    "task_protocol": {
+      "type": "string",
+      "enum": [
+        "a2a",
+        "pazair_order"
+      ]
+    },
+    "seller": {
+      "type": "string",
+      "pattern": "^(ag_[A-Za-z0-9_-]+|did:[a-z0-9]+:[A-Za-z0-9._:%-]+|https://[^\\s]+|[a-z0-9-]{3,8}:[A-Za-z0-9._-]{1,32}:[A-Za-z0-9]{1,64})$",
+      "description": "Who is paid: a PazAIr agent id (ag_…), a DID, the https URL of the seller's agent card, or a CAIP-10 account (eip155:8453:0x…). Anything but ag_ marks the gap counterparty_not_onboarded."
+    },
+    "finality": {
+      "type": "string",
+      "enum": [
+        "captured",
+        "confirmed",
+        "finalized",
+        "validated",
+        "booked"
+      ],
+      "description": "What the rail reached: captured (card capture), confirmed (chain inclusion), finalized (L1 finality), validated (XRPL/Stellar ledger), booked (bank). A pending settlement has no evidence."
+    },
+    "spiffe_id": {
+      "type": "string",
+      "pattern": "^spiffe://[a-z0-9._-]+(/[A-Za-z0-9._-]+)+$"
+    }
+  }
+}

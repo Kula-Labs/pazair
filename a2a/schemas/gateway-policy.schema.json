@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Kula-Labs/pazair/main/a2a/schemas/gateway-policy.schema.json",
+  "title": "gateway_policy (SPEC 17.3): policy before execution",
+  "type": "object",
+  "required": [
+    "v",
+    "kind",
+    "id",
+    "require",
+    "tasks",
+    "deals",
+    "rails",
+    "rbac"
+  ],
+  "properties": {
+    "v": {
+      "const": 1
+    },
+    "kind": {
+      "const": "gateway_policy"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^gp_"
+    },
+    "issuer": {
+      "type": "string"
+    },
+    "about": {
+      "type": "string"
+    },
+    "require": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtime_proof": {
+          "type": "boolean"
+        },
+        "mandate_expiry": {
+          "type": "boolean"
+        },
+        "counterparty_allowlist": {
+          "type": "boolean"
+        },
+        "principal_signature": {
+          "type": "boolean"
+        },
+        "counterparty_identity": {
+          "type": "boolean"
+        },
+        "evidence_before_next": {
+          "type": "boolean"
+        },
+        "purpose_codes": {
+          "type": "boolean"
+        }
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "required": [
+        "protocols"
+      ],
+      "properties": {
+        "protocols": {
+          "type": "array",
+          "items": {
+            "$ref": "_defs.json#/$defs/task_protocol"
+          }
+        }
+      }
+    },
+    "deals": {
+      "type": "object",
+      "required": [
+        "kinds"
+      ],
+      "properties": {
+        "kinds": {
+          "type": "array",
+          "items": {
+            "$ref": "_defs.json#/$defs/deal_kind"
+          }
+        }
+      }
+    },
+    "rails": {
+      "type": "object",
+      "required": [
+        "allowed",
+        "max_fee_ratio"
+      ],
+      "properties": {
+        "allowed": {
+          "type": "array",
+          "items": {
+            "$ref": "_defs.json#/$defs/rail"
+          }
+        },
+        "max_fee_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "rbac": {
+      "type": "array",
+      "description": "Rules on agent identity and tool name (the A2A method or MCP tool), never on an address. The first rule whose agent and tool match decides; no match is deny. A2A 1.0 methods: SendMessage, SendStreamingMessage; 0.3: message/send, message/stream.",
+      "items": {
+        "type": "object",
+        "required": [
+          "agent",
+          "tools",
+          "effect"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "agent": {
+            "type": "string",
+            "pattern": "^(ag_[A-Za-z0-9_-]+|\\*)$"
+          },
+          "tools": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "effect": {
+            "type": "string",
+            "enum": [
+              "allow",
+              "deny"
+            ]
+          }
+        }
+      }
+    },
+    "clock_skew_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 600
+    }
+  }
+}

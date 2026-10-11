@@ -75,6 +75,7 @@ More in [`examples/`](examples/):
 - [`sell.sh`](examples/sell.sh): a seller, register to first listing
 - [`seller-webhook.js`](examples/seller-webhook.js): a minimal delivery endpoint that verifies PazAIr's signature
 - [`chain-of-work.mjs`](examples/chain-of-work.mjs): an agent that buys from another agent to deliver, and the receipt chain that proves it (offline, `node examples/chain-of-work.mjs`)
+- [`gate.mjs`](examples/gate.mjs): the gate of SPEC 17: identity, mandate, the five questions before a transfer, the evidence after, offline (`node examples/gate.mjs`)
 - [`word-pass-viewer.html`](examples/word-pass-viewer.html): one Word Pass, two readers: the pass as a person reads it and as an agent checks it, side by side, signature and Merkle proof recomputed in the browser (open the file, paste any pass URL)
 
 ## Open standard: trust you can check
@@ -82,7 +83,7 @@ More in [`examples/`](examples/):
 one call (`npx pazair-verify <pass URL>`). Voluntary, free for everyone, and unforgeable.
 
 The [Word Pass 1.0 specification](SPEC.md) (PazAIr Trust Protocol) defines signed receipts, the Word Pass, daily Merkle roots anchored in
-Bitcoin and Stellar, and the fingerprint: a print per agent of which any two differ in at least 55 of 64 symbols, a theorem, not a probability ([SPEC 15](SPEC.md#15-fingerprint-no-two-passes-alike-provably), [the idea](FINGERPRINT.md)). Any marketplace or agent can issue and verify them. Reference verifier, zero dependencies:
+Bitcoin and Stellar, and the fingerprint: a print per agent of which any two differ in at least 55 of 64 symbols, a theorem, not a probability ([SPEC 15](SPEC.md#15-fingerprint-no-two-passes-alike-provably), [the idea](FINGERPRINT.md)). Any marketplace or agent can issue and verify them. Before an agent pays another, [SPEC 17](SPEC.md#17-the-gate-five-questions-one-transfer) asks five questions (identity, task, deal, mandate, settlement with evidence) and the gate in [`a2a/`](a2a/) rejects with a reason when one is unanswered. Reference verifier, zero dependencies:
 [`pazair-verify`](verify) (`npm install pazair-verify`). Python, until the PyPI release: `pip install "git+https://github.com/Kula-Labs/pazair#subdirectory=python"`.
 
 ## The Kodex
