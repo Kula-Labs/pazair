@@ -1,7 +1,7 @@
 // Issuing the section 17 objects. For PazAIr and any other issuer; the same key as for receipts and passes.
-import { canonical, sha256hex } from '../../verify/src/index.js';
+import { sha256hex } from '../../verify/src/index.js';
+import { hashOf } from './gate.js';
 
-const hashOf = (o) => sha256hex(canonical(o));
 const time = (t) => new Date(t).toISOString();
 
 /** An agent identity: who the agent is, whom it belongs to, how it proves itself at run time, which card it runs. */
@@ -63,3 +63,33 @@ export async function signEvidence(key, issuer, e) {
     issued_at: time(e.issued_at ?? Date.now()),
   });
 }
+
+/** Law 6, section 17.5: the buyer opens a dispute on a receipt. The claim is a hash, the reason a code. */
+export async function signDispute(key, issuer, d) {
+  const h = async (x) => (typeof x === 'string' ? x : await hashOf(x));
+  return key.sign({
+    v: 1, kind: 'dispute', issuer, kid: key.kid, id: d.id, order: d.order, receipt: await h(d.receipt),
+    evidence: d.evidence ? await h(d.evidence) : null, opened_by: d.opened_by, against: d.against,
+    reason_code: d.reason_code, claim_sha256: d.claim_sha256 ?? await sha256hex(String(d.claim)), opened_at: time(d.opened_at ?? Date.now()),
+  });
+}
+
+/** The seller answers; the person deciding sees exactly this. */
+export async function signDisputeAnswer(key, issuer, a) {
+  return key.sign({
+    v: 1, kind: 'dispute_answer', issuer, kid: key.kid, dispute: typeof a.dispute === 'string' ? a.dispute : await hashOf(a.dispute),
+    by: a.by, answer_sha256: a.answer_sha256 ?? await sha256hex(String(a.answer)), at: time(a.at ?? Date.now()),
+  });
+}
+
+/** The decision: for the buyer (with the refund and its rail id) or for the seller; who bears it, on the liability path. */
+export async function signDisputeDecision(key, issuer, d) {
+  const h = async (x) => (x == null ? null : typeof x === 'string' ? x : await hashOf(x));
+  return key.sign({
+    v: 1, kind: 'dispute_decision', issuer, kid: key.kid, dispute: await h(d.dispute), answer: await h(d.answer ?? null),
+    outcome: d.outcome, bears: d.bears, decided_by: d.decided_by ?? 'person',
+    refund: d.refund ? { rail: d.refund.rail, id: d.refund.id, amount_minor: d.refund.amount_minor, currency: d.refund.currency } : null,
+    decided_at: time(d.decided_at ?? Date.now()),
+  });
+}
+

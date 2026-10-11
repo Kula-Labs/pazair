@@ -381,10 +381,10 @@
       "settled what was priced",
       "result stated",
       "identity, mandate and deal named by hash",
+      "follows an allow of this gate",
       "names this identity",
       "names this mandate",
-      "names this deal and counterparty",
-      "follows an allow of this gate",
+      "names this deal, counterparty and price",
       "names this receipt"
     ],
     "reasons": []
@@ -487,12 +487,194 @@
       ],
       "say": "Rejected: no rule allows this agent this tool."
     },
+    "other_chain_without_evidence": {
+      "decision": "allow",
+      "reasons": [],
+      "say": "Allowed: all four questions answered; the fifth comes with the evidence."
+    },
     "forged_mandate": {
       "decision": "reject",
       "reasons": [
         "MANDATE_SIGNATURE"
       ],
       "say": "Rejected: the mandate's signature does not verify."
+    }
+  },
+  "transition": {
+    "policy": {
+      "v": 1,
+      "kind": "gateway_policy",
+      "id": "gp_transition_1",
+      "issuer": "pazair",
+      "about": "Transition policy: like the reference policy, but it accepts the PazAIr order of today (buy, accept_bid, create_project over MCP) as the task, under the name pazair_order, with agreed_sha256 = sha256hex of the order input as sent. Every decision under it carries gaps: [\"task_not_a2a\"], so the gap stays visible until the PazAIr order is an A2A task. Not the owner's decision yet; offered for it.",
+      "require": {
+        "runtime_proof": true,
+        "mandate_expiry": true,
+        "counterparty_allowlist": false,
+        "principal_signature": false,
+        "counterparty_identity": false,
+        "evidence_before_next": true
+      },
+      "tasks": {
+        "protocols": [
+          "a2a",
+          "pazair_order"
+        ]
+      },
+      "deals": {
+        "kinds": [
+          "listing",
+          "award",
+          "ucp_checkout",
+          "acp_order"
+        ]
+      },
+      "rails": {
+        "allowed": [
+          "stripe",
+          "x402",
+          "mpp",
+          "xrpl",
+          "stellar"
+        ],
+        "max_fee_ratio": 0.25
+      },
+      "rbac": [
+        {
+          "agent": "*",
+          "tools": [
+            "buy",
+            "accept_bid",
+            "create_project",
+            "message/send",
+            "tasks/send"
+          ],
+          "effect": "allow"
+        }
+      ],
+      "clock_skew_seconds": 120
+    },
+    "policy_hash": "05b582d6153e9db323edc48eaac90a670a2d4de63c4d7d7f1067dd57aab5279a",
+    "decision": {
+      "v": 1,
+      "kind": "gate_decision",
+      "transfer": "tr_1",
+      "decision": "allow",
+      "reasons": [],
+      "answered": {
+        "identity": true,
+        "task": true,
+        "deal": true,
+        "mandate": true,
+        "settlement": "after_evidence"
+      },
+      "gaps": [
+        "counterparty_identity",
+        "task_not_a2a"
+      ],
+      "chain": "c77ebe64e59c07707a20499db742e82f93056837b84bf0adfc84d5c83d6ec1cb",
+      "policy": "05b582d6153e9db323edc48eaac90a670a2d4de63c4d7d7f1067dd57aab5279a",
+      "decided_at": "2026-10-11T09:00:00.000Z"
+    }
+  },
+  "dispute": {
+    "dispute": {
+      "v": 1,
+      "kind": "dispute",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "id": "dp_1",
+      "order": "or_17",
+      "receipt": "16258b24e1ab86c72b129353d1dc7d7ea7ac7d790a4046d958a9d248746234f1",
+      "evidence": "3564926a522f9207be816dc6a903871e6c9080852a5519c164a7fe9e64b0179c",
+      "opened_by": "ag_gamma",
+      "against": "ag_alpha",
+      "reason_code": "not_as_promised",
+      "claim_sha256": "36bcebbcd834da0c5ce80299fb7e35fe40d044e3f67740de73864d9349e01153",
+      "opened_at": "2026-10-12T10:00:00.000Z",
+      "sig": "ujbd6ryqw3yIGLxJQ_lMXkWdT59ewsfr23XTBBotlfMmCAcV3H5LuzD12XAe-rkWzfCsl-3Qkt3wFgMr3y6zCg"
+    },
+    "dispute_hash": "19486f836c3646d87f878ddcf528752dc4e91ee69e198af718c8e530bbcd9523",
+    "answer": {
+      "v": 1,
+      "kind": "dispute_answer",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "dispute": "19486f836c3646d87f878ddcf528752dc4e91ee69e198af718c8e530bbcd9523",
+      "by": "ag_alpha",
+      "answer_sha256": "b931e24a41e5baa1310d1df60aa34c16c81e8ec87915980ceac3ffc7e0d8ba60",
+      "at": "2026-10-13T10:00:00.000Z",
+      "sig": "xIY4RZS3kqL7BCf8IjvAJJg-AvX61opft4QDgvirmD6sJ60Z4B63mRqIW9cmH_mdCcpFJo-aXAuTkpv_8L_TBQ"
+    },
+    "answer_hash": "d864a0d6d137721247a12b0ad103ce1426d8c81eaf5caf27413af054526c845e",
+    "decision": {
+      "v": 1,
+      "kind": "dispute_decision",
+      "issuer": "example",
+      "kid": "a1171dbbeb4c3fc2",
+      "dispute": "19486f836c3646d87f878ddcf528752dc4e91ee69e198af718c8e530bbcd9523",
+      "answer": "d864a0d6d137721247a12b0ad103ce1426d8c81eaf5caf27413af054526c845e",
+      "outcome": "for_buyer",
+      "bears": "counterparty",
+      "decided_by": "person",
+      "refund": {
+        "rail": "stripe",
+        "id": "re_17",
+        "amount_minor": 500,
+        "currency": "chf"
+      },
+      "decided_at": "2026-10-14T09:00:00.000Z",
+      "sig": "sg6w-6qCMxHXeXHl_vVonwxCxZjUfIqw7uuhgGuM0X1gSetdxwQXMLv8XLFWQ-bMHA2lutIDzlCI3T_CoZSGAA"
+    },
+    "check": {
+      "valid": true,
+      "covers": [
+        "dispute signed",
+        "decision signed",
+        "decision names this dispute",
+        "claim fixed by hash and reason code",
+        "decided after it was opened",
+        "outcome and who bears it stated",
+        "refund with the rail's id",
+        "dispute names this receipt",
+        "opened by the buyer against the seller",
+        "opened after the delivery",
+        "refund within what was paid",
+        "the answer the decision saw",
+        "answered between opening and decision"
+      ],
+      "reasons": []
+    },
+    "variants": {
+      "refund_over_paid": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_REFUND_OVER_PAID"
+        ]
+      },
+      "for_seller_with_refund": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_REFUND_UNEXPECTED"
+        ]
+      },
+      "for_seller": {
+        "valid": true,
+        "reasons": []
+      },
+      "answer_hidden_from_decision": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_ANSWER_MISMATCH"
+        ]
+      },
+      "decided_before_opened": {
+        "valid": false,
+        "reasons": [
+          "DISPUTE_DECIDED_BEFORE_OPENED",
+          "DISPUTE_ANSWER_OUT_OF_ORDER"
+        ]
+      }
     }
   }
 }

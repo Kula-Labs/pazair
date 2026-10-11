@@ -71,7 +71,7 @@ Kette (`EVIDENCE_MISSING_PRIOR`).
 | 3 Principal bleibt haftbar | Principal-Hash im Mandat | Principal-Hash in Identität und Mandat, müssen übereinstimmen (`MANDATE_PRINCIPAL_MISMATCH`) |
 | 4 Unwiderruflich heisst vorher prüfen | Lieferung gegen Vertrag, dann Capture | unverändert; Chargeback ist ein Streit-Fall mit Beweis, kein Sicherheitsnetz |
 | 5 Eine Schicht, ein Job | Kauf über MCP | Gate trennt Task, Deal, Mandat, Settlement; MCP als Aufgabenprotokoll abgelehnt; PazAIr-Kaufpfad offen |
-| 6 Streit ist ein Objekt | Entscheid eines Menschen, signiert und verankert (live) | unverändert; ein `dispute`-Schema fehlt in SPEC (offen) |
+| 6 Streit ist ein Objekt | Entscheid eines Menschen, signiert und verankert (live) | SPEC 17.5: `dispute`, `dispute_answer`, `dispute_decision` mit `bears` (Haftungspfad) und Rückerstattung mit Rail-ID; `verifyDispute` |
 | 7 Limite sind Code | Limite pro Auftrag, Monat | dazu Ablauf, Allowlist, Zweck-Codes, Step-up-Band, unattended, Monatslimite aus dem Ledger |
 | 8 Kein Protokoll-Mix als Ausrede | nichts markiert | jede Entscheidung listet `gaps`: `counterparty_identity`, `task_not_a2a`, `principal_signature` |
 
@@ -98,17 +98,30 @@ Kette (`EVIDENCE_MISSING_PRIOR`).
 | Settlement | zu (Plan) | `settlement` im Request, `FEE_EATS_CALL`, `RAIL_NOT_ALLOWED` | Finalität je Rail prüfen (x402/MPP-Ingestion) |
 | Gate | zu | `a2a/policy/gateway-policy.json`, `gateway-policy.schema.json`, `decide()`, `rejection-reasons.json` | Einbau in den Gateway vor `buy`, `accept_bid`, `create_project` |
 | Beleg | zu | `a2a/schemas/evidence.schema.json`, `signEvidence`, `verifyEvidence` | Server stellt es noch nicht aus |
-| Testvektor | | `vectors/a2a-transfer-1.json`: ein Transfer, Allow, Evidence, 15 Varianten mit je einem Grund | |
+| Streit | zu | `a2a/schemas/dispute.schema.json`, `signDispute`, `signDisputeAnswer`, `signDisputeDecision`, `verifyDispute` | Server stellt die drei Objekte noch nicht so aus |
+| Testvektor | | `vectors/a2a-transfer-1.json`: ein Transfer, Allow, Evidence, 16 Varianten mit je einem Grund, Übergangs-Policy, Streit mit 5 Varianten | |
 
-Alles in `a2a/` ist ohne Abhängigkeiten, läuft mit `npm test` (10 Tests) und steht in SPEC 17.
+Alles in `a2a/` ist ohne Abhängigkeiten, läuft mit `npm test` (13 Tests) und steht in SPEC 17.
+
+**Was es für Kula Flow heisst.** Kula Flow handelt nur mit Mandat (Positionierung, Innovation 10). Das Gate ist
+die Stelle, an der das geprüft wird, bevor Kula Flow Geld bewegt; das Evidence-Objekt ist, was sein Learning
+Quantum Loop danach liest. Siehe [`a2a/README.md`](a2a/README.md#wie-es-kula-flow-speist).
+
+**Nachprüfung des eigenen Codes.** Eine zweite, kritische Durchsicht fand sechs Lücken im Gate, alle behoben
+und mit Tests belegt: `verifyEvidence` verglich den Preis nicht mit dem Deal; die Identität der Gegenpartei wurde
+ohne Art, Ablauf und Ausstelldatum angenommen; ein Step-up aus der Zukunft galt als frisch; eine unlesbare
+Transferzeit wurde durch «jetzt» ersetzt (geraten, nicht abgelehnt); eine kaputte RBAC-Regel liess das Gate
+abstürzen statt ablehnen; `answered` wurde vor dem Ende aller Prüfungen berechnet. Dazu ein Grund-Code ohne
+Prüfung dahinter (entfernt) und Code-Duplikate (zusammengelegt).
 
 ## Was offen bleibt und wer entscheidet
 
 - **Owner:** Kaufpfad als A2A-Task oder `pazair_order` in der Policy zulassen. Empfehlung: `pazair_order` für
   12 Monate zulassen, in jeder Entscheidung als `gaps: ["task_not_a2a"]` sichtbar, parallel A2A-Task einführen.
+  Vorbereitet als `a2a/policy/gateway-policy-transition.json`; die Referenz-Policy bleibt streng.
 - **Server:** `agent_identity` bei `register_agent` ausstellen; `set_mandate` um die 17.2-Felder erweitern;
   `decide()` vor `buy`, `accept_bid`, `create_project`; `evidence` nach jedem Capture; SPEC-Drift schliessen.
-- **SPEC:** `dispute`-Objekt (Gesetz 6), Settlement-Objekt, Receipts v2 nachtragen.
+- **SPEC:** Settlement-Objekt und Receipts v2 nachtragen (braucht den Server-Code). Das `dispute`-Objekt ist erledigt (17.5).
 - **Partner:** UCP/ACP-Adapter, x402/MPP-Finalität.
 
 ## Die Challenge: der Sprung

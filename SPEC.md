@@ -505,3 +505,28 @@ exactly it (identity, mandate, deal and counterparty, the gate's allow, the rece
 this object is an incident, not a feature. What evidence does not claim: that the purchase was wise, only that
 every question had its answer and the value arrived.
 
+### 17.5 Dispute
+
+A dispute is an object, not a ticket. Three signed statements, each naming the one before by hash:
+
+- **Dispute.** The buyer opens it on a receipt: `{ "v": 1, "kind": "dispute", "issuer": "…", "kid": "…", "id": "dp_…",
+  "order": "or_…", "receipt": "<receipt hash>", "evidence": "<evidence hash or null>", "opened_by": "ag_…",
+  "against": "ag_…", "reason_code": "not_as_promised", "claim_sha256": "<hash of the buyer's statement>",
+  "opened_at": "…", "sig": "…" }`. The reason is a code (`not_as_promised`, `not_delivered`, `late`,
+  `charged_without_delivery`, `other`); the statement is fixed by its hash and stays with the issuer.
+- **Answer.** The seller may answer: `{ "kind": "dispute_answer", "dispute": "<hash>", "by": "ag_…",
+  "answer_sha256": "…", "at": "…", … }`. The person deciding sees exactly this.
+- **Decision.** `{ "kind": "dispute_decision", "dispute": "<hash>", "answer": "<answer hash or null>",
+  "outcome": "for_buyer" | "for_seller", "bears": "principal" | "agent" | "counterparty" | "rail",
+  "decided_by": "person" | "rule", "refund": { "rail": "stripe", "id": "re_…", "amount_minor": 500, "currency": "chf" } | null,
+  "decided_at": "…", … }`. `bears` names who carries the loss on the liability path principal → agent →
+  counterparty → rail. For the buyer there is a refund with the rail's own id; for the seller there is none.
+
+`verifyDispute(decision, dispute, { keys, receipt, answer })` checks the signatures; that the decision names the
+dispute and the dispute the receipt; that the buyer opened it against the seller, after the delivery; that it was
+decided after it was opened, with an outcome and a bearer; that a refund exists exactly when decided for the buyer
+and never exceeds what was paid; and, given the answer, that it is the one the decision saw, given between opening
+and decision. A decision for the buyer counts as `disputes_lost` in the seller's Word Pass (section 4); the
+decision goes into the daily root like a receipt. What a dispute object does not claim: that the decision was
+right, only who said what, in which order, and what was paid back.
+

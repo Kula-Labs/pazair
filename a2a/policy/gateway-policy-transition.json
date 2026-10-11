@@ -1,0 +1,53 @@
+{
+  "v": 1,
+  "kind": "gateway_policy",
+  "id": "gp_transition_1",
+  "issuer": "pazair",
+  "about": "Transition policy: like the reference policy, but it accepts the PazAIr order of today (buy, accept_bid, create_project over MCP) as the task, under the name pazair_order, with agreed_sha256 = sha256hex of the order input as sent. Every decision under it carries gaps: [\"task_not_a2a\"], so the gap stays visible until the PazAIr order is an A2A task. Not the owner's decision yet; offered for it.",
+  "require": {
+    "runtime_proof": true,
+    "mandate_expiry": true,
+    "counterparty_allowlist": false,
+    "principal_signature": false,
+    "counterparty_identity": false,
+    "evidence_before_next": true
+  },
+  "tasks": {
+    "protocols": [
+      "a2a",
+      "pazair_order"
+    ]
+  },
+  "deals": {
+    "kinds": [
+      "listing",
+      "award",
+      "ucp_checkout",
+      "acp_order"
+    ]
+  },
+  "rails": {
+    "allowed": [
+      "stripe",
+      "x402",
+      "mpp",
+      "xrpl",
+      "stellar"
+    ],
+    "max_fee_ratio": 0.25
+  },
+  "rbac": [
+    {
+      "agent": "*",
+      "tools": [
+        "buy",
+        "accept_bid",
+        "create_project",
+        "message/send",
+        "tasks/send"
+      ],
+      "effect": "allow"
+    }
+  ],
+  "clock_skew_seconds": 120
+}

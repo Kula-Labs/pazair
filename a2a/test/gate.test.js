@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { importKey, signReceipt } from '../../issuer/src/index.js';
 import { verifyMandate } from '../../verify/src/index.js';
-import { decide, verifyEvidence, hashOf, say, REASONS, principalSigned, signAgentIdentity, signMandate17, signStepUp, signEvidence, problems, loadSchemas } from '../src/index.js';
+import { decide, verifyEvidence, verifyDispute, hashOf, say, REASONS, principalSigned, signAgentIdentity, signMandate17, signStepUp, signEvidence, signDispute, signDisputeDecision, problems, loadSchemas } from '../src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/a2a-transfer-1.json', import.meta.url), 'utf8'));
 const policy = JSON.parse(readFileSync(new URL('../policy/gateway-policy.json', import.meta.url), 'utf8'));
@@ -36,6 +36,8 @@ test('every object of the vector conforms to its schema', () => {
   check('transfer-request.schema.json', V.request);
   check('gateway-policy.schema.json', policy);
   check('evidence.schema.json', V.evidence);
+  for (const o of [V.dispute.dispute, V.dispute.answer, V.dispute.decision]) check('dispute.schema.json', o);
+  check('gateway-policy.schema.json', V.transition.policy);
   assert.ok(problems({ ...V.mandate, scope: { ...V.mandate.scope, counterparties: [] } }, schemas['mandate.schema.json'], schemas).length > 0, 'an empty allowlist is not a choice');
   assert.ok(problems({ ...V.evidence, settlement: { ...V.evidence.settlement, final: 'yes' } }, schemas['evidence.schema.json'], schemas).length > 0);
 });
@@ -58,6 +60,7 @@ test('the five questions: each missing answer is named, never guessed', async ()
   assert.deepEqual(r.wrong_runtime_key.reasons, ['RUNTIME_MISMATCH']);
   assert.deepEqual(r.tool_not_allowed.reasons, ['RBAC_DENIED']);
   assert.deepEqual(r.forged_mandate.reasons, ['MANDATE_SIGNATURE']);
+  assert.equal(r.other_chain_without_evidence.decision, 'allow', 'the evidence rule is per chain; another chain counts for the monthly cap only');
   assert.equal(r.step_up.decision, 'step_up');
   assert.deepEqual(r.step_up.reasons, ['STEP_UP_AMOUNT']);
   assert.equal(r.step_up_confirmed.decision, 'allow');
@@ -136,3 +139,58 @@ test('say: one sentence per decision, in English; REASONS carries the German one
   assert.match(say({ decision: 'step_up', reasons: ['STEP_UP_AMOUNT'] }), /^Step-up needed/);
   for (const [code, r] of Object.entries(REASONS)) assert.ok(r.de && r.en && [0, 1, 2, 3, 4, 5].includes(r.question), code);
 });
+
+test('transition policy: the PazAIr order of today passes as the task, and the gap stays visible', async () => {
+  const d = await decide({ ...V.request, task: { ...V.request.task, protocol: 'pazair_order' } }, V.transition.policy, { keys });
+  assert.deepEqual(d, V.transition.decision);
+  assert.equal(d.decision, 'allow');
+  assert.ok(d.gaps.includes('task_not_a2a'));
+  assert.equal(await hashOf(V.transition.policy), V.transition.policy_hash);
+  assert.notEqual(d.policy, V.decision.policy, 'another policy, another hash in every decision');
+});
+
+test('law 6: a dispute is an object; the decision names the dispute, the answer it saw, and a refund within what was paid', async () => {
+  const D = V.dispute;
+  for (const o of [D.dispute, D.answer, D.decision]) { const { sig, ...body } = o; assert.equal((await issuer.sign(body)).sig, sig); }
+  assert.equal(await hashOf(D.dispute), D.dispute_hash);
+  assert.deepEqual(await verifyDispute(D.decision, D.dispute, { keys, receipt: V.receipt, answer: D.answer }), D.check);
+  assert.equal(D.check.valid, true);
+  assert.deepEqual(D.variants.refund_over_paid.reasons, ['DISPUTE_REFUND_OVER_PAID']);
+  assert.deepEqual(D.variants.for_seller_with_refund.reasons, ['DISPUTE_REFUND_UNEXPECTED']);
+  assert.deepEqual(D.variants.for_seller, { valid: true, reasons: [] });
+  assert.deepEqual(D.variants.answer_hidden_from_decision.reasons, ['DISPUTE_ANSWER_MISMATCH'], 'a decision that did not see the answer is caught');
+  assert.deepEqual(D.variants.decided_before_opened.reasons, ['DISPUTE_DECIDED_BEFORE_OPENED', 'DISPUTE_ANSWER_OUT_OF_ORDER']);
+  const bySeller = await signDispute(issuer, 'example', { ...D.dispute, receipt: V.receipt, opened_by: 'ag_alpha', against: 'ag_gamma', claim_sha256: D.dispute.claim_sha256 });
+  const dec = await signDisputeDecision(issuer, 'example', { dispute: bySeller, answer: null, outcome: 'for_seller', bears: 'principal', refund: null, decided_at: '2026-10-14T09:00:00.000Z' });
+  assert.deepEqual((await verifyDispute(dec, bySeller, { keys, receipt: V.receipt })).reasons, ['DISPUTE_WRONG_PARTIES']);
+  const otherReceipt = { ...V.receipt, order: 'or_other' };
+  assert.ok((await verifyDispute(D.decision, D.dispute, { keys, receipt: otherReceipt })).reasons.includes('DISPUTE_NAMES_OTHER_RECEIPT'));
+  const tampered = { ...D.decision, outcome: 'for_seller', refund: null };
+  assert.ok((await verifyDispute(tampered, D.dispute, { keys })).reasons.includes('DISPUTE_DECISION_SIGNATURE'));
+});
+
+test('after review: nothing is guessed, every check counts, a malformed policy does not throw', async () => {
+  const garbage = await decide({ ...V.request, at: 'yesterday-ish' }, policy, { keys });
+  assert.deepEqual([garbage.decision, garbage.reasons.includes('REQUEST_TIME_INVALID')], ['reject', true]);
+  const priced = await decide({ ...V.request, settlement: { ...V.request.settlement, amount_minor: 499 } }, policy, { keys });
+  assert.deepEqual([priced.reasons, priced.answered.deal], [['DEAL_PRICE_MISMATCH'], false], 'answered follows every reason of its question');
+  const broken = await decide(V.request, { ...policy, rbac: [{ agent: '*', effect: 'allow' }] }, { keys });
+  assert.deepEqual(broken.reasons, ['RBAC_DENIED']);
+  assert.equal((await decide(V.request, { ...policy, rbac: 'all' }, { keys })).reasons.includes('POLICY_INVALID'), true);
+  const big = { ...V.request, deal: { ...V.request.deal, amount_minor: 900 }, settlement: { ...V.request.settlement, amount_minor: 900 } };
+  const future = await signStepUp(issuer, 'example', { transfer: 'tr_1', agent: 'ag_gamma', mandate: V.mandate, amount_minor: 900 }, { now: new Date(new Date(V.request.at).getTime() + 3_600_000) });
+  assert.equal((await decide({ ...big, step_up: future }, policy, { keys })).decision, 'step_up', 'a confirmation from the future is not fresh');
+  const strict = { ...policy, require: { ...policy.require, counterparty_identity: true } };
+  const notAnIdentity = await decide({ ...V.request, counterparty_identity: { ...V.mandate, agent: 'ag_alpha' } }, strict, { keys });
+  assert.deepEqual(notAnIdentity.reasons, ['COUNTERPARTY_IDENTITY_INVALID'], 'a signed object with agent set is not an identity');
+  const expired = await signAgentIdentity(issuer, 'example', { ...V.identity, agent: 'ag_alpha', card: V.identity.card, expires_at: '2026-10-11T08:30:00.000Z' });
+  assert.deepEqual((await decide({ ...V.request, counterparty_identity: expired }, strict, { keys })).reasons, ['COUNTERPARTY_IDENTITY_INVALID']);
+  const fresh = await signAgentIdentity(issuer, 'example', { ...V.identity, agent: 'ag_alpha', card: V.identity.card });
+  const withCp = await decide({ ...V.request, counterparty_identity: fresh }, strict, { keys });
+  assert.deepEqual([withCp.decision, withCp.gaps.includes('counterparty_identity')], ['allow', false]);
+  const refused = { ...V.evidence, gate: { ...V.evidence.gate, decision: 'reject' } };
+  const { sig, ...body } = refused;
+  assert.deepEqual((await verifyEvidence(await issuer.sign(body), { keys })).reasons, ['EVIDENCE_WITHOUT_ALLOW'], 'evidence of a refused transfer is no evidence, decision object or not');
+  assert.deepEqual((await verifyEvidence(V.evidence, { keys, deal: { ...V.request.deal, amount_minor: 1 } })).reasons, ['EVIDENCE_NAMES_OTHER_DEAL'], 'the price is part of the deal');
+});
+

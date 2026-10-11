@@ -17,6 +17,14 @@ Ablehnung mit Grund, nie Raten.
 Dazwischen steht das Gate: `gateway_policy` plus `decide()`, vor der Ausführung, mit RBAC auf Agent-Identität
 und Werkzeugname.
 
+## Wie es Kula Flow speist
+
+Kula Flow handelt eigenständig, innerhalb von Mandat und Not-Aus. Dieses Gate ist der Not-Aus in Code: Kula Flow
+ruft `decide()` vor jedem eigenen Transfer auf, und ohne eine der vier Antworten bewegt sich nichts. Das
+Evidence-Objekt ist, was Kula Flow in seinen Learning Quantum Loop zurücknimmt: pro Transfer ein Objekt mit
+Preis, Gegenpartei, Ergebnis und Settlement, prüfbar, nicht erinnert. Ein Streit wird zum dritten Objekt, das
+derselbe Loop liest. Kula Flow lernt also aus Belegen, nicht aus Chatverläufen.
+
 ## Die Dateien
 
 | Datei | Was |
@@ -27,13 +35,15 @@ und Werkzeugname.
 | `schemas/gateway-policy.schema.json`, `policy/gateway-policy.json` | 17.3: Policy vor Ausführung, Referenz-Policy |
 | `policy/rejection-reasons.json` | jeder Ablehnungsgrund mit Frage, Schicht, Satz auf Deutsch und Englisch |
 | `schemas/evidence.schema.json` | 17.4: ein Objekt pro Transfer, alle fünf Antworten per Hash |
-| `src/gate.js` | `decide()`, `verifyEvidence()`, `say()` |
-| `src/issue.js` | `signAgentIdentity`, `signMandate17`, `signStepUp`, `signEvidence` |
+| `schemas/dispute.schema.json` | 17.5: Streit als Objekt: `dispute`, `dispute_answer`, `dispute_decision` mit Haftungspfad und Rückerstattung |
+| `policy/gateway-policy-transition.json` | Übergangs-Policy: lässt den heutigen PazAIr-Kauf (`pazair_order`) als Aufgabe zu, jede Entscheidung zeigt `gaps: ["task_not_a2a"]`; Owner-Entscheid offen |
+| `src/gate.js` | `decide()`, `verifyEvidence()`, `verifyDispute()`, `say()` |
+| `src/issue.js` | `signAgentIdentity`, `signMandate17`, `signStepUp`, `signEvidence`, `signDispute`, `signDisputeAnswer`, `signDisputeDecision` |
 | `src/schema.js` | kleiner Schema-Prüfer, damit die Tests ohne Abhängigkeit laufen |
-| `../vectors/a2a-transfer-1.json` | ein Transfer von der Identität bis zum Beleg, 15 Varianten mit je einem Grund |
+| `../vectors/a2a-transfer-1.json` | ein Transfer von der Identität bis zum Beleg, 16 Varianten mit je einem Grund, die Übergangs-Policy, ein Streit mit Antwort und Entscheid und 5 Varianten |
 
 ```sh
-cd a2a && npm test            # 10 Tests
+cd a2a && npm test            # 13 Tests
 node scripts/make-vector.mjs  # erzeugt den Vektor neu, byteidentisch
 ```
 

@@ -4,11 +4,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { importKey, signReceipt } from '../../issuer/src/index.js';
 import { canonical, sha256hex } from '../../verify/src/index.js';
-import { decide, verifyEvidence, hashOf, say } from '../src/gate.js';
-import { signAgentIdentity, signMandate17, signStepUp, signEvidence } from '../src/issue.js';
+import { decide, verifyEvidence, verifyDispute, hashOf, say } from '../src/gate.js';
+import { signAgentIdentity, signMandate17, signStepUp, signEvidence, signDispute, signDisputeAnswer, signDisputeDecision } from '../src/issue.js';
 
 const W = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 const policy = JSON.parse(readFileSync(new URL('../policy/gateway-policy.json', import.meta.url), 'utf8'));
+const transition = JSON.parse(readFileSync(new URL('../policy/gateway-policy-transition.json', import.meta.url), 'utf8'));
 const issuer = await importKey({ kty: 'OKP', crv: 'Ed25519', x: W.key.x, d: W.key.d_test_only });
 const keys = [{ kid: issuer.kid, kty: 'OKP', crv: 'Ed25519', x: issuer.x }];
 
@@ -75,7 +76,23 @@ await v('free_text_deal', (r) => { const d = { ...r.deal }; delete d.output_sche
 await v('prior_without_evidence', (r) => ({ ...r, history: [{ transfer: 'tr_0', at: '2026-10-11T08:30:00.000Z', amount_minor: 300, currency: 'chf', settlement_id: 'pi_0', evidence: null }] }));
 await v('wrong_runtime_key', (r) => ({ ...r, runtime_proof: { kind: 'key', sig: runtimeProof.sig.slice(0, -4) + 'AAAA' } }));
 await v('tool_not_allowed', (r) => ({ ...r, tool: 'export_my_data' }));
+await v('other_chain_without_evidence', (r) => ({ ...r, history: [{ transfer: 'tr_0', at: '2026-10-11T08:30:00.000Z', amount_minor: 300, currency: 'chf', settlement_id: 'pi_0', evidence: null, chain: 'b'.repeat(64) }] }));
 await v('forged_mandate', (r) => ({ ...r, mandate: { ...r.mandate, scope: { ...r.mandate.scope, max_order_minor: 100000 } } }));
+
+const transitionDecision = await decide({ ...request, task: { ...request.task, protocol: 'pazair_order' } }, transition, { keys });
+
+// Law 6: the buyer disputes the delivery, the seller answers, a person decides for the buyer; the refund has the rail's id.
+const dispute = await signDispute(issuer, 'example', { id: 'dp_1', order: 'or_17', receipt, evidence, opened_by: 'ag_gamma', against: 'ag_alpha', reason_code: 'not_as_promised', claim: 'The translation is in Italian, not French.', opened_at: '2026-10-12T10:00:00.000Z' });
+const answer = await signDisputeAnswer(issuer, 'example', { dispute, by: 'ag_alpha', answer: 'Delivered what the model gave; no second pass was ordered.', at: '2026-10-13T10:00:00.000Z' });
+const disputeDecision = await signDisputeDecision(issuer, 'example', { dispute, answer, outcome: 'for_buyer', bears: 'counterparty', decided_by: 'person', refund: { rail: 'stripe', id: 're_17', amount_minor: 500, currency: 'chf' }, decided_at: '2026-10-14T09:00:00.000Z' });
+const disputeCheck = await verifyDispute(disputeDecision, dispute, { keys, receipt, answer });
+const disputeVariants = {};
+const dv = async (name, decision, opts) => { const r = await verifyDispute(decision, dispute, { keys, receipt, ...opts }); disputeVariants[name] = { valid: r.valid, reasons: r.reasons }; };
+await dv('refund_over_paid', await signDisputeDecision(issuer, 'example', { dispute, answer, outcome: 'for_buyer', bears: 'counterparty', refund: { rail: 'stripe', id: 're_x', amount_minor: 600, currency: 'chf' }, decided_at: '2026-10-14T09:00:00.000Z' }), { answer });
+await dv('for_seller_with_refund', await signDisputeDecision(issuer, 'example', { dispute, answer, outcome: 'for_seller', bears: 'principal', refund: { rail: 'stripe', id: 're_x', amount_minor: 500, currency: 'chf' }, decided_at: '2026-10-14T09:00:00.000Z' }), { answer });
+await dv('for_seller', await signDisputeDecision(issuer, 'example', { dispute, answer, outcome: 'for_seller', bears: 'principal', refund: null, decided_at: '2026-10-14T09:00:00.000Z' }), { answer });
+await dv('answer_hidden_from_decision', await signDisputeDecision(issuer, 'example', { dispute, answer: null, outcome: 'for_buyer', bears: 'counterparty', refund: { rail: 'stripe', id: 're_17', amount_minor: 500, currency: 'chf' }, decided_at: '2026-10-14T09:00:00.000Z' }), { answer });
+await dv('decided_before_opened', await signDisputeDecision(issuer, 'example', { dispute, answer, outcome: 'for_buyer', bears: 'counterparty', refund: { rail: 'stripe', id: 're_17', amount_minor: 500, currency: 'chf' }, decided_at: '2026-10-11T09:00:00.000Z' }), { answer });
 
 const out = {
   about: 'SPEC section 17: one agent-to-agent transfer through the gate, start to evidence. Keys: the Ed25519 test key of word-pass-1.json signs as the issuer; runtime_key and principal_key are test-only pairs. An implementation is conformant when it reproduces every signature, hash and decision here.',
@@ -84,8 +101,10 @@ const out = {
   card, identity, identity_hash: await hashOf(identity), mandate, mandate_hash: await hashOf(mandate),
   listing, task_message: taskMessage, runtime_proof_over: canonical({ transfer, agent: 'ag_gamma', aud }),
   request, decision, say: say(decision), step_up: stepUp, receipt, evidence, evidence_hash: await hashOf(evidence), evidence_check: evidenceCheck, variants,
+  transition: { policy: transition, policy_hash: await hashOf(transition), decision: transitionDecision },
+  dispute: { dispute, dispute_hash: await hashOf(dispute), answer, answer_hash: await hashOf(answer), decision: disputeDecision, check: disputeCheck, variants: disputeVariants },
 };
 const clean = JSON.parse(JSON.stringify(out));
 writeFileSync(new URL('../../vectors/a2a-transfer-1.json', import.meta.url), JSON.stringify(clean, null, 2) + '\n');
-console.log(`decision: ${decision.decision} ${JSON.stringify(decision.reasons)}; evidence ${evidenceCheck.valid}; ${Object.keys(variants).length} variants`);
+console.log(`decision: ${decision.decision} ${JSON.stringify(decision.reasons)}; evidence ${evidenceCheck.valid}; ${Object.keys(variants).length} variants; transition ${transitionDecision.decision} gaps ${JSON.stringify(transitionDecision.gaps)}; dispute ${disputeCheck.valid} ${JSON.stringify(Object.fromEntries(Object.entries(disputeVariants).map(([k, x]) => [k, x.reasons])))}`);
 for (const [k, x] of Object.entries(variants)) console.log(`  ${k}: ${x.decision} ${x.reasons.join(',')}`);
