@@ -17,7 +17,13 @@ const enc = new TextEncoder();
 const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
 const TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/;
 /** A time as the schemas define it (RFC 3339 with a zone), normalised to UTC; null for anything else. Never a guess. */
-const iso = (t) => { if (typeof t !== 'string' || !TIME.test(t)) return null; const d = new Date(t); return Number.isNaN(d.getTime()) ? null : d.toISOString(); };
+const iso = (t) => {
+  if (typeof t !== 'string' || !TIME.test(t)) return null;
+  // The Date parser rolls 2026-02-31 over to 3 March and 24:00 to the next day: an impossible time is unreadable.
+  const [y, mo, da, h, mi, s] = t.slice(0, 19).split(/[-T:]/).map(Number);
+  if (mo < 1 || mo > 12 || da < 1 || da > new Date(Date.UTC(y, mo, 0)).getUTCDate() || h > 23 || mi > 59 || s > 59) return null;
+  const d = new Date(t); return Number.isNaN(d.getTime()) ? null : d.toISOString();
+};
 const isId = (s, prefix) => typeof s === 'string' && s.startsWith(prefix) && s.length > prefix.length;
 const isHash = (h) => /^[0-9a-f]{64}$/.test(String(h));
 const isMinor = (n) => Number.isInteger(n) && n >= 0;
@@ -137,7 +143,9 @@ export async function decide(request, policy, { keys = [], now } = {}) {
     if (deal) {
       if (deal.currency !== sc.currency) reject.push('MANDATE_CURRENCY');
       if (!(isMinor(sc.max_order_minor) && deal.amount_minor <= sc.max_order_minor)) reject.push('MANDATE_OVER_ORDER_CAP');
-      if (Number.isInteger(sc.monthly_minor) && at && history) {
+      // A cap that is there but not a whole amount ("20000", 1.5) is never read as no cap.
+      if (sc.monthly_minor != null && !isMinor(sc.monthly_minor)) reject.push('MANDATE_OVER_MONTHLY_CAP');
+      else if (Number.isInteger(sc.monthly_minor) && at && history) {
         // Every entry of the month counts, settled or not: an allow the gateway recorded is a reservation.
         const month = at.slice(0, 7);
         const spent = history.filter((h) => h.currency === sc.currency && iso(h.at)?.slice(0, 7) === month).reduce((s, h) => s + h.amount_minor, 0);
@@ -147,7 +155,8 @@ export async function decide(request, policy, { keys = [], now } = {}) {
       else if (req.counterparty_allowlist) reject.push('MANDATE_NO_COUNTERPARTIES');
       if (Array.isArray(sc.purpose_codes)) { if (!sc.purpose_codes.includes(deal.purpose_code)) reject.push('MANDATE_PURPOSE_MISMATCH'); }
       else if (req.purpose_codes) reject.push('MANDATE_NO_PURPOSE_CODES');
-      if (Number.isInteger(sc.step_up_above_minor) && deal.amount_minor > sc.step_up_above_minor) stepUp.push('STEP_UP_AMOUNT');
+      if (sc.step_up_above_minor != null && !isMinor(sc.step_up_above_minor)) stepUp.push('STEP_UP_AMOUNT');
+      else if (Number.isInteger(sc.step_up_above_minor) && deal.amount_minor > sc.step_up_above_minor) stepUp.push('STEP_UP_AMOUNT');
     }
     // Unattended spending is the principal's explicit choice; absent means no. human_present is asserted by the gateway.
     if (sc.unattended !== true && request.human_present !== true) stepUp.push('STEP_UP_HUMAN_REQUIRED');

@@ -60,11 +60,14 @@ export async function verifyLink(link, sig, { keys = [], pqPublicKey } = {}) {
  * The public document (/.well-known/pazair-remember.json): `sig` is Ed25519 over the canonical JSON without "sig" and
  * "pq_sig"; `pq_sig` is ML-DSA-65 over the same bytes with the key the document itself carries, whose kid must be `pq_kid`.
  */
-export async function verifyRememberDocument(doc, { keys = [] } = {}) {
+export async function verifyRememberDocument(doc, { keys = [], pqKeys } = {}) {
   if (!doc || typeof doc !== 'object') return { ed25519: false, ml_dsa_65: false, pq_kid_matches: false };
   const { pq_sig, ...rest } = doc;
   const { sig, ...body } = rest;
-  const pub = doc.keys?.ml_dsa_65?.public_key_b64url;
+  // When the issuer publishes its ML-DSA keys (pq_keys), only that key counts: one the document brings itself proves
+  // nothing against someone who could forge the Ed25519 signature, which is what the second signature is for.
+  const published = publishedPq(pqKeys, doc.pq_kid);
+  const pub = published !== undefined ? published : doc.keys?.ml_dsa_65?.public_key_b64url;
   const kidOk = typeof pub === 'string' && (await pqKid(pub)) === doc.pq_kid;
   return {
     ed25519: await verifySignature({ ...body, sig }, keys),
@@ -72,6 +75,13 @@ export async function verifyRememberDocument(doc, { keys = [] } = {}) {
     pq_kid_matches: kidOk,
   };
 }
+
+/** The issuer's published ML-DSA key for a kid: undefined when it publishes none, null when it publishes others. */
+const publishedPq = (pqKeys, kid) => {
+  if (!Array.isArray(pqKeys) || !pqKeys.length) return undefined;
+  const k = pqKeys.find((x) => x && typeof x === 'object' && x.pq_kid === kid && !x.revoked_at);
+  return typeof k?.public_key_b64url === 'string' ? k.public_key_b64url : null;
+};
 
 const get = async (f, url) => { const r = await f(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10000) }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); };
 
@@ -87,9 +97,10 @@ export async function checkRemember(origin = 'https://pazair.kulalabs.ch', { fet
   try { doc = await get(f, `${o}/.well-known/pazair-remember.json`); } catch (e) { return none(`No Remember document at ${o}/.well-known/pazair-remember.json (${e.message}).`); }
   try { kd = await fetchKeysDocument(o, f); } catch { return none(`${o} publishes no keys at /.well-known/pazair-receipts.json.`); }
   try { chain = await get(f, `${o}/v1/remember/chain`); } catch (e) { return none(`No chain at ${o}/v1/remember/chain (${e.message}).`); }
-  const docSig = await verifyRememberDocument(doc, { keys: kd.keys });
+  const docSig = await verifyRememberDocument(doc, { keys: kd.keys, pqKeys: kd.pq_keys });
   const re = await recomputeChain(chain.chain ?? []);
-  const pub = chain.keys?.ml_dsa_65_public_key_b64url ?? doc.keys?.ml_dsa_65?.public_key_b64url;
+  const published = publishedPq(kd.pq_keys, doc.pq_kid);
+  const pub = published !== undefined ? published : chain.keys?.ml_dsa_65_public_key_b64url ?? doc.keys?.ml_dsa_65?.public_key_b64url;
   let linksEd = 0, linksPq = 0, linksChecked = 0, linkFailures = [];
   for (const d of chain.chain ?? []) {
     if (!d.head_sig) continue;

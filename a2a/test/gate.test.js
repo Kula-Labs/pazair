@@ -217,3 +217,14 @@ test('reasons: a closed catalogue, each with question, layer, actor, retry and t
   }
   for (const code of src.match(/'[A-Z][A-Z_]+'/g).map((s) => s.slice(1, -1))) if (/^[A-Z_]+$/.test(code) && code.length > 3) assert.ok(REASONS[code], `${code} is catalogued`);
 });
+
+test('an impossible time is unreadable, and a cap that is there but not a whole amount is never read as no cap', async () => {
+  for (const t of ['2026-02-31T09:00:00Z', '2026-10-11T24:00:00Z', '2026-13-01T09:00:00Z', '2026-10-11T09:60:00Z']) assert.deepEqual((await decide({ ...V.request, at: t }, policy, { keys })).reasons, ['REQUEST_TIME_INVALID'], t);
+  const resign = (scope) => issuer.sign({ ...(({ sig, ...b }) => b)(V.mandate), scope: { ...V.mandate.scope, ...scope } });
+  const capText = await decide({ ...V.request, mandate: await resign({ monthly_minor: '20000' }) }, policy, { keys });
+  assert.ok(capText.reasons.includes('MANDATE_OVER_MONTHLY_CAP'), JSON.stringify(capText.reasons));
+  const stepText = await decide({ ...V.request, mandate: await resign({ step_up_above_minor: 1.5 }) }, policy, { keys });
+  assert.ok([...stepText.reasons].includes('STEP_UP_AMOUNT') || stepText.decision !== 'allow', JSON.stringify(stepText));
+  const noCap = await decide({ ...V.request, mandate: await resign({ monthly_minor: null }) }, policy, { keys });
+  assert.ok(!noCap.reasons.includes('MANDATE_OVER_MONTHLY_CAP'), 'null still means no monthly cap');
+});

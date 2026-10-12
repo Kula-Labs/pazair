@@ -85,3 +85,10 @@ test('section 16: a key that signs twice; verifiers that know only Ed25519 keep 
   const { sig: s2, pq_sig: p2, ...b2 } = signed;
   assert.equal(ml_dsa65.verify(unb64u(p2), new TextEncoder().encode(canonical(b2)), unb64u(pq.public_key_b64url)), true);
 });
+
+test('a field left undefined is left out of the signed bytes, as JSON leaves it out: the signature still verifies after sending', async () => {
+  const { canonical } = await import('../src/index.js');
+  assert.equal(canonical({ b: 1, a: undefined, c: { d: undefined, e: 2 } }), '{"b":1,"c":{"e":2}}');
+  assert.equal(canonical(JSON.parse(JSON.stringify({ b: 1, a: undefined }))), canonical({ b: 1, a: undefined }));
+  assert.throws(() => canonical({ a: Infinity }), /out of range/);
+});

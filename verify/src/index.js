@@ -9,6 +9,8 @@ const enc = new TextEncoder();
 export function canonical(v) {
   if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
   if (v && typeof v === 'object') return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+  // 1e400 parses to Infinity, which JSON.stringify writes as null: a signed null must never read back as a number.
+  if (typeof v === 'number' && !Number.isFinite(v)) throw new TypeError('canonical: number out of range');
   return JSON.stringify(v);
 }
 
@@ -37,7 +39,7 @@ export async function fetchKeys(origin = 'https://pazair.kulalabs.ch', f = fetch
  */
 export async function verifySignature(obj, keys, { anchoredBefore } = {}) {
   if (!obj || typeof obj.sig !== 'string' || typeof obj.kid !== 'string') return false;
-  const jwk = keys.find((k) => k.kid === obj.kid);
+  const jwk = Array.isArray(keys) ? keys.find((k) => k && typeof k === 'object' && k.kid === obj.kid) : undefined;
   if (!jwk || typeof jwk.x !== 'string') return false;
   if ((await sha256hex(jwk.x)).slice(0, 16) !== jwk.kid) return false; // SPEC §1: kid = sha256(x)[0:16]
   if (jwk.revoked_at && !(anchoredBefore && anchoredBefore < String(jwk.revoked_at).slice(0, 10))) return false;
@@ -84,6 +86,8 @@ export async function verifyReceiptChain(top, { receipts = [], keys, maxDepth = 
     if (!(await verifySignature(p, keys))) return `${p?.order}: signature`;
     if (p.inputs === undefined) return null;
     if (!Array.isArray(p.inputs)) return `${p.order}: inputs`;
+    // Each bought input counts once: a repeated hash would inflate the total (and the walk) without another purchase.
+    if (new Set(p.inputs).size !== p.inputs.length) return `${p.order}: an input is named twice`;
     if (p.inputs.length && d >= maxDepth) return `${p.order}: deeper than ${maxDepth}`;
     for (const h of p.inputs) {
       const c = byHash.get(h);
@@ -323,7 +327,12 @@ export async function verifyHolderProof(proof, { keys, pqKeys, agent, nonce, aud
  * the root on Stellar from the issuer's anchor account, the root in its Bitcoin block and, given { proof, nonce }, that the pass is theirs.
  * Returns a verdict and one sentence to act on.
  */
-export async function checkWordPass(url, { fetch: f = fetch, keys, proof, nonce, aud } = {}) {
+export async function checkWordPass(url, opts = {}) {
+  // A hostile issuer (keys that are not a list, a pass nested thousands deep) gets a verdict, never a crash.
+  try { return await checkWordPassUnsafe(url, opts); }
+  catch { return { trust: 'unreachable', say: 'The Word Pass or its keys could not be read as a valid document.', issuer: null, checks: null, pass: null }; }
+}
+async function checkWordPassUnsafe(url, { fetch: f = fetch, keys, proof, nonce, aud } = {}) {
   const none = (say) => ({ trust: 'unreachable', say, issuer: null, checks: null, pass: null });
   let u;
   try { u = new URL(url); } catch { return none('That is not a URL.'); }
