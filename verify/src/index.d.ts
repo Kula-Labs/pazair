@@ -46,12 +46,12 @@ export type RememberCheck = { verdict: 'consistent' | 'inconsistent' | 'unreacha
 export function checkRemember(origin?: string, opts?: { fetch?: typeof fetch }): Promise<RememberCheck>;
 export function checkHead(kept: string, origin?: string, opts?: { fetch?: typeof fetch }): Promise<{ verdict: 'consistent' | 'inconsistent' | 'unreachable'; day?: string; kept?: string; recomputed?: string | null; published?: string | null; days_since?: number; say: string }>;
 
-// Fingerprint (SPEC section 15): a print no other agent can carry, provably.
+// Fingerprint (SPEC section 15): two different prints differ in at least 55 of 64 symbols, provably.
 export const FINGERPRINT: { n: 64; k: 10; d: 55; field: string; generator: string };
 export function rsEncode(msg: Uint8Array): Uint8Array;
 export type Fingerprint = { seed: string; codeword: string };
 export function fingerprintOf(input: { origin: string; agent: string; first_leaf: string }): Promise<Fingerprint>;
-/** Symbols that differ, 0 … 64; never below 55 for two different seeds. */
+/** Symbols that differ, 0 … 64: 0 for the same message (the first 10 bytes of the seed), otherwise at least 55. */
 export function fingerprintDistance(a: Fingerprint | string, b: Fingerprint | string): number;
 export type FingerprintRecord = { delivered: number; buyers: number; badge: string | null; disputes_lost: number };
 export function recordOf(pass: Record<string, unknown>): FingerprintRecord;

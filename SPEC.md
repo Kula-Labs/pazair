@@ -330,6 +330,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 3.1 | 2026-10-07 | Chain of work: `parent_order` on the child, `inputs` (receipt hashes) on the parent |
 | 1.0 + 3.2 | 2026-10-08 | Mandate: the principal's limits, signed; receipts name the mandate they were bought within |
 | 1.0 + 15 | 2026-10-10 | Fingerprint: a print per agent from a Reed-Solomon codeword over the seed; any two differ in at least 55 of 64 symbols |
+| 1.0 + 15, wording | 2026-10-14 | Section 15 separates the theorem (55 of 64 for different messages) from the probability (different messages, 80 bits of a hash); 0 means the same message, not the same agent. Code, vector and drawing unchanged |
 | 1.0 + 16 | 2026-10-10 | Second signature: `pq_sig` (ML-DSA-65) on passes, receipts and holder proofs, `pq_keys` in the keys document |
 | 1.0 + 17 | 2026-10-11 | The gate: `agent_identity`, mandate expiry, counterparties, purpose codes and step-up, `gateway_policy`, `evidence`, `dispute`; five questions before a transfer, one evidence object after, a dispute as an object |
 
@@ -358,22 +359,30 @@ into one chain and signs every link twice, so that any change to a past day show
   chain in full; say in the document what is not claimed (that nothing can be manipulated) and what is (that any
   change shows).
 
-## 15. Fingerprint: no two passes alike, provably
+<a id="15-fingerprint-no-two-passes-alike-provably"></a>
 
-Every Word Pass carries a **fingerprint**: a print no other agent can have. Two prints of different agents differ in
-at least 55 of their 64 symbols. That is a theorem of the code below, not a probability, and it holds for 2^80 agents
-and against quantum computers, because nothing in it is a problem Shor solves: only a hash and a code.
+## 15. Fingerprint: two prints, 55 of 64 symbols apart
+
+Every Word Pass carries a **fingerprint**, a print drawn from the agent's identity. Two different prints differ in at
+least 55 of their 64 symbols: that is a theorem of the code below. Whether two agents get different prints is a
+probability, because the print encodes the first 80 bits of a hash: among a million agents the chance that any two
+share a print is about 4 × 10⁻¹³, among a billion about 4 × 10⁻⁷. The print lets people and agents recognise a pass;
+the identity is the issuer's origin and the agent's id, under the issuer's signature.
 
 - **Seed.** `seed = sha256hex(origin + "\n" + agent + "\n" + first_leaf)`: the issuer's https origin (section 2,
   without a trailing slash), the agent's id, and the leaf (section 5) of the agent's first anchored pass. The issuer
-  serves that leaf as `fingerprint.first_leaf` next to the pass. No two agents share this input.
+  serves that leaf as `fingerprint.first_leaf` next to the pass. No two agents share this input, so their seeds
+  differ (SHA-256); their prints differ unless the first 10 bytes of the seeds happen to agree.
 - **Codeword.** The first 10 bytes of the seed are the message of a systematic Reed-Solomon code over GF(256)
   (primitive polynomial 0x11d, generator polynomial with roots α^0 … α^53), `n = 64`, `k = 10`: the 10 message bytes
   followed by 54 parity bytes, written as 128 lowercase hex characters in `fingerprint.codeword`. The minimum distance
-  is `d = n − k + 1 = 55` (Singleton bound, met by Reed-Solomon codes): for any two agents A ≠ B with
-  `seed(A) ≠ seed(B)`, their codewords differ in at least 55 of 64 symbols. A verifier compares two prints by counting
-  differing bytes (`fingerprintDistance` in `pazair-verify`); 0 means the same agent, anything below 55 means at
-  least one of them is not a fingerprint of this section.
+  is `d = n − k + 1 = 55`: the generator's 54 consecutive roots give every non-zero codeword at least 55 non-zero
+  symbols (BCH bound), and no code with `n = 64`, `k = 10` can do better (Singleton bound). So for any two seeds whose
+  first 10 bytes differ, the codewords differ in at least 55 of 64 symbols; seeds that share their first 10 bytes give
+  the same codeword. A verifier compares two prints by counting differing bytes (`fingerprintDistance` in
+  `pazair-verify`): 0 means the same message, 1 to 54 means at least one of them is not a fingerprint of this
+  section. Whether two passes belong to the same agent is decided by origin, agent id and signatures, not by the
+  print.
 - **Drawing.** Each symbol is one of 64 sectors of a print drawn like a finger: closed ridges around a core, taller
   than wide. In sector `j` with symbol `s`, bits 0–4 say on which ridge (`(s & 31) mod ridges`) the sector's ridge
   ending sits, bits 5–7 how far the ridges bulge there (smoothed over the neighbouring sectors); the first four bytes
@@ -388,7 +397,11 @@ and against quantum computers, because nothing in it is a problem Shor solves: o
   and the print wherever the pass is shown to people.
 
 What it does not claim: that a person tells trillions of pictures apart. The eye recognises that a picture belongs
-to a pass; a machine counts the 64 symbols. And a fingerprint is only as durable as the signatures around it: an
+to a pass; a machine counts the 64 symbols. Nor that no two agents can ever share a print: by chance they do only at
+the scale above, but an issuer that picks its own agent ids can give two of its own agents one print with about 2^40
+hash evaluations (a collision on 80 bits). Matching the print of another issuer's agent needs about 2^80 evaluations;
+a large quantum computer would bring that to about 2^40 (Grover), so the print alone is not proof of identity
+against such a machine. And a fingerprint is only as durable as the signatures around it: an
 issuer that wants the chain to outlive Ed25519 adds the second signature of section 14 (`ml_dsa_65`) to passes and
 receipts as well.
 

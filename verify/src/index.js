@@ -380,5 +380,5 @@ export { GENESIS, headOf, recomputeChain, verifyLink, verifyRememberDocument, ch
 export { loadMlDsa, verifyMlDsa, pqKid, verifyPqSignature } from './pq.js';
 import { verifyPqSignature } from './pq.js';
 
-// Fingerprint (SPEC section 15): a print no other agent can carry, provably; the reference drawing.
+// Fingerprint (SPEC section 15): two different prints differ in at least 55 of 64 symbols; the reference drawing.
 export { FINGERPRINT, rsEncode, fingerprintOf, fingerprintDistance, fingerprintSvg, recordOf, ridgesOf } from './fingerprint.js';

@@ -1,7 +1,9 @@
-// Fingerprint (SPEC section 15): a print no other agent can carry, provably.
+// Fingerprint (SPEC section 15): two different prints differ in at least 55 of 64 symbols, provably.
 // seed = sha256(origin "\n" agent "\n" first_leaf); the first 10 bytes are the message of a Reed-Solomon code over
-// GF(256) with n = 64, k = 10, so any two prints differ in at least d = n - k + 1 = 55 of 64 symbols. Each symbol is
-// one sector of the drawing. The record is drawn over it and never changes the identity.
+// GF(256) with n = 64, k = 10, so any two prints of different messages differ in at least d = n - k + 1 = 55 of 64
+// symbols. Seeds that share their first 10 bytes share the print: that two agents get different messages is a
+// probability (80 bits of a hash), not part of the theorem. Each symbol is one sector of the drawing. The record is
+// drawn over it and never changes the identity.
 import { sha256hex } from './index.js';
 
 const N = 64, K = 10, POLY = 0x11d;
@@ -33,7 +35,7 @@ export async function fingerprintOf({ origin, agent, first_leaf }) {
   return { seed, codeword: hex(rsEncode(unhex(seed))) };
 }
 
-/** How many of the 64 symbols differ. For two different seeds this is never below 55. */
+/** How many of the 64 symbols differ: 0 for the same message, never 1 to 54 for two fingerprints of section 15. */
 export function fingerprintDistance(a, b) {
   const x = unhex(a.codeword ?? a), y = unhex(b.codeword ?? b);
   if (x.length !== N || y.length !== N) throw new TypeError('fingerprintDistance: a codeword has 64 bytes');

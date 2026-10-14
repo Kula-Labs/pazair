@@ -37,6 +37,39 @@ class Fingerprint(unittest.TestCase):
         with self.assertRaises(TypeError):
             fingerprint_distance("ab", F["codeword"])
 
+    def test_proof(self):
+        # Every codeword, first byte as the highest power, vanishes at α^0 … α^53: at least 55 non-zero symbols (BCH
+        # bound). A one-byte change reaches exactly 55, the Singleton limit for n = 64, k = 10.
+        exp, log, x = [0] * 512, [0] * 256, 1
+        for i in range(255):
+            exp[i], log[x] = x, i
+            x <<= 1
+            if x & 256:
+                x ^= 0x11D
+        for i in range(255, 512):
+            exp[i] = exp[i - 255]
+        mul = lambda a, b: exp[log[a] + log[b]] if a and b else 0  # noqa: E731
+        for i in range(10):
+            m = bytearray(10)
+            m[i] = 1
+            c = rs_encode(bytes(m))
+            for t in range(54):
+                s = 0
+                for j in range(64):
+                    s ^= mul(c[j], exp[(t * (63 - j)) % 255])
+                self.assertEqual(s, 0, f"basis {i}, root α^{t}")
+        one = bytearray(10)
+        one[9] = 1
+        self.assertEqual(fingerprint_distance(bytes(rs_encode(bytes(10))).hex(), bytes(rs_encode(bytes(one))).hex()), 55)
+
+    def test_boundary(self):
+        # Only the first 10 bytes of the seed are encoded: seeds that share them share the print (SPEC 15).
+        m = bytearray(os.urandom(32))
+        m2 = bytearray(m)
+        m2[20] ^= 0xFF
+        self.assertNotEqual(m, m2)
+        self.assertEqual(fingerprint_distance(bytes(rs_encode(bytes(m))).hex(), bytes(rs_encode(bytes(m2))).hex()), 0)
+
     def test_record(self):
         self.assertEqual((ridges_of(0), ridges_of(3), ridges_of(1000)), (5, 6, 26))
         self.assertEqual(record_of(V["passes"][0]), {"delivered": 12, "buyers": 6, "badge": "word_kept_99", "disputes_lost": 0})
