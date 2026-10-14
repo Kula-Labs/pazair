@@ -14,6 +14,8 @@ import { chromium } from 'playwright-core';
 
 const ROOT = new URL('../', import.meta.url);
 const args = new Set(process.argv.slice(2));
+// The pages to render: examples/ by default; --dir=standard/fixtures for the checker's own test (selftest.mjs).
+const DIR = process.argv.find((a) => a.startsWith('--dir='))?.slice(6).replace(/\/+$/, '') || 'examples';
 const LIVE = process.env.STANDARD_BASE || 'https://pazair.kulalabs.ch'; // a preview of the server can be measured the same way
 const LIVE_PAGES = ['/', '/ask', '/muse', '/connect', '/sell', '/sell/konto', '/market', '/passes', '/fingerprint', '/remember', '/transparency', '/terms', '/privacy', '/gibt-es-nicht'];
 
@@ -103,7 +105,21 @@ function measure([BARS, phone]) {
     const inText = el.tagName === 'A' && getComputedStyle(el).display === 'inline' && (el.parentElement?.innerText || '').trim().length > (el.innerText || '').trim().length + 10;
     if (inText || el.type === 'checkbox' || el.type === 'radio') continue; // the label around them is the target
     const r = el.getBoundingClientRect();
-    if (r.width < target - 0.5 || r.height < target - 0.5) found.push({ bar: 'target', detail: `"${(el.innerText || el.value || el.getAttribute('aria-label') || el.type || '').trim().slice(0, 30)}" ${Math.round(r.width)}×${Math.round(r.height)} px, needs ${target}×${target}`, at: where(el) });
+    if (r.width >= target - 0.5 && r.height >= target - 0.5) continue;
+    const label = `"${(el.innerText || el.value || el.getAttribute('aria-label') || el.textContent || el.type || '').trim().slice(0, 30)}" ${Math.round(r.width)}×${Math.round(r.height)} px`;
+    // WCAG 2.5.8, "equivalent": a small target may stay when the same link is on the page as a target that meets the
+    // bar. The page names it (data-equivalent="<id>"); it counts only if it exists, is shown, leads to the same address
+    // and is big enough itself. A small shopfront in a drawing, with its stall below, is the case it was made for.
+    const eqId = el.getAttribute('data-equivalent');
+    if (eqId) {
+      const eq = document.getElementById(eqId), er = eq?.getBoundingClientRect();
+      const why = !eq ? 'is missing' : !shown(eq) ? 'is not shown' : eq.getAttribute('href') !== el.getAttribute('href') ? 'leads elsewhere'
+        : er.width < target - 0.5 || er.height < target - 0.5 ? `is ${Math.round(er.width)}×${Math.round(er.height)} px itself` : '';
+      if (!why) continue;
+      found.push({ bar: 'target', detail: `${label}; its equivalent #${eqId} ${why}`, at: where(el) });
+      continue;
+    }
+    found.push({ bar: 'target', detail: `${label}, needs ${target}×${target}`, at: where(el) });
   }
   for (const el of document.querySelectorAll('input:not([type=hidden]):not([type=submit]):not([type=button]),select,textarea')) {
     if (!el.labels?.length && !el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby') && !el.title) found.push({ bar: 'name', detail: `form field "${el.id || el.name || el.type}" has no label`, at: where(el) });
@@ -130,9 +146,9 @@ function findChrome() {
 
 const targets = args.has('--live')
   ? LIVE_PAGES.map((p) => ({ name: p, url: LIVE + p }))
-  : readdirSync(new URL('examples/', ROOT)).filter((f) => f.endsWith('.html')).map((f) => ({ name: `examples/${f}`, url: new URL(`examples/${f}`, ROOT).href }));
+  : readdirSync(new URL(`${DIR}/`, ROOT)).filter((f) => f.endsWith('.html')).map((f) => ({ name: `${DIR}/${f}`, url: new URL(`${DIR}/${f}`, ROOT).href }));
 
-const findings = args.has('--live') ? [] : checkBrand();
+const findings = args.has('--live') || DIR !== 'examples' ? [] : checkBrand();
 const browser = await chromium.launch({ executablePath: findChrome() });
 for (const theme of THEMES) for (const vp of VIEWPORTS) {
   const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: 'light', reducedMotion: 'reduce' });

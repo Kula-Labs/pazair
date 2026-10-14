@@ -20,6 +20,17 @@ Ein Massstab, den nur Menschen prüfen, sinkt mit dem ersten müden Abend. Darum
 Eine Zahl darf steigen. Sinken darf sie nur mit einem Owner-Entscheid, der hier mit Datum und Grund steht. Ein
 Commit, der still eine Zahl senkt, wird nicht gemergt.
 
+### Entscheide
+
+- **14. Oktober 2026, gleichwertiges Ziel (WCAG 2.5.8, Ausnahme «Equivalent»).** Ein Ziel unter der Grenze darf
+  bleiben, wenn die Seite ein Gegenstück nennt (`data-equivalent="<id>"`) und der Prüfer nachweist: es existiert, es
+  wird gezeigt, es führt auf dieselbe Adresse und ist selbst gross genug. Fehlt eines davon, bleibt es ein Befund.
+  Grund: Die Ladenfassaden in der perspektivischen Zeichnung von `/market` sind Maus-Abkürzungen (nicht per Tastatur
+  erreichbar) zu Ständen, die weiter unten auf derselben Seite daumengross stehen; sie grösser zu zeichnen, zerstört
+  die Perspektive. `standard/selftest.mjs` beweist bei jedem Commit, dass nur ein echtes Gegenstück zählt. Der Prüfer
+  nimmt damit etwas an, was er vorher ablehnte; darum steht es hier. Auftrag des Owners am 14. Oktober: «ja mach das
+  alles» (die Folgepunkte des Audits, `/market` auf dem Handy darunter).
+
 ## Die Zahlen
 
 Jede Zahl kann ein Dritter nachmessen. Keine davon ist Geschmack.
@@ -29,7 +40,7 @@ Jede Zahl kann ein Dritter nachmessen. Keine davon ist Geschmack.
 | Kontrast Text | mindestens 4.5:1 | WCAG 2.2 AA, 1.4.3 |
 | Kontrast grosser Text (ab 24 px, fett ab 18.66 px) | mindestens 3:1 | WCAG 2.2 AA, 1.4.3 |
 | Kontrast Marken und Statuszeichen | mindestens 3:1 | WCAG 2.2 AA, 1.4.11 |
-| Tippziele (Knöpfe, Felder, Menüs, alleinstehende Links) | mindestens 44 × 44 px auf dem Handy (390 px), 24 × 24 px mit Maus (1440 px) | Daumen; WCAG 2.2 AA 2.5.8; Links im Fliesstext sind ausgenommen |
+| Tippziele (Knöpfe, Felder, Menüs, alleinstehende Links, auch allein in einer Tabellenzelle) | mindestens 44 × 44 px auf dem Handy (390 px), 24 × 24 px mit Maus (1440 px) | Daumen; WCAG 2.2 AA 2.5.8; Links im Fliesstext sind ausgenommen, ebenso ein kleines Ziel mit nachgewiesenem Gegenstück (siehe Entscheide) |
 | Kleinste Schrift, die jemand lesen muss | 12 px | Feld, Handy, abends |
 | Breite bei 390 px | nichts ragt über den Rand, nichts wird abgeschnitten | ein Handy ohne Querscrollen |
 | Aufbau | `lang`, `<title>`, Viewport, genau ein `<main>`, genau ein `<h1>` | Screenreader, Suche |
@@ -80,6 +91,7 @@ cd standard && npm ci     # einmal: playwright-core, ohne Browser-Download; es n
 node check.mjs            # examples/ und brand/; Befunde auf stdout, Exit 1 bei jedem Befund
 node check.mjs --live     # dieselben Zahlen an pazair.kulalabs.ch
 node check.mjs --json     # ein JSON-Dokument, zum Beispiel für Kula Flow
+node selftest.mjs         # der Prüfer prüft sich selbst: ein echtes Gegenstück zählt, drei falsche nicht
 ```
 
 ## Wie das Kula Flow speist
@@ -104,8 +116,9 @@ selbst deployen.
 
 ## 10 Innovationen
 
-Stand 14. Oktober 2026: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server, ebenso «dunkel für alle». Sie sind gebaut und getestet (Patch für
-`Kula-Labs/jobflow-a2a`), aber noch nicht deployt. Die übrigen gelten in diesem Repository ab dem Merge.
+Stand 14. Oktober 2026, 16:51 UTC: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server, ebenso «dunkel für alle». Sie
+sind live (`Kula-Labs/jobflow-a2a#232`), nachgemessen im [Bericht, Teil III](PRUEFUNG-ODIN-VISUAL.md#teil-iii-nachmessung-nach-dem-deploy).
+Die übrigen gelten in diesem Repository.
 
 1. **Die Konsole lügt nicht mehr.** Die erste Zeile auf der Startseite ist die echte Antwort des Marktes, live
    gefragt. Was danach kommt, ist als Beispiel markiert.

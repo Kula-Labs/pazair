@@ -58,3 +58,4 @@ jobs:
       - run: npm ci   # playwright-core only
       - run: npx playwright-core install --with-deps chromium   # the Chromium this playwright-core was built for, so the result never depends on the runner's Chrome
       - run: node check.mjs   # MASSSTAB.md: contrast, text size, 44 px targets, nothing cut off, structure, no third parties; any finding fails
+      - run: node selftest.mjs   # the checker checks itself: a real equivalent target passes, three false ones fail

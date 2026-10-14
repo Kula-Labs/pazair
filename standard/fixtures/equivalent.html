@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fixture: equivalent targets</title>
+<style>
+/* The checker's own test (selftest.mjs): four small links, one with a real equivalent, three whose equivalent fails. */
+body{margin:0;background:#0a0f1f;color:#ecebe6;font:16px/1.5 system-ui,sans-serif}main{padding:2rem 1rem;display:grid;gap:1rem}
+a{color:#d1a04a}.small{display:inline-block;width:12px;height:12px;overflow:hidden;font-size:12px;line-height:12px}
+.big{display:inline-flex;align-items:center;min-width:48px;min-height:48px;padding:0 .8rem}
+</style></head><body><main><h1>Equivalent targets</h1>
+<p><a class="small" href="/a" data-equivalent="big-a">a</a></p><p><a class="big" id="big-a" href="/a">The stall for a</a></p>
+<p><a class="small" href="/b" data-equivalent="nowhere">b</a></p>
+<p><a class="small" href="/c" data-equivalent="small-c">c</a></p><p><a class="small" id="small-c" href="/c">C</a></p>
+<p><a class="small" href="/d" data-equivalent="big-d">d</a></p><p><a class="big" id="big-d" href="/elsewhere">The stall for something else</a></p>
+</main></body></html>

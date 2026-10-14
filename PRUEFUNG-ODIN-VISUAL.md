@@ -22,6 +22,12 @@ grünen Live-Punkt und bot eine abgeschaltete Zahlungsart an. Nach der Urteilslo
 **NOT READY · KEINE FREIGABE**. Der Patch schliesst beides und dazu die Sicherheitsbefunde. Er ist gebaut und getestet,
 aber noch nicht deployt.
 
+**Nachtrag, 14. Oktober, 16:51 UTC.** Der Patch ist live (`Kula-Labs/jobflow-a2a#232`). Die Nachmessung mit demselben
+Prüfer: 366 Befunde vorher, 233 danach, 11 von 14 Seiten ohne Befund, beide V0 aus dem Audit geschlossen. Sie fand
+auch, was die Vorschau nicht sah, darunter einen Satz auf `/fingerprint`, der mehr verspricht als der Beweis (G1, V0).
+Ein Folgepatch schliesst alles, was sie fand: in der Vorschau mit Live-Daten 0 Befunde auf 14 Seiten. Er ist gebaut und
+getestet, aber noch nicht deployt. Siehe [Teil III](#teil-iii-nachmessung-nach-dem-deploy).
+
 ---
 
 ## Teil I: Visual-Gremium
@@ -188,6 +194,10 @@ Zwei Stimmen gegen zwei, drei Fälle, entschieden nach den Regeln des Gremiums:
 Live (14.10.): **KEINE FREIGABE**, G1. Nach dem Deploy des Patches: **FREIGABE**; `/market` bleibt V2 und offen.
 Dieses Repository: **FREIGABE**.
 
+Nachgemessen nach dem Deploy (Teil III): live weiter **KEINE FREIGABE**, G1, wegen eines Satzes auf `/fingerprint`,
+den das Audit übersehen hatte; dazu G6 auf `/market`, `/transparency` und `/passes`. Mit dem Folgepatch: **FREIGABE**,
+0 Befunde auf 14 Seiten. MASTERCLASS verlangt den 3-Sekunden-Test des Gremiums auf einem Handy; er steht aus.
+
 > Beim ersten Öffnen: Werk oder Attrappe? Am 14. Oktober ein Werk mit einer Attrappen-Zeile in der Konsole. Mit dem
 > Patch ein Werk.
 
@@ -221,15 +231,15 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 
 | ID | Linse | Befund | Stand |
 |---|---|---|---|
-| P1-1 | Hex | Sicherheitsbefund, hoch | Patch, Schliesstest |
-| P1-2 | Ledger | Krypto angeboten trotz Abschaltung (Fund 2) | Patch; README hier |
-| P2-3 | Hex | Schutz-Header fehlten auf HTML-Seiten | Patch, Schliesstest |
-| P2-4 | Hex | Sicherheitsbefund, mittel | Patch, eigener Commit (Designentscheid, einzeln ablehnbar) |
-| P2-5 | Pulse, Ledger | «3 delivered orders» waren Testkäufe von Kula Labs bei Kula Labs. `/v1/stats` zählt sie jetzt getrennt (`test_orders`), die Startseite zeigt nur Käufe anderer | Patch, Schliesstest |
-| P2-6 | Grind | Geteilte Links auf nicht vorhandene Pässe, Shops oder Listings zeigten Menschen rohes JSON | Patch: Menschen bekommen eine Seite, Agenten JSON |
-| P3-7 | Ledger | Fusszeile ohne Handelsregisternummer; `/sell/konto` ohne Fuss; og-Tags fehlen auf 6 Seiten | Nummer im Patch, Rest offen |
-| P3-8 | Hex, Ledger | Cloudflare fügt Web Analytics in jede Seite ein. Das steht weder im Code noch in `/privacy` | offen: im Cloudflare-Dashboard ausschalten oder in `/privacy` nennen |
-| P3-9 | Grind | `HEAD /` antwortete 404 JSON (Monitore halten die Seite für tot) | Patch |
+| P1-1 | Hex | Sicherheitsbefund, hoch | live (#232), Schliesstest |
+| P1-2 | Ledger | Krypto angeboten trotz Abschaltung (Fund 2) | live (#232); README hier |
+| P2-3 | Hex | Schutz-Header fehlten auf HTML-Seiten | live (#232), Schliesstest |
+| P2-4 | Hex | Sicherheitsbefund, mittel | live (#232) |
+| P2-5 | Pulse, Ledger | «3 delivered orders» waren Testkäufe von Kula Labs bei Kula Labs. `/v1/stats` zählt sie jetzt getrennt (`test_orders`), die Startseite zeigt nur Käufe anderer | live (#232), Schliesstest |
+| P2-6 | Grind | Geteilte Links auf nicht vorhandene Pässe, Shops oder Listings zeigten Menschen rohes JSON | live (#232): Menschen bekommen eine Seite, Agenten JSON |
+| P3-7 | Ledger | Fusszeile ohne Handelsregisternummer; `/sell/konto` ohne Fuss; og-Tags fehlen auf 6 Seiten | Nummer live (#232); `/sell/konto` mit Fuss im Folgepatch; og-Tags offen |
+| P3-8 | Hex, Ledger | Cloudflare fügt Web Analytics in jede Seite ein. Das steht weder im Code noch in `/privacy` | Folgepatch: das Skript läuft auf keiner Seite mehr, `/privacy` sagt es. Im Dashboard ausschalten bleibt sauberer |
+| P3-9 | Grind | `HEAD /` antwortete 404 JSON (Monitore halten die Seite für tot) | live (#232) |
 | P3-10 | Ledger | README: Listing-Gebühr missverständlich | in diesem Commit |
 
 ### Zukunftsbrüche (nur die materiellen)
@@ -273,19 +283,19 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 
 ### Entscheidung
 
-- **Jetzt:** den Patch für `jobflow-a2a` prüfen und mergen. Er hat vier Commits; der Commit zu P2-4 ist ein
-  Designentscheid und lässt sich einzeln ablehnen. Cloudflare Web Analytics ausschalten oder in `/privacy` nennen.
-- **Danach:** `/market` auf dem Handy lesbar machen. Eine gemeinsame Hülle aus Tokens, Leiste und Fuss für die 9 Seiten
-  mit eigener Hülle. Ein Leitsatz statt vier.
+- **Erledigt am 14.10.:** der Patch ist live (`jobflow-a2a#232`, 16:51 UTC).
+- **Jetzt:** den Folgepatch einspielen (Teil III). Cloudflare Web Analytics im Dashboard ausschalten; mit dem Folgepatch
+  läuft das Skript ohnehin nirgends mehr.
+- **Entschieden mit dem Folgepatch:** `/market` auf dem Handy lesbar; eine gemeinsame Hülle aus Tokens, Leiste und Fuss
+  für die 9 Seiten mit eigener Hülle; ein Leitsatz, «Where agents keep their word.».
 - **Nicht bauen:** neue Sektionen auf der Startseite.
 - **Entschieden am 14.10.:** dunkel für alle, hell nur auf Wahl (Fund 7).
-- **Menschlich klären:** welcher Leitsatz gilt («Where agents keep their word», «Any agent can pay» oder «the economic
-  infrastructure of AI agents») und ob Krypto im README überhaupt erwähnt bleibt, solange es aus ist.
+- **Menschlich klären:** ob Krypto im README überhaupt erwähnt bleibt, solange es aus ist.
 
 ### Restenergie
 
-- Bis zum Merge gilt live weiter KEINE FREIGABE.
-- Diese Sitzung hatte nur Lesezugriff auf `jobflow-a2a`. Den Patch spielt der Owner ein.
+- Bis zum Deploy des Folgepatches gilt live weiter KEINE FREIGABE (G1, Teil III).
+- Diese Sitzung hatte nur Lesezugriff auf `jobflow-a2a`. Den Patch und den Folgepatch spielt der Owner ein.
 - Der CI-Job `standard` ist neu. Der erste Lauf auf GitHub zeigt, ob der Browser-Download im Runner stabil läuft.
 - Alles läuft über einen Menschen, Fatih, mit Merge gleich Deploy vom Handy. Das ist der Engpass im Betrieb.
 
@@ -298,3 +308,61 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 - Zahlen der Sperrklinke: live 366 Befunde auf 14 Seiten (225 davon auf `/market`). Mit dem Patch in der lokalen
   Vorschau mit den echten Listings: 0 auf 13 Seiten, 183 auf `/market`. Die Beispielseiten dieses Repositorys hatten
   vorher 61 Befunde, jetzt 0.
+
+---
+
+## Teil III: Nachmessung nach dem Deploy
+
+14. Oktober 2026. Der Patch wurde als `Kula-Labs/jobflow-a2a#232` gemergt und lief um 16:51 UTC live, rund vier Minuten
+nach dem Merge. Gemessen wurde mit demselben Prüfer wie im Audit (`node standard/check.mjs --live`), dazu einzeln per
+Anfrage an die Live-Seite.
+
+### Was live gilt
+
+- **Dunkel für alle** auf allen 14 Seiten, gemessen mit einem System auf hell [GEMESSEN].
+- **Beide V0 aus dem Audit geschlossen:** die Konsole fragt den Markt live; keine der geprüften Seiten bietet Krypto an
+  [GESEHEN].
+- **Aufbau:** Schutz-Header, genau ein `<main>` und ein `<h1>`, auch auf der Fehlerseite und der neuen `/licence`
+  [GEMESSEN].
+- **Fingerabdruck:** `/fingerprint` titelt «Two prints, 55 of 64 ridges apart. Provably.»; die alten Sätze stehen auf
+  keiner der geprüften Seiten mehr [GESEHEN].
+- **Sperrklinke:** 366 Befunde vor dem Audit, 233 danach; 11 von 14 Seiten ohne Befund [GEMESSEN].
+
+### Was die Nachmessung fand
+
+Die Vorschau vor dem Deploy hatte keine Tabellenzeilen und einen Satz übersehen. Darum steht hier, was erst live sichtbar
+wurde, und was der Folgepatch daraus macht.
+
+| Fund | Regel, Stufe | Wo | Folgepatch |
+|---|---|---|---|
+| «Not mostly: always»: ein Zeichen der Agenten-ID ändern kippe den Abdruck immer. Gilt nur, solange zwei IDs nicht dieselbe 80-Bit-Nachricht ergeben (1 zu 2<sup>80</sup>) | G1, V0 | `/fingerprint` | Satz korrigiert, im Schliesstest von SPEC 15 |
+| Links allein in einer Tabellenzelle, 20 px hoch | G6, V1 | `/transparency`, `/passes` | 24 px mit Maus, 44 px auf dem Handy |
+| Schrift in den Ständen 8 bis 11 px, Standnummer 4.24:1, Pfeile 37 px | G6, V1 | `/market` (218) | Stände breiter, alles ab 12 px, volle Deckkraft, Pfeile 44 px |
+| Fassaden in der Zeichnung 11 bis 32 px breit | G6, V1 | `/market` | gleichwertiges Ziel nach WCAG 2.5.8, nachgewiesen (MASSSTAB, Entscheide) |
+| Ein Skript eines Dritten lief auf einigen Seiten (P3-8) | Datenschutz, mittel | mehrere | läuft auf keiner Seite mehr; `/privacy` sagt es |
+| Neun Seiten (acht Vorlagen) mit eigener Hülle | G3, V2 | `/sell`, Konto, `/fingerprint`, `/transparency`, `/passes`, Pass, Shop, Antworten | gemeinsame Leiste, gemeinsamer Fuss, ein Satz Farben |
+| Mehrere Leitsätze nebeneinander | G2, V2 | Startseite, Shell, `/demand` | einer: «Where agents keep their word.» |
+
+Der Folgepatch hat fünf Commits mit Schliesstests (`tests/audit-folgen-2026-10-14.test.ts`), 839 Tests grün. In der
+lokalen Vorschau mit den Live-Daten (Listings, Transparenz, Register) [GEMESSEN]: **0 Befunde auf 14 Seiten**, keine
+Seite von ihrer Richtlinie blockiert, kein Skriptfehler. Er ist gebaut und getestet, aber noch nicht deployt.
+
+### Entscheid: der Fingerabdruck bleibt bei k = 10
+
+Vorgeschlagen war, den Code auf k = 16 zu stärken (d = 49, 2<sup>64</sup> statt 2<sup>40</sup> für eine erzwungene
+Kollision). Entschieden: **nein**.
+
+1. Ein anderes k ändert jeden Abdruck. Ein verankerter Abdruck darf sich nie ändern; SPEC 15, der Testvektor und
+   `pazair-verify` (npm, PyPI) hängen daran.
+2. Agenten-IDs wählt niemand selbst; der Server zieht sie zufällig. Eine Kollision unter fremden Agenten bräuchte rund
+   10<sup>12</sup> Registrierungen gegen eine Ratenbegrenzung, einen bestimmten Abdruck nachzubauen 2<sup>80</sup>.
+3. Nur der Aussteller selbst könnte IDs durchprobieren. Er signiert die Pässe ohnehin; wer ein Agent ist, sagen
+   Herkunft, ID und Signatur, nicht der Abdruck (SPEC 15, «What it does not claim»).
+
+Wird der Abdruck je zur Identität erklärt, dann als zweites Feld mit grösserem k neben dem ersten, nie an seiner Stelle.
+
+### Quellen
+
+- Live: pazair.kulalabs.ch, 14.10.2026, 16:51 bis 16:54 UTC (Messung), 17:00 bis 19:30 UTC (Folgepunkte); Deploy-Lauf von `jobflow-a2a#232`.
+- Code: `Kula-Labs/jobflow-a2a` @ `383c3ee` (nach #232), Folgepatch auf diesem Stand; `Kula-Labs/pazair` @ `4f1816b`.
+- Messung: wie im Audit; dazu `standard/selftest.mjs` für die Ausnahme «gleichwertiges Ziel».
