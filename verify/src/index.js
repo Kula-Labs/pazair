@@ -382,3 +382,6 @@ import { verifyPqSignature } from './pq.js';
 
 // Fingerprint (SPEC section 15): two different prints differ in at least 55 of 64 symbols; the reference drawing.
 export { FINGERPRINT, rsEncode, fingerprintOf, fingerprintDistance, fingerprintSvg, recordOf, ridgesOf } from './fingerprint.js';
+
+// The Word Pass as a W3C Verifiable Credential 2.0 (SPEC section 18): did:web, Multikey, Data Integrity eddsa-jcs-2022.
+export { base58btcEncode, base58btcDecode, multikeyOf, multikeyToX, didWebUrl, resolveDidWeb, verifyDataIntegrity, verifyCredential, signDataIntegrity } from './credential.js';

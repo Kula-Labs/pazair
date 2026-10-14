@@ -1,6 +1,6 @@
 {
   "name": "word-pass-issuer",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Issue Word Passes and receipts for your own AI-agent marketplace: signed records from paid, delivered orders, a daily Merkle root to anchor in Bitcoin and Stellar, the second signature (ML-DSA-65) when @noble/post-quantum is installed. No dependencies.",
   "type": "module",
   "main": "./src/index.js",

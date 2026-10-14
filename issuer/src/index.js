@@ -170,3 +170,45 @@ export const otsDigest = (root) => hexBytes(root);
 export function passDocument(current, anchored) {
   return anchored ? { current, anchored: { pass: anchored.pass, leaf: anchored.leaf, proof: anchored.proof, root: anchored.root } } : { current, anchored: null };
 }
+
+// Section 18: the issuer as a W3C DID (did:web) and every pass also a Verifiable Credential 2.0 with a Data Integrity
+// proof (eddsa-jcs-2022), so wallets and frameworks that speak VCs can hold and check it. Same key, same pass.
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function base58btc(bytes) {
+  let n = 0n, s = '';
+  for (const b of bytes) n = n * 256n + BigInt(b);
+  while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; }
+  for (const b of bytes) { if (b !== 0) break; s = '1' + s; }
+  return s;
+}
+const multikey = (x) => { const raw = unb64u(x), b = new Uint8Array(2 + raw.length); b[0] = 0xed; b[1] = 0x01; b.set(raw, 2); return 'z' + base58btc(b); };
+
+/** did:web of your origin: "https://market.example" → "did:web:market.example" (a port's colon as %3A). */
+export const didOf = (origin) => `did:web:${new URL(origin).host.replace(/:/g, '%3A')}`;
+
+/** What to serve at <origin>/.well-known/did.json (section 2): your Ed25519 keys as Multikeys, for assertions. */
+export function didDocument(origin, keys) {
+  const base = origin.replace(/\/+$/, ''), id = didOf(base);
+  const vms = keys.map((k) => ({ id: `${id}#${k.kid}`, type: 'Multikey', controller: id, publicKeyMultibase: multikey(k.x) }));
+  return {
+    '@context': ['https://www.w3.org/ns/did/v1', 'https://w3id.org/security/multikey/v1'],
+    id, alsoKnownAs: [base], verificationMethod: vms, assertionMethod: vms.map((v) => v.id),
+    service: [{ id: `${id}#word-pass-keys`, type: 'WordPassIssuerKeys', serviceEndpoint: `${base}/.well-known/pazair-receipts.json` }],
+  };
+}
+
+/**
+ * Section 18: a pass document as a Verifiable Credential, signed with the key that signed the pass. `wordPass` is
+ * passDocument(...).anchored ({ pass, leaf, proof, root }) or { pass } before the first anchored day. Serve it at <pass URL>.vc.
+ */
+export async function passCredential(key, origin, passUrl, wordPass, now = new Date()) {
+  const issuer = didOf(origin);
+  const doc = { '@context': ['https://www.w3.org/ns/credentials/v2'], type: ['VerifiableCredential', 'WordPassCredential'], issuer, validFrom: wordPass.pass.issued_at, credentialSubject: { id: passUrl, wordPass } };
+  const proof = { '@context': doc['@context'], type: 'DataIntegrityProof', cryptosuite: 'eddsa-jcs-2022', created: now.toISOString().replace(/\.\d{3}Z$/, 'Z'), verificationMethod: `${issuer}#${key.kid}`, proofPurpose: 'assertionMethod' };
+  const hash = async (v) => new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(canonical(v))));
+  const data = new Uint8Array(64);
+  data.set(await hash(proof), 0);
+  data.set(await hash(doc), 32);
+  const priv = await crypto.subtle.importKey('jwk', key.privateJwk, ALG, false, ['sign']);
+  return { ...doc, proof: { ...proof, proofValue: 'z' + base58btc(new Uint8Array(await crypto.subtle.sign(ALG, priv, data))) } };
+}

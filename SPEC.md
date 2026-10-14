@@ -31,6 +31,9 @@ Any marketplace, agent framework or payment provider may issue and verify these 
   ±(2^53 − 1) are read as doubles, as `JSON.parse` does; issuers keep counts within that range.
 - **Hash.** `sha256hex(s)`: lowercase hex SHA-256 of the UTF-8 bytes of `s`.
 - **Money.** Integer minor units (`amount_minor`) and a lowercase ISO 4217 `currency`.
+- **JCS.** For the objects of this specification (no lone surrogates, no number out of range) the canonical form is
+  exactly the JSON Canonicalization Scheme, RFC 8785: keys sorted by UTF-16 code units, numbers and strings as
+  ECMAScript writes them. Any JCS library gives the same bytes; section 18 relies on it.
 
 ## 2. Issuer keys
 
@@ -52,6 +55,11 @@ A verifier keeps the keys it trusts. A rotated key stays listed while objects si
 - **Second key.** An issuer that signs twice (section 16) lists its ML-DSA-65 keys as
   `"pq_keys": [{ "pq_kid": "…", "alg": "ML-DSA-65", "public_key_b64url": "…" }]`, where `pq_kid` is the first 16 hex
   characters of `sha256hex(hex(public key))` (as in section 14). Revocation works as for `keys`.
+- **DID.** An issuer MAY also publish itself as a W3C DID with the did:web method: `GET <origin>/.well-known/did.json`,
+  `id` `did:web:<host>` (a port's colon written `%3A`), every Ed25519 key of `keys` as a `Multikey` verification
+  method `did:web:<host>#<kid>` (`publicKeyMultibase`: `z` + base58btc of the bytes `0xed 0x01` and the 32 key
+  bytes), listed under `assertionMethod`. Same keys, same `kid`; the keys document then names it: `"did": "did:web:<host>"`.
+  Section 18 uses it.
 
 ## 3. Receipt
 
@@ -279,14 +287,28 @@ of the root, an OpenTimestamps proof of the root with the block Merkle root it l
 times it is valid and expired, the sentence a verifier says, a fingerprint (section 15) with its seed, codeword, the distance
 to another agent's and the hash of the reference drawing, and a pass, a receipt and a holder proof signed twice (section 16)
 with the ML-DSA-65 test key, its seed and the keys document that lists it. An implementation is conformant when it reproduces all of them.
+[`vectors/credential-1.json`](./vectors/credential-1.json) (section 18): base58btc, the Multikey of the test key,
+did:web URLs, a DID document, the first pass as a Verifiable Credential with its proof, the two hashes it signs, and a
+forged copy that must fail. The reference verifiers also reproduce the W3C Recommendation's own eddsa-jcs-2022 vector.
 
 ## 11. Governance
 
-Kula Labs (Switzerland) edits this specification in the open: proposals and changes as issues and pull requests
-in this repository, decisions explained there. The text and the reference verifier stay MIT licensed; issuing
-or checking a Word Pass needs no permission, fee or contract. The name "Word Pass" may be used by any issuer
-whose objects pass section 9's checks. The goal is a neutral home (a W3C Community Group, then an IETF draft)
-once several issuers use it; Kula Labs stays its editor.
+- **Free to implement.** Issuing, showing or checking a Word Pass needs no permission, fee, membership or contract.
+  The text, the test vectors and the reference implementations stay MIT licensed. Kula Labs will not assert any
+  patent against an implementation of this specification.
+- **Earned, never bought.** An issuer may charge for its own services; PazAIr charges a fee per paid sale. No issuer
+  sells, rents or hand-edits a record (rule 7.1), and none sells a badge, a rank, a seal or anyone's data. Nothing in
+  a pass can be bought, from Kula Labs or from anyone else.
+- **No privileged issuer.** PazAIr is the first issuer, not a special one: its objects follow exactly these sections,
+  and a verifier treats every issuer the same way. Trust in an issuer stays the verifier's choice (section 12). The
+  name "Word Pass" may be used by any issuer whose objects pass section 9's checks.
+- **Nothing changes in silence.** Proposals and changes are issues and pull requests in this repository, decisions
+  explained there. Fields are only added (section 8). A change that closes a gap against abuse or fixes a security
+  problem may apply at once (section 13); every other change is announced here at least 14 days before issuers apply it.
+- **A neutral home.** Kula Labs (Switzerland) edits the specification today. Any issuer whose implementation
+  reproduces the test vectors (section 10) may ask for a co-editor seat. Once three issuers not controlled by Kula Labs
+  issue Word Passes, Kula Labs proposes the specification, together with them, to a neutral home: a W3C Community
+  Group, then an IETF draft.
 
 
 ## 12. Security considerations
@@ -333,6 +355,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 15, wording | 2026-10-14 | Section 15 separates the theorem (55 of 64 for different messages) from the probability (different messages, 80 bits of a hash); 0 means the same message, not the same agent. Code, vector and drawing unchanged |
 | 1.0 + 16 | 2026-10-10 | Second signature: `pq_sig` (ML-DSA-65) on passes, receipts and holder proofs, `pq_keys` in the keys document |
 | 1.0 + 17 | 2026-10-11 | The gate: `agent_identity`, mandate expiry, counterparties, purpose codes and step-up, `gateway_policy`, `evidence`, `dispute`; five questions before a transfer, one evidence object after, a dispute as an object |
+| 1.0 + 18 | 2026-10-14 | did:web for issuers (section 2); the pass as a W3C Verifiable Credential 2.0 with an eddsa-jcs-2022 proof (section 18); section 1 names JCS; governance: free to implement, nothing in a pass for sale, 14 days' notice, co-editors (section 11). Passes, receipts and their signatures unchanged |
 
 ## 14. Remember: the chain of daily roots
 
@@ -581,3 +604,53 @@ and decision. A decision for the buyer counts as `disputes_lost` in the seller's
 goes into the daily root like a receipt. What a dispute object does not claim: that the decision was right, only who
 said what, in which order, and what was paid back.
 
+
+## 18. The Word Pass as a W3C Verifiable Credential
+
+A Word Pass is plain JSON, checked with the keys document of section 2. Much of the world checks claims the W3C way:
+a DID for the issuer, a Verifiable Credential for the claim, a Data Integrity proof around it. An issuer that
+implements this section serves every pass in both forms. The pass itself does not change.
+
+`GET <pass URL>.vc`
+
+```json
+{ "@context": ["https://www.w3.org/ns/credentials/v2"],
+  "type": ["VerifiableCredential", "WordPassCredential"],
+  "issuer": "did:web:pazair.ch", "validFrom": "<issued_at of the pass>",
+  "credentialSubject": { "id": "<pass URL>", "wordPass": { "pass": {…}, "leaf": "…", "proof": […], "root": {…} } },
+  "proof": { "@context": ["https://www.w3.org/ns/credentials/v2"], "type": "DataIntegrityProof",
+             "cryptosuite": "eddsa-jcs-2022", "created": "…", "verificationMethod": "did:web:pazair.ch#3f1c…",
+             "proofPurpose": "assertionMethod", "proofValue": "z…" } }
+```
+
+- **Issuer.** The issuer's did:web (section 2). `verificationMethod` names one of its Ed25519 keys by `kid`: the key
+  that also signs the pass inside.
+- **Subject.** `credentialSubject.id` is the pass URL (section 9), on the issuer's own origin. `wordPass` is the
+  document of section 5, `{ pass, leaf, proof, root }`, unchanged; before the agent's first anchored day it is
+  `{ pass }` with today's signed pass.
+- **Proof.** `eddsa-jcs-2022` of the W3C Recommendation *Data Integrity EdDSA Cryptosuites v1.0*: Ed25519 over
+  `sha256(JCS(proof without proofValue)) || sha256(JCS(credential without proof))`, the proof carrying the
+  credential's `@context`, `proofValue` in multibase base58btc. JCS is the canonical form of section 1.
+- **Nothing new in it.** The credential says exactly what the pass URL says. Its own terms (`WordPassCredential`,
+  `wordPass`) fall under the issuer-dependent vocabulary of the VC 2.0 context; verifying needs no JSON-LD processing.
+
+**Checking a credential** (what `verifyCredential` in `pazair-verify` and `verify_credential` in Python do):
+
+1. `@context` starts with the VC 2.0 context; `type` holds `VerifiableCredential` and `WordPassCredential`.
+2. Resolve the issuer's did:web; the document must name the DID it was fetched for.
+3. Verify the proof: the cryptosuite, the purpose `assertionMethod`, the key listed under `assertionMethod`, the
+   proof's `@context` where the credential's starts, the signature.
+4. The subject is an https URL on the origin of the did:web.
+5. `validUntil`, if given, has not passed; `validFrom` is not in the future.
+6. The pass inside verifies as section 5 says, with the keys document of the same origin: signature, second
+   signature (section 16), Merkle proof, word.
+7. For full trust, the day's root on Bitcoin or Stellar, as section 9 checks it at the subject URL
+   (`npx pazair-verify credential <url>` does steps 1 to 7).
+
+Any VC verifier stops after step 3 and knows that the issuer signed this record. Steps 4 to 7 add what only a Word
+Pass has: the record follows from paid deliveries, and its day is fixed in Bitcoin and Stellar.
+
+What a credential does not claim: more than its pass. It is a second envelope for the same signed record, so that a
+wallet, a gateway or an agent framework that speaks VCs can hold and show a Word Pass without knowing this
+specification. Reference: `verifyCredential`, `verifyDataIntegrity`, `signDataIntegrity` and `resolveDidWeb` in
+`pazair-verify`; the same in Python.

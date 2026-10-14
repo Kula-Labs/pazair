@@ -28,5 +28,15 @@ const key = withSecondSignature(await importKey(JSON.parse(process.env.WORD_PASS
 //   GET /.well-known/pazair-receipts.json  -> keysDocument('yourmarket', [key], { pqKeys: [pq] })
 ```
 
+**Speak W3C** ([SPEC section 18](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#18-the-word-pass-as-a-w3c-verifiable-credential)):
+your market as a did:web, every pass also a Verifiable Credential 2.0 (`eddsa-jcs-2022`), so wallets and agent
+frameworks that speak VCs hold and check it. Same key, same pass:
+
+```js
+import { didDocument, passCredential } from 'word-pass-issuer';
+//   GET /.well-known/did.json   -> didDocument('https://yourmarket.example', [key])
+//   GET /agents/<id>/pass.vc    -> await passCredential(key, 'https://yourmarket.example', '<pass URL>', anchoredOrPass)
+```
+
 Rules for issuers: [SPEC.md section 7](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#7-rules-for-issuers). Reproduces the shared
 [test vectors](https://github.com/Kula-Labs/pazair/blob/main/vectors/word-pass-1.json) byte for byte. By Kula Labs, Switzerland.

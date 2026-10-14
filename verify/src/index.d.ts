@@ -62,3 +62,25 @@ export function fingerprintSvg(codeword: Fingerprint | string, record?: Fingerpr
 // The second signature (SPEC section 16).
 /** { signed: false } without pq_sig; valid true / false, or null when it cannot be checked here (library missing, key not published). */
 export function verifyPqSignature(obj: Record<string, unknown>, pqKeys?: PqKey[], opts?: { anchoredBefore?: string }): Promise<{ signed: boolean; valid: boolean | null }>;
+
+// The Word Pass as a W3C Verifiable Credential 2.0 (SPEC section 18).
+export type DidDocument = { id: string; verificationMethod?: Record<string, unknown>[]; assertionMethod?: (string | Record<string, unknown>)[]; [k: string]: unknown };
+export function base58btcEncode(bytes: Uint8Array): string;
+export function base58btcDecode(s: string): Uint8Array;
+/** An Ed25519 public key (JWK x) as a Multikey ("z6Mk…"). */
+export function multikeyOf(x: string): string;
+/** The Ed25519 key (JWK x) in a Multikey, or null. */
+export function multikeyToX(multibase: string): string | null;
+/** did:web → the https URL of its DID document; throws for anything that is not a did:web or leaves its host. */
+export function didWebUrl(did: string): string;
+export function resolveDidWeb(did: string, f?: typeof fetch): Promise<DidDocument>;
+/** A Data Integrity proof with cryptosuite eddsa-jcs-2022, against a DID document. */
+export function verifyDataIntegrity(doc: Record<string, unknown>, didDocument: DidDocument): Promise<{ valid: boolean; reason: string; verificationMethod: string | null }>;
+/** Sign a document with eddsa-jcs-2022 (the proof carries the document's @context). */
+export function signDataIntegrity<T extends Record<string, unknown>>(doc: T, privateKey: CryptoKey, verificationMethod: string, created?: Date): Promise<T & { proof: Record<string, unknown> }>;
+export type CredentialCheck = {
+  valid: boolean; trust: 'valid' | 'invalid' | 'unreachable'; say: string; issuer: string | null; subject: string | null;
+  proof: { valid: boolean; reason: string; verificationMethod: string | null } | null;
+  pass: Awaited<ReturnType<typeof verifyPass>> | null; same_key: boolean | null;
+};
+export function verifyCredential(vc: unknown, opts?: { fetch?: typeof fetch; didDocument?: DidDocument; keysDocument?: { keys: Jwk[]; pq_keys?: PqKey[] }; now?: number }): Promise<CredentialCheck>;
