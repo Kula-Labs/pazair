@@ -188,6 +188,27 @@ An agent's record, from paid and delivered orders only. Nothing personal, nothin
   `kept_pct ≥ 99`; `word_kept_95` with the same minimum and `≥ 95`; else `null`. Buying from yourself earns nothing.
 - `issuer` is the issuer's short name; who the issuer is follows from the origin that serves its keys (section 2).
 
+**The buyer's word.** Many agents mostly buy: a personal assistant, a procurement agent. Their side of the promise is
+to pay for what was delivered. An issuer that implements it adds two fields (both optional, fields only added):
+
+```json
+"as_buyer": { "paid_orders": 12, "sellers": 6, "chargebacks": 0, "disputes_opened": 1, "disputes_upheld_for_seller": 1 },
+"buyer_word": { "kept_pct": 100, "badge": "pays_99" }
+```
+
+- `chargebacks`: chargebacks the agent raised through its card issuer on delivered orders, each counted once. It is
+  the only thing that breaks a buyer's word: pulling back what was paid for, outside the market's own review. An
+  honest dispute costs nothing, won or lost (`disputes_opened`, `disputes_upheld_for_seller` are shown, never counted).
+- `buyer_word.kept_pct = floor(paid_orders / (paid_orders + chargebacks) × 1000) / 10`, `null` without either.
+- `buyer_word.badge`: `pays_99` from 10 paid orders from at least 5 different sellers (`as_buyer.sellers ≥ 5`) and
+  `kept_pct ≥ 99`; `pays_95` with the same minimum and `≥ 95`; else `null`. The same thresholds as the seller's
+  badge, mirrored: buying from your own shops earns nothing.
+- `word` stays the seller's word. A verifier keeps the two apart: a buyer's badge never makes a seller trusted.
+- An issuer says from when it counts chargebacks (PazAIr: 14 October 2026).
+
+Test vector: [`vectors/buyer-word-1.json`](./vectors/buyer-word-1.json) (the badge table, a signed buyer's pass, its
+sentence, and a signed pass whose badge does not follow from its counts).
+
 ## 5. Daily root and proof
 
 Once a day the issuer signs a pass for every agent that traded and builds one Merkle tree:
@@ -271,10 +292,13 @@ rejects a proof made for anyone else, so an agent cannot relay another agent's p
    named block carries something else, is a failure; a pending proof or an unreachable explorer is "unknown".
 6. If a holder proof was given: signature with the same issuer's key, `agent` equal to the pass's `agent`,
    `nonce` equal to the one you sent, `aud` equal to your id if you gave one, `exp` not passed.
-7. `word` must follow from the pass's own counts (section 4); a badge they do not earn is a failure.
+7. `word` must follow from the pass's own counts (section 4); a badge they do not earn is a failure. The same holds
+   for `buyer_word` when the pass carries one.
 8. Verdict: `invalid` if any check fails; else `no_badge_yet` without `word.badge`; else `kept_its_word` when step 4
    or step 5 found the root, `signed_unanchored` when neither did (signed by the issuer, not yet provable to others).
-   A transaction or block that cannot be found is "unknown", not a failure.
+   A transaction or block that cannot be found is "unknown", not a failure. Next to it, for whoever sells to the
+   agent, the buyer's verdict: `no_buyer_badge_yet` without `buyer_word.badge`, else `pays_its_way` or
+   `signed_unanchored` by the same rule (`buyer_trust` in `pazair-verify`).
 
 A verifier says which issuer signed. Trust in an issuer is the verifier's choice; the checks above make sure
 nobody else, not even the issuer later, can change what it signed.
@@ -355,6 +379,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 15, wording | 2026-10-14 | Section 15 separates the theorem (55 of 64 for different messages) from the probability (different messages, 80 bits of a hash); 0 means the same message, not the same agent. Code, vector and drawing unchanged |
 | 1.0 + 16 | 2026-10-10 | Second signature: `pq_sig` (ML-DSA-65) on passes, receipts and holder proofs, `pq_keys` in the keys document |
 | 1.0 + 17 | 2026-10-11 | The gate: `agent_identity`, mandate expiry, counterparties, purpose codes and step-up, `gateway_policy`, `evidence`, `dispute`; five questions before a transfer, one evidence object after, a dispute as an object |
+| 1.0 + 4, buyer | 2026-10-14 | The buyer's word: `as_buyer.chargebacks`, `buyer_word` (`pays_99`, `pays_95`, 10 paid orders from 5 sellers), only chargebacks break it; `buyer_trust` next to `trust` (section 9). Older passes unchanged and valid |
 | 1.0 + 18 | 2026-10-14 | did:web for issuers (section 2); the pass as a W3C Verifiable Credential 2.0 with an eddsa-jcs-2022 proof (section 18); section 1 names JCS; governance: free to implement, nothing in a pass for sale, 14 days' notice, co-editors (section 11). Passes, receipts and their signatures unchanged |
 
 ## 14. Remember: the chain of daily roots

@@ -20,7 +20,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
-           "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
+           "word_of", "buyer_word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
            "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award",
            "FINGERPRINT", "rs_encode", "fingerprint_of", "fingerprint_distance", "fingerprint_svg", "record_of", "ridges_of",
            "base58btc_encode", "base58btc_decode", "multikey_of", "multikey_to_x", "did_web_url", "resolve_did_web",
@@ -247,6 +247,29 @@ def word_of(p: dict) -> dict:
     return {"kept_pct": kept, "badge": "word_kept_99" if enough and kept >= 99 else "word_kept_95" if enough and kept >= 95 else None}
 
 
+def buyer_word_of(p: dict) -> dict:
+    """SPEC section 4, the buyer's word: paid for what was delivered; only a chargeback on a delivered order breaks it."""
+    b = p.get("as_buyer") or {}
+    paid = b.get("paid_orders") or 0
+    closed = paid + (b.get("chargebacks") or 0)
+    if not closed:
+        return {"kept_pct": None, "badge": None}
+    kept = int(paid / closed * 1000) / 10
+    enough = paid >= 10 and (b.get("sellers") or 0) >= 5
+    return {"kept_pct": kept, "badge": "pays_99" if enough and kept >= 99 else "pays_95" if enough and kept >= 95 else None}
+
+
+def _same_word(claimed: Any, computed: dict) -> bool:
+    """A word in the pass must be the one its own counts give; no word, no claim."""
+    if claimed is None:
+        return True
+    if not isinstance(claimed, dict):
+        return False
+    pk = claimed.get("kept_pct")
+    return ((pk is None) == (computed["kept_pct"] is None) and (pk is None or (isinstance(pk, (int, float)) and float(pk) == computed["kept_pct"]))
+            and claimed.get("badge") == computed["badge"])
+
+
 def verify_pass(anchored: dict, keys: list[dict], anchored_before: Optional[str] = None) -> dict:
     """A revoked key counts only with anchored_before: a day you proved yourself (a Bitcoin block time), never root.day."""
     p = anchored.get("pass", anchored)
@@ -254,11 +277,7 @@ def verify_pass(anchored: dict, keys: list[dict], anchored_before: Optional[str]
     in_root = verify_proof(leaf_of(p), anchored["proof"], root) if anchored.get("proof") is not None and root else None
     sig = p.get("kind") == "word_pass" and verify_signature(p, keys, anchored_before if in_root else None)
     pq_signed = isinstance(p.get("pq_sig"), str)  # section 16: ML-DSA-65 is not checked in Python (None), never reported valid
-    w, pw = word_of(p), p.get("word")
-    if pw is None:  # no word, no claim
-        return {"valid": sig and in_root is not False, "signature_valid": sig, "pq_signed": pq_signed, "ml_dsa_65": None, "in_root": in_root, "word_consistent": True, "word": None}
-    pk = pw.get("kept_pct")
-    consistent = (pk is None) == (w["kept_pct"] is None) and (pk is None or (isinstance(pk, (int, float)) and float(pk) == w["kept_pct"])) and pw.get("badge") == w["badge"]
+    consistent = _same_word(p.get("word"), word_of(p)) and _same_word(p.get("buyer_word"), buyer_word_of(p))
     return {"valid": sig and in_root is not False and consistent, "signature_valid": sig, "pq_signed": pq_signed, "ml_dsa_65": None, "in_root": in_root, "word_consistent": consistent, "word": p.get("word")}
 
 
@@ -447,8 +466,15 @@ def say_pass(p: dict, by: Optional[str] = None) -> str:
         record = f"no sales yet, {n((p.get('as_buyer') or {}).get('paid_orders', 0), 'paid purchase')}"
     b = w.get("badge")
     head = ("kept its word on 99 % or more" if b == "word_kept_99" else "kept its word on 95 % or more" if b == "word_kept_95"
-            else f"kept its word on {_num(float(w['kept_pct']))} % (no badge yet)" if w.get("kept_pct") is not None else "new, no record yet")
-    return f"{p.get('name')} (Word Pass by {by or p.get('issuer')}): {head}; {record}."
+            else f"kept its word on {_num(float(w['kept_pct']))} % (no badge yet)" if w.get("kept_pct") is not None
+            else "no record as a seller yet" if (p.get("as_buyer") or {}).get("paid_orders") or (p.get("as_buyer") or {}).get("chargebacks") else "new, no record yet")
+    buyer, bw, ab = "", p.get("buyer_word"), p.get("as_buyer") or {}
+    if isinstance(bw, dict) and bw.get("kept_pct") is not None:  # section 4, the buyer's word
+        cb, bb = ab.get("chargebacks") or 0, bw.get("badge")
+        bhead = ("paid for 99 % or more" if bb == "pays_99" else "paid for 95 % or more" if bb == "pays_95"
+                 else f"paid for {_num(float(bw['kept_pct']))} % (no buyer's badge yet)")
+        buyer = f" As a buyer: {bhead} of {n((ab.get('paid_orders') or 0) + cb, 'delivered order')} from {n(ab.get('sellers') or 0, 'seller')}, {n(cb, 'chargeback')}."
+    return f"{p.get('name')} (Word Pass by {by or p.get('issuer')}): {head}; {record}.{buyer}"
 
 
 def verify_holder_proof(proof: Any, keys: list[dict], agent: str, nonce: str, now: Optional[float] = None, aud: Optional[str] = None) -> dict:
@@ -536,7 +562,10 @@ def _check_doc(url, u, doc, fetch, proof, nonce, fetch_text, aud=None) -> dict:
     whose = " The agent showing it proved it is this agent." if held and held["ok"] else " To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass)."
     anchored_ok = stellar is True or bool(btc and btc.get("ok") is True)
     trust = "no_badge_yet" if not (p.get("word") or {}).get("badge") else "kept_its_word" if anchored_ok else "signed_unanchored"
-    return {"trust": trust, "issuer": issuer, "checks": checks, "pass": p,
+    # trust is the seller's verdict, as it always was; buyer_trust is the buyer's word (SPEC 4), for whoever sells to it.
+    bw = p.get("buyer_word") if isinstance(p.get("buyer_word"), dict) else {}
+    buyer_trust = "no_buyer_badge_yet" if not bw.get("badge") else "pays_its_way" if anchored_ok else "signed_unanchored"
+    return {"trust": trust, "buyer_trust": buyer_trust, "issuer": issuer, "checks": checks, "pass": p,
             "say": f"{say_pass(p, issuer)} Checked: signature of {issuer} valid, {where}.{whose}"}
 
 

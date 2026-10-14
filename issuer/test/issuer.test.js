@@ -110,3 +110,15 @@ test('section 18: did.json and the pass as a Verifiable Credential, byte for byt
   assert.equal(r.valid, true, r.say);
   assert.equal(r.same_key, true);
 });
+
+test("section 4, the buyer's word: signPass writes buyer_word from as_buyer, the vector's table holds, the verifier accepts it", async () => {
+  const { buyerWord } = await import('../src/index.js');
+  const W = JSON.parse(readFileSync(new URL('../../vectors/buyer-word-1.json', import.meta.url), 'utf8'));
+  for (const c of W.cases) assert.deepEqual(buyerWord(c.as_buyer), c.buyer_word);
+  const key = await generateKey();
+  const p = await signPass(key, 'market', { agent: 'ag_b', name: 'Buyer', since: '2026-10-01T00:00:00.000Z', as_seller: { delivered: 0, not_delivered: 0, buyers: 0 }, as_buyer: { paid_orders: 19, sellers: 5, chargebacks: 1 } });
+  assert.deepEqual(p.as_buyer, { paid_orders: 19, sellers: 5, chargebacks: 1 });
+  assert.deepEqual(p.buyer_word, { kept_pct: 95, badge: 'pays_95' });
+  const v = await verifyPass(p, { keys: keysDocument('market', [key]).keys });
+  assert.deepEqual([v.valid, v.word_consistent], [true, true]);
+});

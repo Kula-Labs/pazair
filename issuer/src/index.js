@@ -97,18 +97,29 @@ export function word(asSeller, disputesLost = 0) {
   return { kept_pct: kept, badge: enough && kept >= 99 ? 'word_kept_99' : enough && kept >= 95 ? 'word_kept_95' : null };
 }
 
+/** Section 4, the buyer's word: paid for what was delivered; only a chargeback on a delivered order breaks it. */
+export function buyerWord(asBuyer) {
+  const b = asBuyer, cb = b.chargebacks ?? 0, closed = b.paid_orders + cb;
+  if (!closed) return { kept_pct: null, badge: null };
+  const kept = Math.floor((b.paid_orders / closed) * 1000) / 10;
+  const enough = b.paid_orders >= 10 && b.sellers >= 5;
+  return { kept_pct: kept, badge: enough && kept >= 99 ? 'pays_99' : enough && kept >= 95 ? 'pays_95' : null };
+}
+
 /**
  * Sign one agent's pass (section 4). Counts come from paid, delivered orders only.
  * a: { agent, name, since, as_seller: { delivered, not_delivered, buyers, success_rate?, median_delivery_ms?, first_sale?, last_sale? },
- *      as_buyer?: { paid_orders, sellers }, disputes_lost?, verified_name?, day? }
+ *      as_buyer?: { paid_orders, sellers, chargebacks? }, disputes_lost?, verified_name?, day? }
+ * as_buyer.chargebacks: chargebacks the agent raised on delivered orders (section 4, the buyer's word).
  */
 export async function signPass(key, issuer, a, now = new Date()) {
   const s = a.as_seller;
   const as_seller = { delivered: s.delivered, not_delivered: s.not_delivered, success_rate: s.success_rate ?? (s.delivered + s.not_delivered ? s.delivered / (s.delivered + s.not_delivered) : null), median_delivery_ms: s.median_delivery_ms ?? null, buyers: s.buyers, first_sale: s.first_sale ?? null, last_sale: s.last_sale ?? null };
   const lost = a.disputes_lost ?? 0;
+  const as_buyer = { paid_orders: a.as_buyer?.paid_orders ?? 0, sellers: a.as_buyer?.sellers ?? 0, chargebacks: a.as_buyer?.chargebacks ?? 0 };
   return key.sign({
     v: 1, issuer, kind: 'word_pass', kid: key.kid, agent: a.agent, name: a.name, verified_name: a.verified_name ?? null, since: a.since,
-    as_seller, as_buyer: a.as_buyer ?? { paid_orders: 0, sellers: 0 }, disputes_lost: lost, word: word(as_seller, lost),
+    as_seller, as_buyer, disputes_lost: lost, word: word(as_seller, lost), buyer_word: buyerWord(as_buyer),
     day: a.day ?? now.toISOString().slice(0, 10), issued_at: now.toISOString(),
   });
 }
