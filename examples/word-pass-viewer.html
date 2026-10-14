@@ -5,17 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <!-- Word Pass viewer: one pass, two readers. Open this file in a browser; it loads any pass URL live (CORS is open) and falls back to the embedded snapshot. Signature (Ed25519) and Merkle proof are recomputed in the browser; the Stellar and Bitcoin anchors are linked, not looked up. -->
 <title>Word Pass Lupe</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one bar to pick a pass, then two panes side by side: the pass as a person reads it, the pass as an agent reads it. Dark-first, the PazAIr mark's black, cream and gold. */
 :root {
   --bg: #0b0b0f; --panel: #14141b; --panel2: #1b1b24; --line: #2a2a36; --fg: #f3ecdc; --muted: #a39d8c;
   --gold: #d1a04a; --gold-ink: #0b0b0f; --ok: #7fc69a; --warn: #e0b45a; --bad: #e07a6a; --unknown: #8b94a8;
-  --display: 'Fraunces', Georgia, serif; --body: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --display: Georgia, 'Times New Roman', serif; --body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: dark;
 }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #a9782a; --gold-ink: #fffdf7; --ok: #2f7f4f; --warn: #9a6d12; --bad: #b3402f; --unknown: #6c7386; color-scheme: light } }
-:root[data-theme="light"] { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #a9782a; --gold-ink: #fffdf7; --ok: #2f7f4f; --warn: #9a6d12; --bad: #b3402f; --unknown: #6c7386; color-scheme: light }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #84590c; --gold-ink: #fffdf7; --ok: #177049; --warn: #9c4f00; --bad: #b3402f; --unknown: #5d6475; color-scheme: light } }
+:root[data-theme="light"] { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #84590c; --gold-ink: #fffdf7; --ok: #177049; --warn: #9c4f00; --bad: #b3402f; --unknown: #5d6475; color-scheme: light }
 * { box-sizing: border-box }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); padding-block: 0 48px; padding-inline: 16px }
 a { color: var(--gold) }
@@ -85,9 +84,11 @@ pre { margin: 0; padding: 12px 14px; overflow-x: auto; font: 12.5px/1.5 var(--mo
 .k { color: var(--gold) } .s { color: var(--ok) } .n { color: var(--warn) } .z { color: var(--muted) }
 details summary { cursor: pointer; padding: 10px 14px; font: 600 13px var(--body); border-bottom: 1px solid var(--line); list-style: none; display: flex; justify-content: space-between }
 details summary::after { content: "+"; color: var(--muted) } details[open] summary::after { content: "–" }
-.copy { font: 12px var(--body); padding: 3px 9px; border-radius: 5px; border: 1px solid var(--line); background: transparent; color: var(--fg) }
 .err { color: var(--bad); font-size: 14px }
 @media (prefers-reduced-motion: no-preference) { .dot { transition: background .25s } }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap }
+/* A finger, not a cursor: every control is at least 44 px where people tap. */
+button, input[type=text], .chip, details summary { min-height: 44px } .chip { display: inline-flex; align-items: center }
 </style>
 </head>
 <body>
@@ -99,7 +100,7 @@ details summary::after { content: "+"; color: var(--muted) } details[open] summa
     <div>Word Pass Lupe <small>· ein Pass, zwei Leser</small></div>
   </div>
   <form id="f">
-    <label for="url" class="visually-hidden" hidden>Pass-URL oder Agent-ID</label>
+    <label for="url" class="visually-hidden">Pass-URL oder Agent-ID</label>
     <input type="text" id="url" placeholder="https://pazair.kulalabs.ch/v1/agents/ag_…/pass oder ag_…" autocomplete="off" spellcheck="false">
     <button type="submit" id="go">Prüfen</button>
   </form>
@@ -107,7 +108,7 @@ details summary::after { content: "+"; color: var(--muted) } details[open] summa
 <div class="chips" id="chips"></div>
 <div class="source" id="source"></div>
 
-<div class="panes">
+<main class="panes">
   <section class="pane" aria-labelledby="hh">
     <h2 id="hh">Was ein Mensch sieht <span>pazair.kulalabs.ch/pass/&lt;id&gt;</span></h2>
     <div class="card" id="human"><p class="foot">Lade …</p></div>
@@ -116,7 +117,7 @@ details summary::after { content: "+"; color: var(--muted) } details[open] summa
     <h2 id="ah">Was ein Agent sieht <span>GET /v1/agents/&lt;id&gt;/pass · check_word_pass</span></h2>
     <div class="agent" id="agent"></div>
   </section>
-</div>
+</main>
 </div>
 
 <script>
