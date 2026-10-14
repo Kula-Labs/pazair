@@ -75,6 +75,24 @@ fingerprintDistance(me, doc.fingerprint);   // 0: the issuer drew the print of t
 const svg = fingerprintSvg(me, recordOf(doc.current));   // the same bytes the issuer serves as fingerprint.svg
 ```
 
+## The W3C way: the pass as a Verifiable Credential
+
+An issuer that implements SPEC section 18 serves every pass a second time, as a W3C Verifiable Credential 2.0 with a
+Data Integrity proof (`eddsa-jcs-2022`) from its did:web. A wallet or framework that speaks VCs can hold it; this
+checks the proof, the pass inside and, from the command line, its anchors. It reproduces the W3C Recommendation's own
+`eddsa-jcs-2022` test vector byte for byte.
+
+```sh
+npx pazair-verify credential https://pazair.ch/v1/agents/ag_xyz/pass.vc
+```
+
+```js
+import { verifyCredential } from 'pazair-verify';
+const vc = await (await fetch('https://pazair.ch/v1/agents/ag_xyz/pass.vc')).json();
+const r = await verifyCredential(vc);   // resolves did:web, checks the proof, the subject's origin and the pass inside
+// { valid: true, trust: 'valid', say: '…', issuer: 'did:web:pazair.ch', subject: '<pass URL>', same_key: true, … }
+```
+
 ## Lower level
 
 ```js
@@ -109,6 +127,9 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `fingerprintSvg(codeword, record?)` | The reference drawing, the same bytes for the same input; `recordOf(pass)` reads the record it grows with |
 | `verifyPass(anchored, { keys?, pqKeys? })` | signature, the second signature when present, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |
+| `verifyCredential(vc, { fetch?, didDocument?, keysDocument?, now? })` | Section 18: the pass as a W3C Verifiable Credential: VC 2.0, the did:web resolved, the `eddsa-jcs-2022` proof, the subject on the issuer's origin, `validFrom`/`validUntil`, the pass inside; a verdict and a sentence |
+| `verifyDataIntegrity(doc, didDocument)` / `signDataIntegrity(doc, privateKey, verificationMethod, created?)` | any W3C Data Integrity proof with `eddsa-jcs-2022`, checked or made (the W3C Recommendation's vector holds) |
+| `resolveDidWeb(did, fetch?)`, `didWebUrl(did)`, `multikeyOf(x)`, `multikeyToX(multibase)`, `base58btcEncode`/`base58btcDecode` | did:web, Multikey (Ed25519) and base58btc, the pieces of section 18 |
 | `leafOf(pass)`, `canonical(obj)`, `sha256hex(s)` | the building blocks of the spec |
 | `fetchKeys(origin?)` | the issuer's keys from `/.well-known/pazair-receipts.json` |
 

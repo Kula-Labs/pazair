@@ -11,9 +11,10 @@ from decimal import Decimal
 import hashlib
 import math
 import json
+import re
 import urllib.request
 from typing import Any, Callable, Optional
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -21,8 +22,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
            "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award",
-           "FINGERPRINT", "rs_encode", "fingerprint_of", "fingerprint_distance", "fingerprint_svg", "record_of", "ridges_of"]
-__version__ = "1.9.0"
+           "FINGERPRINT", "rs_encode", "fingerprint_of", "fingerprint_distance", "fingerprint_svg", "record_of", "ridges_of",
+           "base58btc_encode", "base58btc_decode", "multikey_of", "multikey_to_x", "did_web_url", "resolve_did_web",
+           "verify_data_integrity", "verify_credential"]
+__version__ = "1.10.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -676,11 +679,252 @@ def fingerprint_svg(codeword: Any, record: Optional[dict] = None, size: int = 36
             f'<g fill="none" stroke-linecap="round" stroke-linejoin="round"{g_mask}>{"".join(paths)}</g></svg>')
 
 
+# The Word Pass as a W3C Verifiable Credential 2.0 (SPEC section 18): the issuer as did:web, a Data Integrity proof
+# (cryptosuite eddsa-jcs-2022) around the pass document of section 5. Same results as verify/src/credential.js.
+
+_B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+
+def base58btc_encode(b: bytes) -> str:
+    """Base58 with the Bitcoin alphabet, as multibase "z" writes it."""
+    b = bytes(b)
+    n, s = int.from_bytes(b, "big"), ""
+    while n > 0:
+        n, r = divmod(n, 58)
+        s = _B58[r] + s
+    return "1" * (len(b) - len(b.lstrip(b"\x00"))) + s
+
+
+def base58btc_decode(s: str) -> bytes:
+    s, n = str(s), 0
+    for c in s:
+        i = _B58.find(c)
+        if i < 0:
+            raise ValueError("not base58btc")
+        n = n * 58 + i
+    body = n.to_bytes((n.bit_length() + 7) // 8, "big") if n else b""
+    return b"\x00" * (len(s) - len(s.lstrip("1"))) + body
+
+
+def _b64u(b: bytes) -> str:
+    return base64.urlsafe_b64encode(b).decode("ascii").rstrip("=")
+
+
+def multikey_of(x: str) -> str:
+    """An Ed25519 public key (JWK x) as a Multikey: "z" + base58btc(0xed 0x01 + the 32 key bytes)."""
+    return "z" + base58btc_encode(b"\xed\x01" + _unb64u(x))
+
+
+def multikey_to_x(mb: Any) -> Optional[str]:
+    """The Ed25519 key (JWK x) in a Multikey, or None when it is not one."""
+    if not isinstance(mb, str) or not mb.startswith("z"):
+        return None
+    try:
+        b = base58btc_decode(mb[1:])
+    except ValueError:
+        return None
+    return _b64u(b[2:]) if len(b) == 34 and b[0] == 0xED and b[1] == 0x01 else None
+
+
+def did_web_url(did: Any) -> str:
+    """did:web:<host>[:path] -> the https URL of its DID document (did:web method, read operation)."""
+    m = re.fullmatch(r"did:web:([^:#?/]+)((?::[^:#?/]+)*)", str(did))
+    if not m:
+        raise ValueError("not a did:web")
+    host = unquote(m.group(1))
+    if not re.fullmatch(r"[A-Za-z0-9.-]+(:[0-9]{1,5})?", host):
+        raise ValueError("did:web: not a host")
+    segs = [unquote(x) for x in m.group(2)[1:].split(":")] if m.group(2) else [".well-known"]
+    if any(not x or x in (".", "..") or re.search(r"[/\\?#]", x) for x in segs):
+        raise ValueError("did:web: not a path")
+    return "https://" + host + "/" + "/".join(segs) + "/did.json"
+
+
+def resolve_did_web(did: str, fetch: Fetch = _get_json) -> dict:
+    """Fetch a did:web document; it must name the DID it was fetched for."""
+    doc = fetch(did_web_url(did))
+    if not isinstance(doc, dict) or doc.get("id") != did:
+        raise ValueError("did: the document is for another DID")
+    return doc
+
+
+def _ms(v: Any) -> Optional[float]:
+    from datetime import datetime
+    try:
+        return datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp() * 1000
+    except (ValueError, TypeError):
+        return None
+
+
+def _same(a: Any, b: Any) -> bool:
+    try:
+        return canonical(a) == canonical(b)
+    except ValueError:
+        return False
+
+
+def _assertion_key(dd: Any, vm_id: str) -> Optional[str]:
+    """The Ed25519 key (JWK x) a DID document lists for assertions under this id, or None."""
+    if not isinstance(dd, dict):
+        return None
+    am = dd.get("assertionMethod") if isinstance(dd.get("assertionMethod"), list) else []
+    vms = dd.get("verificationMethod") if isinstance(dd.get("verificationMethod"), list) else []
+    if vm_id not in [m if isinstance(m, str) else m.get("id") if isinstance(m, dict) else None for m in am]:
+        return None
+    vm = next((m for m in vms + am if isinstance(m, dict) and m.get("id") == vm_id), None)
+    if not vm or ("controller" in vm and vm["controller"] != dd.get("id")):
+        return None
+    if vm.get("publicKeyMultibase"):
+        return multikey_to_x(vm["publicKeyMultibase"])
+    j = vm.get("publicKeyJwk")
+    if isinstance(j, dict) and j.get("kty") == "OKP" and j.get("crv") == "Ed25519" and isinstance(j.get("x"), str) and not j.get("d"):
+        return j["x"]
+    return None
+
+
+def verify_data_integrity(doc: Any, did_document: Any) -> dict:
+    """A Data Integrity proof with cryptosuite eddsa-jcs-2022 (W3C Recommendation), checked against a DID document:
+    Ed25519 over sha256(JCS(proof without proofValue)) + sha256(JCS(document without proof))."""
+    proof = doc.get("proof") if isinstance(doc, dict) else None
+    vm = proof.get("verificationMethod") if isinstance(proof, dict) else None
+
+    def no(reason: str) -> dict:
+        return {"valid": False, "reason": reason, "verificationMethod": vm}
+
+    if not isinstance(proof, dict):
+        return no("no proof (one Data Integrity proof is expected)")
+    config = {k: v for k, v in proof.items() if k != "proofValue"}
+    pv = proof.get("proofValue")
+    if config.get("type") != "DataIntegrityProof" or config.get("cryptosuite") != "eddsa-jcs-2022":
+        return no("not an eddsa-jcs-2022 Data Integrity proof")
+    if config.get("proofPurpose") != "assertionMethod":
+        return no("the proof is not for assertionMethod")
+    if "created" in config and not (_ms(config["created"]) or 0) > 0:
+        return no("created is not a date")
+    if not isinstance(pv, str) or not pv.startswith("z"):
+        return no("proofValue is not multibase base58btc")
+    unsecured = {k: v for k, v in doc.items() if k != "proof"}
+    if "@context" in config:
+        # The proof's context must be where the document's context starts, in the same order; it then stands for it.
+        d = unsecured.get("@context")
+        dc = [] if d is None else d if isinstance(d, list) else [d]
+        pc = config["@context"] if isinstance(config["@context"], list) else [config["@context"]]
+        if len(pc) > len(dc) or any(not _same(c, dc[i]) for i, c in enumerate(pc)):
+            return no("the proof @context is not the document @context")
+        unsecured["@context"] = config["@context"]
+    vm_id = str(config.get("verificationMethod") or "")
+    did_id = did_document.get("id") if isinstance(did_document, dict) else None
+    if not did_id or not vm_id.startswith(f"{did_id}#"):
+        return no("the key is not one of the DID document")
+    x = _assertion_key(did_document, vm_id)
+    if not x:
+        return no("the DID document lists no Ed25519 assertion key under that id")
+    try:
+        sig = base58btc_decode(pv[1:])
+    except ValueError:
+        return no("proofValue is not base58btc")
+    if len(sig) != 64:
+        return no("proofValue is not an Ed25519 signature")
+    try:
+        data = hashlib.sha256(canonical(config).encode("utf-8")).digest() + hashlib.sha256(canonical(unsecured).encode("utf-8")).digest()
+        Ed25519PublicKey.from_public_bytes(_unb64u(x)).verify(sig, data)
+        return {"valid": True, "reason": "ok", "verificationMethod": vm_id}
+    except InvalidSignature:
+        return no("the signature does not match the key")
+    except (ValueError, TypeError):
+        return no("the document cannot be checked (not canonical JSON)")
+
+
+def verify_credential(vc: Any, fetch: Fetch = _get_json, did_document: Optional[dict] = None, keys_document: Optional[dict] = None, now: Optional[float] = None) -> dict:
+    """A Word Pass credential (SPEC 18): the proof against the issuer's did:web document, the subject a pass URL on the
+    issuer's own origin, and the pass inside checked as section 5 says, with the keys document of the same origin.
+    The anchors on Bitcoin and Stellar are check_word_pass's job: call it with the subject. `now` in seconds."""
+    import time
+    now_ms = (time.time() if now is None else now) * 1000
+    ok = isinstance(vc, dict)
+    issuer = vc.get("issuer") if ok and isinstance(vc.get("issuer"), str) else None
+    subj = vc.get("credentialSubject") if ok else None
+    subject = subj.get("id") if isinstance(subj, dict) else None
+
+    def out(trust: str, say: str, extra: Optional[dict] = None) -> dict:
+        r = {"valid": trust == "valid", "trust": trust, "say": say, "issuer": issuer, "subject": subject, "proof": None, "pass": None, "same_key": None}
+        r.update(extra or {})
+        return r
+
+    ctx = vc.get("@context") if ok else None
+    first = (ctx[0] if ctx else None) if isinstance(ctx, list) else ctx
+    if not ok or first != "https://www.w3.org/ns/credentials/v2":
+        return out("invalid", "This is not a Verifiable Credential 2.0.")
+    types = vc.get("type")
+    if not isinstance(types, list) or "VerifiableCredential" not in types or "WordPassCredential" not in types:
+        return out("invalid", "This credential is not a Word Pass credential.")
+    try:
+        origin = "https://" + urlparse(did_web_url(vc.get("issuer"))).netloc.lower()
+    except ValueError:
+        return out("invalid", "The issuer of a Word Pass credential is a did:web.")
+    dd, kd = did_document, keys_document
+    if dd is None:
+        try:
+            dd = resolve_did_web(vc["issuer"], fetch)
+        except Exception:  # noqa: BLE001 (any failure to read is "unreachable", never "valid")
+            return out("unreachable", f"The DID document of {vc['issuer']} could not be read.")
+    proof = verify_data_integrity(vc, dd)
+    if not proof["valid"]:
+        return out("invalid", f"Do not rely on this credential: {proof['reason']}.", {"proof": proof})
+    word_pass = subj.get("wordPass") if isinstance(subj, dict) else None
+    p = word_pass.get("pass") if isinstance(word_pass, dict) else None
+    u = urlparse(subject) if isinstance(subject, str) else None
+    if not u or u.scheme != "https" or "https://" + u.netloc.lower() != origin:
+        return out("invalid", f"Do not rely on this credential: its subject is not a pass URL on {origin}.", {"proof": proof})
+    if not isinstance(p, dict) or p.get("kind") != "word_pass":
+        return out("invalid", "Do not rely on this credential: it carries no Word Pass.", {"proof": proof})
+    if "validUntil" in vc:
+        t = _ms(vc["validUntil"])
+        if t is None or t < now_ms:
+            return out("invalid", "Do not rely on this credential: it has expired (validUntil).", {"proof": proof})
+    if "validFrom" in vc:
+        t = _ms(vc["validFrom"])
+        if t is None or t > now_ms + 300_000:
+            return out("invalid", "Do not rely on this credential: it is not valid yet (validFrom).", {"proof": proof})
+    if kd is None:
+        try:
+            kd = fetch_keys_document(origin, fetch)
+        except Exception:  # noqa: BLE001
+            return out("unreachable", f"{u.netloc} publishes no keys at /.well-known/pazair-receipts.json.", {"proof": proof})
+    raw = kd.get("keys") if isinstance(kd, dict) else None
+    keys = [k for k in raw if isinstance(k, dict)] if isinstance(raw, list) else []
+    v = verify_pass(word_pass, keys)
+    pass_key = next((k for k in keys if k.get("kid") == p.get("kid")), None)
+    same_key = bool(pass_key) and pass_key.get("x") == _assertion_key(dd, proof["verificationMethod"])
+    if not v["valid"]:
+        what = "signature" if not v["signature_valid"] else "Merkle proof" if v["in_root"] is False else "badge"
+        return out("invalid", f"Do not rely on this credential: the Word Pass inside does not verify ({what}).", {"proof": proof, "pass": v, "same_key": same_key})
+    where = f"in the Merkle root of {(word_pass.get('root') or {}).get('day')}" if v["in_root"] else "signed today, not anchored yet"
+    return out("valid", f"{say_pass(p, u.netloc)} Credential by {vc['issuer']}: proof eddsa-jcs-2022 valid, pass signature valid, {where}. "
+                        f"Anchors on Bitcoin and Stellar: check_word_pass({subject}).", {"proof": proof, "pass": v, "same_key": same_key})
+
+
 def main() -> None:
     import sys
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
-        print("Usage: pazair-verify <word pass url>")
-        raise SystemExit(0 if len(sys.argv) > 1 else 2)
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help") or (sys.argv[1] == "credential" and len(sys.argv) < 3):
+        print("Usage: pazair-verify <word pass url>\n       pazair-verify credential <credential url or file>")
+        raise SystemExit(0 if len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help") else 2)
+    if sys.argv[1] == "credential":
+        try:
+            src = sys.argv[2]
+            if src.startswith("https://"):
+                vc = _get_json(src)
+            else:
+                with open(src, encoding="utf-8") as f:
+                    vc = json.load(f)
+        except Exception:  # noqa: BLE001
+            print(f"No credential could be read at {sys.argv[2]}.")
+            raise SystemExit(3)
+        c = verify_credential(vc)
+        print(c["say"])
+        if not c["valid"]:
+            raise SystemExit({"invalid": 1, "unreachable": 3}.get(c["trust"], 1))
+        sys.argv[1] = c["subject"]  # proof and pass hold: now the anchors, at the pass URL the credential names
     r = check_word_pass(sys.argv[1])
     print(r["say"])
     raise SystemExit({"kept_its_word": 0, "no_badge_yet": 0, "signed_unanchored": 0, "invalid": 1, "unreachable": 3}.get(r["trust"], 1))

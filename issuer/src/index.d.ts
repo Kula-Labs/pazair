@@ -23,3 +23,7 @@ export function otsDigest(root: string): Uint8Array;
 export function passDocument(current: object, anchored?: { pass: object; leaf: string; proof: Step[]; root: { day: string; root: string; bitcoin_ots?: string | null; stellar_tx?: string | null } } | null): object;
 export function signMandate(key: Key, issuer: string, m: { id: string; agent: string; principal: string; currency: string; max_order_minor: number; monthly_minor?: number | null; how?: string; purpose?: string | null; issued_at?: string }, now?: Date): Promise<Record<string, unknown>>;
 export function signMandateEnd(key: Key, issuer: string, mandate: Record<string, unknown>, now?: Date): Promise<Record<string, unknown>>;
+// Section 18: did:web and the pass as a W3C Verifiable Credential 2.0 (eddsa-jcs-2022).
+export function didOf(origin: string): string;
+export function didDocument(origin: string, keys: { kid: string; x: string }[]): Record<string, unknown>;
+export function passCredential(key: Key, origin: string, passUrl: string, wordPass: { pass: Record<string, unknown>; leaf?: string; proof?: Step[]; root?: Record<string, unknown> }, now?: Date): Promise<Record<string, unknown>>;

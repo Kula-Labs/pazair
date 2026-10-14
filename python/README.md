@@ -20,4 +20,8 @@ section 15: `fingerprint_of(origin, agent, first_leaf)`, `fingerprint_distance(a
 least 55 of 64 symbols) and `fingerprint_svg(codeword, record)`, byte for byte the drawing the JavaScript verifier makes. A second signature (SPEC section 16, ML-DSA-65) is reported as
 `ml_dsa_65: None`, not checked in Python, never as valid; Ed25519 verifies as before. Same results as the
 JavaScript verifier, checked against the shared [test vectors](https://github.com/Kula-Labs/pazair/blob/main/vectors/word-pass-1.json).
+
+The W3C way (SPEC section 18): `verify_credential(vc)` checks a Word Pass served as a Verifiable Credential 2.0: the issuer's did:web,
+the `eddsa-jcs-2022` Data Integrity proof (the W3C Recommendation's own vector holds), the subject on the issuer's origin and
+the pass inside. From the shell: `pazair-verify credential <credential url or file>` checks that, then the anchors.
 [Specification](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md). MIT, by Kula Labs, Switzerland.

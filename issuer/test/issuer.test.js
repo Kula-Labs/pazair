@@ -92,3 +92,21 @@ test('a field left undefined is left out of the signed bytes, as JSON leaves it 
   assert.equal(canonical(JSON.parse(JSON.stringify({ b: 1, a: undefined }))), canonical({ b: 1, a: undefined }));
   assert.throws(() => canonical({ a: Infinity }), /out of range/);
 });
+
+test('section 18: did.json and the pass as a Verifiable Credential, byte for byte the vector, accepted by the reference verifier', async () => {
+  const { didDocument, passCredential } = await import('../src/index.js');
+  const { verifyCredential } = await import('../../verify/src/index.js');
+  const C = JSON.parse(readFileSync(new URL('../../vectors/credential-1.json', import.meta.url), 'utf8'));
+  const key = await importKey({ kty: 'OKP', crv: 'Ed25519', x: V.key.x, d: V.key.d_test_only });
+  assert.deepEqual(didDocument('https://issuer.example/', [key]), C.did_document);
+  const wp = C.credential.credentialSubject.wordPass;
+  assert.deepEqual(await passCredential(key, 'https://issuer.example', C.credential.credentialSubject.id, wp, new Date('2026-10-14T00:00:00Z')), C.credential);
+  // A new marketplace, its own key, its own origin: the reference verifier resolves its did:web and accepts it.
+  const mine = await generateKey(), origin = 'https://market.example';
+  const pass = await signPass(mine, 'market', { agent: 'ag_1', name: 'One', since: '2026-10-01T00:00:00.000Z', as_seller: { delivered: 0, not_delivered: 0, buyers: 0 } });
+  const vc = await passCredential(mine, origin, `${origin}/v1/agents/ag_1/pass`, { pass });
+  const net = async (url) => url === `${origin}/.well-known/did.json` ? Response.json(didDocument(origin, [mine])) : url === `${origin}/.well-known/pazair-receipts.json` ? Response.json(keysDocument('market', [mine])) : new Response('no', { status: 404 });
+  const r = await verifyCredential(JSON.parse(JSON.stringify(vc)), { fetch: net });
+  assert.equal(r.valid, true, r.say);
+  assert.equal(r.same_key, true);
+});
