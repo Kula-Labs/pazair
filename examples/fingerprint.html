@@ -2,19 +2,18 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<script>try{if(localStorage.getItem('pazair-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Word Pass Fingerprint</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a proposal for pazair.kulalabs.ch. One hero with a living fingerprint, then the placements, a live two-pass comparison, the four-step proof, USPs and innovations. Dark-first in the PazAIr black, cream and gold. */
 :root {
   --bg: #0b0b0f; --panel: #14141b; --panel2: #1b1b24; --line: #2a2a36; --fg: #f3ecdc; --muted: #a39d8c;
   --gold: #d1a04a; --gold-ink: #0b0b0f; --ok: #7fc69a; --ink-line: #f3ecdc; --ring: #d1a04a;
-  --display: 'Fraunces', Georgia, serif; --body: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --display: Georgia, 'Times New Roman', serif; --body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: dark;
 }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #a9782a; --gold-ink: #fffdf7; --ok: #2f7f4f; --ink-line: #15141a; --ring: #a9782a; color-scheme: light } }
-:root[data-theme="light"] { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #a9782a; --gold-ink: #fffdf7; --ok: #2f7f4f; --ink-line: #15141a; --ring: #a9782a; color-scheme: light }
+:root[data-theme="light"] { --bg: #f6f1e4; --panel: #fffdf7; --panel2: #f1eadb; --line: #ddd4c0; --fg: #15141a; --muted: #6a6457; --gold: #84590c; --gold-ink: #fffdf7; --ok: #177049; --ink-line: #15141a; --ring: #84590c; color-scheme: light }
 * { box-sizing: border-box }
 body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body); padding-block: 0 64px; padding-inline: 16px }
 a { color: var(--gold) }
@@ -23,6 +22,7 @@ a { color: var(--gold) }
 .note b { color: var(--fg) }
 nav.top { display: flex; align-items: center; gap: 10px; padding-block: 18px; font-family: var(--display); font-size: 20px; font-weight: 700 }
 nav.top svg { width: 30px; height: 30px }
+nav.top .theme { margin-left: auto }
 nav.top small { font: 13px var(--body); color: var(--muted); font-weight: 400 }
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0 }
 h1 { font-size: clamp(34px, 5.5vw, 58px); line-height: 1.04; font-weight: 700 }
@@ -32,13 +32,13 @@ section { padding-block: 44px; border-top: 1px solid var(--line) }
 section:first-of-type { border-top: 0 }
 .eyebrow { font: 500 12px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px }
 .lead { font-size: 18px; color: var(--muted); max-width: 60ch }
-.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center }
-@media (max-width: 800px) { .hero { grid-template-columns: 1fr } }
-.hero-art { display: grid; place-items: center }
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: center }
+@media (max-width: 800px) { .hero { grid-template-columns: minmax(0, 1fr) } }
+.hero-art { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center }
 canvas { max-width: 100%; height: auto; display: block }
 .big { width: 420px; max-width: 100%; aspect-ratio: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 28px }
 .growth { width: 420px; max-width: 100%; margin-top: 12px; display: grid; gap: 6px }
-.growth label { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--muted) }
+.growth label { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); align-items: center; gap: 10px; font-size: 13px; color: var(--muted) }
 .growth input[type=range] { accent-color: var(--gold); width: 100% }
 .g-lbl { font: 12.5px var(--mono); color: var(--fg); text-align: center }
 .cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px }
@@ -79,6 +79,12 @@ ol.ten li span { color: var(--muted) }
 pre { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font: 12.5px/1.5 var(--mono); margin: 12px 0 0 }
 footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1px solid var(--line) }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+/* A finger, not a cursor: every control is at least 44 px where people tap. */
+.btn { display: inline-flex; align-items: center }
+.btn, .cmp input, .growth input[type=range] { min-height: 44px }
+.theme { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--fg); cursor: pointer }
+.theme:hover, .theme:focus-visible { border-color: var(--gold); color: var(--gold) } .theme svg { width: 18px; height: 18px } .theme .moon { display: none }
+:root[data-theme="light"] .theme .sun { display: none } :root[data-theme="light"] .theme .moon { display: block }
 </style>
 </head>
 <body>
@@ -86,10 +92,12 @@ footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1p
 <div class="wrap">
 <nav class="top">
   <svg viewBox="-24 -24 148 148" role="img" aria-label="PazAIr"><rect x="-24" y="-24" width="148" height="148" rx="28" fill="#0b0b0f"/><g transform="rotate(-10 50 50)"><path d="M6,0L38,35H62L94,0L100,46L82,58L50,102L18,58L0,46Z" fill="none" stroke="#f3ecdc" stroke-width="12" stroke-linejoin="miter"/><path d="M24,55Q32,52 40,60M76,55Q68,52 60,60" fill="none" stroke="#d1a04a" stroke-width="10" stroke-linecap="round"/></g></svg>
-  PazAIr <small>· Vorschlag: pazair.kulalabs.ch/fingerprint und der Block auf der Startseite</small>
+  PazAIr <small>· Abdruck, Referenzzeichnung zu SPEC 15</small>
+  <button type="button" class="theme" id="theme-t" aria-label="Hell" aria-pressed="false" title="Hell"><svg class="sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><svg class="moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg></button>
 </nav>
-<div class="note"><b>Was das ist.</b> Ein Vorschlag, wie der Word-Pass-Abdruck auf PazAIr sichtbar wird, ohne dass jemand suchen muss. Alles auf dieser Seite rechnet echt: der Abdruck wird aus Seed und Reed-Solomon-Code gezeichnet, der Unterschied zweier Pässe wird gezählt. Die Texte sind deutsch für dich; auf der Site wären sie englisch wie der Rest.</div>
+<div class="note"><b>Was das ist.</b> Die Referenzzeichnung des Word-Pass-Abdrucks aus SPEC 15; live und englisch steht er auf <a href="https://pazair.kulalabs.ch/fingerprint">pazair.kulalabs.ch/fingerprint</a>. Alles auf dieser Seite rechnet echt: der Abdruck wird aus Seed und Reed-Solomon-Code gezeichnet, der Unterschied zweier Pässe wird gezählt. Die Texte sind deutsch.</div>
 
+<main>
 <section class="hero">
   <div>
     <div class="eyebrow">Word Pass · Fingerprint</div>
@@ -186,8 +194,9 @@ footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1p
   <h2>Wie es Kula Flow speist</h2>
   <p class="lead">Der Abdruck gibt jedem Agenten, den Echo hört und Vision sieht, eine Identität, die der Loop ohne Nachschlagen erkennt. Zwei Beobachtungen desselben Agenten lassen sich an 64 Bytes zusammenführen, zwei verschiedene Agenten nie verwechseln. Und weil der Record als Ringe darüber liegt, sieht der Loop auf einen Blick, wo ein Mandat Spielraum hat und wo der Not-Aus näher rückt.</p>
 </section>
+</main>
 
-<footer>Vorschlag für PazAIr, Kula Labs, Wallisellen. Der Zeichencode dieser Seite ist die Referenz; er gehört so in <code>pazair-verify</code> und als Abschnitt 15 in die Spec.</footer>
+<footer>PazAIr, Kula Labs, Wallisellen. Die Rechnung steht in SPEC 15 und in <code>pazair-verify</code> (<code>src/fingerprint.js</code>).</footer>
 </div>
 
 <script>
@@ -277,7 +286,12 @@ async function compare() {
   $('diff').textContent = d; $('law').textContent = d === 0 ? 'Derselbe Agent, derselbe Abdruck.' : d >= 55 ? `Satz hält: ${d} ≥ 55` : `Verletzt den Satz (${d} < 55)`;
 }
 $('idA').addEventListener('input', compare); $('idB').addEventListener('input', compare); compare();
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { compare(); heroDraw(); });
+document.addEventListener('pazair-theme', () => { compare(); heroDraw(); });
+// Dunkel für alle (PazAIr, 14. Oktober 2026); hell nur auf Wahl, auf diesem Gerät gemerkt, wie auf pazair.ch.
+(() => { const r = document.documentElement, b = document.getElementById('theme-t'); if (!b) return;
+  const show = () => b.setAttribute('aria-pressed', String(r.getAttribute('data-theme') === 'light')); show();
+  b.addEventListener('click', () => { const l = r.getAttribute('data-theme') !== 'light'; if (l) r.setAttribute('data-theme', 'light'); else r.removeAttribute('data-theme');
+    try { if (l) localStorage.setItem('pazair-theme', 'light'); else localStorage.removeItem('pazair-theme'); } catch {} show(); document.dispatchEvent(new Event('pazair-theme')); }); })();
 </script>
 
 </body>

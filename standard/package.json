@@ -1,0 +1,17 @@
+{
+  "name": "pazair-standard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The visual standard of PazAIr (MASSSTAB.md), measured in a real browser: contrast, text size, touch targets, nothing cut off, structure, no third parties. CI stops on any finding.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "check": "node check.mjs",
+    "live": "node check.mjs --live"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
+  },
+  "author": "Kula Labs (https://kulalabs.ch)",
+  "license": "MIT"
+}
