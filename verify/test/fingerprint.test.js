@@ -21,7 +21,7 @@ test('the fingerprint vector holds: seed, codeword, distance, the reference draw
   assert.deepEqual(await fingerprintOf({ origin: F.origin + '/', agent: F.agent, first_leaf: F.first_leaf }), a);
 });
 
-test('the theorem: codewords of different seeds differ in at least d = 55 of 64 symbols', () => {
+test('the theorem: codewords of different messages differ in at least d = 55 of 64 symbols', () => {
   assert.deepEqual([FINGERPRINT.n, FINGERPRINT.k, FINGERPRINT.d], [64, 10, 55]);
   let min = 64;
   for (let t = 0; t < 3000; t++) {
@@ -33,6 +33,31 @@ test('the theorem: codewords of different seeds differ in at least d = 55 of 64 
   assert.ok(min >= 55, `observed ${min}`);
   assert.equal(fingerprintDistance(F.codeword, F.codeword), 0);
   assert.throws(() => fingerprintDistance('ab', F.codeword), TypeError);
+});
+
+// Why the theorem holds, checked rather than sampled: every codeword of rsEncode, read with its first byte as the highest
+// power, vanishes at the 54 consecutive powers α^0 … α^53, so every non-zero codeword has at least 55 non-zero symbols
+// (BCH bound); the code is linear, so two codewords of different messages differ in at least 55. A one-byte change
+// reaches exactly 55, the Singleton limit for n = 64, k = 10.
+test('the proof behind the theorem: 54 consecutive roots in every codeword, and d = 55 is reached', () => {
+  const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+  for (let i = 0, x = 1; i < 255; i++) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 256) x ^= 0x11d; }
+  for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  const mul = (a, b) => (a && b ? EXP[LOG[a] + LOG[b]] : 0);
+  for (let i = 0; i < 10; i++) {
+    const m = new Uint8Array(10); m[i] = 1; const c = rsEncode(m);
+    for (let t = 0; t < 54; t++) { let s = 0; for (let j = 0; j < 64; j++) s ^= mul(c[j], EXP[(t * (63 - j)) % 255]); assert.equal(s, 0, `basis ${i}, root α^${t}`); }
+  }
+  const one = new Uint8Array(10); one[9] = 1;
+  assert.equal(fingerprintDistance(Buffer.from(rsEncode(new Uint8Array(10))).toString('hex'), Buffer.from(rsEncode(one)).toString('hex')), 55);
+});
+
+test('the boundary of the theorem: seeds that share their first 10 bytes share the print', () => {
+  // Only the first 10 bytes of the seed are encoded. Distinct agents get distinct prints with the probability that
+  // 80 bits of SHA-256 differ (SPEC 15), which is why identity is origin, agent id and signature, not the print.
+  const m = randomBytes(32), m2 = Buffer.from(m); m2[20] ^= 0xff;
+  assert.notDeepEqual(m, m2);
+  assert.equal(fingerprintDistance(Buffer.from(rsEncode(m)).toString('hex'), Buffer.from(rsEncode(m2)).toString('hex')), 0);
 });
 
 test('the record grows the print and never changes the identity', () => {

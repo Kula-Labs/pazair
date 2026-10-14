@@ -317,7 +317,7 @@
     }
   },
   "fingerprint": {
-    "about": "SPEC section 15. seed = sha256hex(origin + \"\\n\" + agent + \"\\n\" + first_leaf); codeword = Reed-Solomon over GF(256) (polynomial 0x11d, generator roots α^0 … α^53, systematic), n = 64, k = 10, of the first 10 bytes of the seed, lowercase hex. Any two codewords from different seeds differ in at least 55 of 64 symbols. The SVG is the reference drawing of the codeword with the record below; a conformant drawing is byte for byte this file (sha256hex of the UTF-8 text).",
+    "about": "SPEC section 15. seed = sha256hex(origin + \"\\n\" + agent + \"\\n\" + first_leaf); codeword = Reed-Solomon over GF(256) (polynomial 0x11d, generator roots α^0 … α^53, systematic), n = 64, k = 10, of the first 10 bytes of the seed, lowercase hex. Any two codewords from seeds whose first 10 bytes differ differ in at least 55 of 64 symbols. The SVG is the reference drawing of the codeword with the record below; a conformant drawing is byte for byte this file (sha256hex of the UTF-8 text).",
     "origin": "https://issuer.example",
     "agent": "ag_alpha",
     "first_leaf": "40778db736daa23eb315bae5b9698905fc4463187e1bf4865da701a4ee66684c",

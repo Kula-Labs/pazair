@@ -1,4 +1,4 @@
-# Word Pass Fingerprint: kein Pass gleicht dem anderen, beweisbar
+# Word Pass Fingerprint: zwei Abdrücke, 55 von 64 Rillen verschieden, beweisbar
 
 **Status:** Owner-Idee vom 10. Oktober 2026, ausgearbeitet und umgesetzt: [SPEC Abschnitt 15](SPEC.md#15-fingerprint-no-two-passes-alike-provably),
 Testvektor in `vectors/word-pass-1.json`, Referenz in `pazair-verify` (JS und Python, byte-gleiche Zeichnung). Offen: der Issuer (Schritt 4).
@@ -6,9 +6,11 @@ Vorschau der Präsentation: `examples/fingerprint.html` (rechnet echt: Seed, Ree
 
 ## Die Idee
 
-Jeder Word Pass trägt einen Abdruck, den nur dieser Agent haben kann. Unter Trillionen Pässen gleicht keiner dem
-anderen, und das ist ein Satz, keine Wahrscheinlichkeit. Er hält auch gegen Quantencomputer, weil er nur aus Hash und
-Code besteht und kein Problem enthält, das Shor löst.
+Jeder Word Pass trägt einen Abdruck aus der Identität seines Agenten. Zwei verschiedene Abdrücke unterscheiden sich in
+mindestens 55 von 64 Rillen, und das ist ein Satz. Dass zwei Agenten verschiedene Abdrücke bekommen, ist eine
+Wahrscheinlichkeit: Unter einer Million Agenten teilen zwei einen Abdruck mit 4 · 10⁻¹³, unter einer Milliarde mit
+4 · 10⁻⁷. Nichts darin bricht Shor; Grover halbiert die 80 Bit der Nachricht, darum bleibt die Signatur der Beweis
+der Identität und der Abdruck das Erkennungszeichen (nachgerechnet am 14. Oktober 2026, SPEC 15).
 
 ## Das Verfahren
 
@@ -25,20 +27,26 @@ Code besteht und kein Problem enthält, das Shor löst.
    ist offen und schliesst sich ab fünf Käufern. Das Badge ist die goldene äusserste Rille. Ein verlorener Streitfall
    ist eine Narbe quer durch die Rillen. Die Identität bleibt, der Abdruck wächst.
 
-**Der Satz.** Für je zwei Agenten A ≠ B mit seed(A) ≠ seed(B) gilt `d(F(A), F(B)) ≥ 55` von 64 Rillen. Das folgt aus
-der Singleton-Schranke des Codes und gilt für 2^80 Agenten. Empirisch geprüft: 200 000 zufällige Paare und 2 000
-Paare, die sich in einem Bit unterscheiden, beobachteter Mindestabstand 55.
+**Der Satz.** Für je zwei Seeds, deren erste 10 Bytes sich unterscheiden, gilt `d(F(A), F(B)) ≥ 55` von 64 Rillen.
+Der Generator hat die 54 aufeinanderfolgenden Nullstellen α^0 … α^53, darum hat jedes Codewort ausser null mindestens
+55 Stellen ungleich null (BCH-Schranke); mehr erlaubt die Singleton-Schranke bei n = 64, k = 10 nicht. Nachgerechnet:
+Alle zehn Basis-Codewörter von `rsEncode` haben genau diese Nullstellen, und zwei Nachrichten, die sich in einem Byte
+unterscheiden, liegen genau 55 auseinander. Gleiche erste 10 Bytes ergeben denselben Abdruck: Zufällig geschieht das
+erst bei rund 2^40 Agenten mit nennenswerter Wahrscheinlichkeit; absichtlich kann ein Issuer, der seine Agent-IDs
+wählt, es mit rund 2^40 Versuchen herbeiführen. Den Abdruck eines bestimmten fremden Agenten zu treffen, kostet 2^80.
 
 **Im Protokoll.** `fingerprint: { seed, codeword (64 Bytes, base64url), svg }` in jedem Pass, in der A2A-Agent-Card
 und im Holder Proof. Ein Agent vergleicht zwei Abdrücke mit einem Byte-Vergleich.
 
 ## Was es garantiert, was nicht
 
-Garantiert: einmalig, maschinell prüfbar, aus öffentlichen Daten nachzeichenbar, ohne den Issuer verifizierbar, nicht
-übertragbar, weil der Seed aus dem in Bitcoin und Stellar verankerten Blatt kommt.
+Garantiert: deutlich verschieden von jedem anderen Abdruck (55 von 64), maschinell prüfbar, aus öffentlichen Daten
+nachzeichenbar, ohne den Issuer verifizierbar, nicht übertragbar, weil der Seed aus dem in Bitcoin und Stellar
+verankerten Blatt kommt.
 
 Nicht behauptet: dass ein Mensch Trillionen Bilder auseinanderhält. Das Auge erkennt, dass ein Bild zum Pass gehört; die
-Maschine zählt die Rillen. Und: der Pass ist heute nur mit Ed25519 signiert. Quantensicher wird die Kette erst mit der
+Maschine zählt die Rillen. Dass nie zwei Agenten denselben Abdruck tragen: siehe «Der Satz». Wer zu wem gehört,
+entscheiden Herkunft, Agent-ID und Signatur, nicht das Bild. Und: der Pass ist heute nur mit Ed25519 signiert. Quantensicher wird die Kette erst mit der
 zweiten Signatur (ML-DSA-65, FIPS 204) am Pass und an jeder Quittung, wie Remember (SPEC 14) sie schon trägt.
 
 ## Wo er sichtbar ist, ohne zu suchen
@@ -54,15 +62,15 @@ zweiten Signatur (ML-DSA-65, FIPS 204) am Pass und an jeder Quittung, wie Rememb
 
 ## 10 USPs
 
-1. **Beweisbar einmalig.** Mindestabstand 55 von 64 als Satz, nicht als Wahrscheinlichkeit.
-2. **Quantensicher von Grund auf.** Nur Hash und Code, kein Problem, das Shor löst.
+1. **Beweisbar verschieden.** Zwei verschiedene Abdrücke trennen mindestens 55 von 64 Rillen, als Satz.
+2. **Ehrlich gegen Quantencomputer.** Nur Hash und Code, nichts, was Shor bricht; Grover halbiert die 80 Bit, darum zählt für die Identität die Signatur.
 3. **Ohne PazAIr prüfbar.** Seed, Code und Zeichnung sind offen; jeder rechnet nach.
 4. **Nicht übertragbar.** Der Seed kommt aus dem verankerten Blatt.
 5. **Ein Abdruck fürs Leben.** Identität aus dem ersten Blatt, Record als Jahresringe darüber.
 6. **Für Maschinen ein Byte-Vergleich.** 64 Bytes, Unterschied in Mikrosekunden gezählt.
 7. **Für Menschen ein Bild.** Siegel im Register, gross auf der Pass-Seite, im Badge der Verkäufer.
-8. **Kein Register nötig.** Die Mathematik ersetzt die Datenbank.
-9. **Skaliert ohne Grenze.** 2^80 Agenten mit denselben 64 Rillen.
+8. **Kein Register nötig.** Seed und Abdruck rechnet jeder selbst nach, ohne zentrale Liste.
+9. **Skaliert weit.** Unter einer Milliarde Agenten teilen zwei einen Abdruck mit 4 · 10⁻⁷.
 10. **Teil des offenen Standards.** Spec-Abschnitt, Testvektoren, Referenz in pazair-verify, für jeden Issuer.
 
 ## 10 Innovationen

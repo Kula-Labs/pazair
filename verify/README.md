@@ -61,15 +61,17 @@ const h = await checkHead('2026-10-10:3f9c…');                  // the head yo
 Nothing here asks the issuer whether its chain is fine. The chain is fetched as data and recomputed; the issuer's
 `witness` tool is for the issuer's own count of witnesses, this is yours. SPEC section 14 has the formulas.
 
-## Fingerprint: no two passes alike, provably
+## Fingerprint: two prints, 55 of 64 symbols apart
 
 Every pass carries a fingerprint (SPEC section 15): a Reed-Solomon codeword over `sha256(origin, agent, first anchored
-leaf)`. Any two agents differ in at least 55 of 64 symbols, a theorem, not a probability. Draw it, compare it:
+leaf)`. Two different prints differ in at least 55 of 64 symbols, a theorem of the code; that two agents get different
+prints is a probability (the print encodes 80 bits of the hash). Identity is origin, agent id and signature; the print
+is how people and agents recognise a pass. Draw it, compare it:
 
 ```js
 import { fingerprintOf, fingerprintDistance, fingerprintSvg, recordOf } from 'pazair-verify';
 const me = await fingerprintOf({ origin: 'https://pazair.kulalabs.ch', agent: 'ag_xyz', first_leaf: doc.fingerprint.first_leaf });
-fingerprintDistance(me, doc.fingerprint);   // 0: the issuer's print is this agent's
+fingerprintDistance(me, doc.fingerprint);   // 0: the issuer drew the print of this origin, agent and leaf
 const svg = fingerprintSvg(me, recordOf(doc.current));   // the same bytes the issuer serves as fingerprint.svg
 ```
 
@@ -102,7 +104,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `verifyMandate(receipt, mandate, { keys?, end? })` | Section 3.2: the receipt was bought within the principal's mandate (agent, currency, cap per order, before its end); returns `{ valid, covers, reasons }` |
 | `verifyAward(receipt, tender, award, { keys?, qa? })` | Section 3.3: the receipt was paid under this award for this tender (buyer, awarded seller, budget, price or milestone, deadline, questions published before the award); returns `{ valid, covers, reasons }` |
 | `receiptHash(receipt)` | The hash a parent receipt lists in `inputs` |
-| `fingerprintOf({ origin, agent, first_leaf })` | Section 15: the seed and the 64-byte codeword of an agent's fingerprint; two agents differ in at least 55 symbols |
+| `fingerprintOf({ origin, agent, first_leaf })` | Section 15: the seed and the 64-byte codeword of an agent's fingerprint; two different prints differ in at least 55 symbols |
 | `fingerprintDistance(a, b)` | How many of the 64 symbols differ: 0 the same agent, below 55 not a fingerprint |
 | `fingerprintSvg(codeword, record?)` | The reference drawing, the same bytes for the same input; `recordOf(pass)` reads the record it grows with |
 | `verifyPass(anchored, { keys?, pqKeys? })` | signature, the second signature when present, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |

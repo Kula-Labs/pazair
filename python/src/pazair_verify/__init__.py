@@ -538,9 +538,10 @@ def _check_doc(url, u, doc, fetch, proof, nonce, fetch_text, aud=None) -> dict:
 
 
 
-# Fingerprint (SPEC section 15): a print no other agent can carry, provably.
+# Fingerprint (SPEC section 15): two different prints differ in at least 55 of 64 symbols, provably.
 # seed = sha256(origin "\n" agent "\n" first_leaf); its first 10 bytes are the message of a Reed-Solomon code over
-# GF(256) with n = 64, k = 10, so any two prints differ in at least 55 of 64 symbols. Same drawing as pazair-verify (JS).
+# GF(256) with n = 64, k = 10, so prints of different messages differ in at least 55 of 64 symbols; seeds that share
+# their first 10 bytes share the print (a probability, not part of the theorem). Same drawing as pazair-verify (JS).
 _N, _K, _POLY = 64, 10, 0x11D
 _EXP, _LOG = [0] * 512, [0] * 256
 _x = 1
@@ -602,7 +603,7 @@ def _cw(x: Any) -> bytes:
 
 
 def fingerprint_distance(a: Any, b: Any) -> int:
-    """How many of the 64 symbols differ; never below 55 for two different seeds."""
+    """How many of the 64 symbols differ: 0 for the same message, otherwise at least 55."""
     return sum(1 for x, y in zip(_cw(a), _cw(b)) if x != y)
 
 

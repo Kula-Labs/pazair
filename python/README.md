@@ -16,8 +16,8 @@ print(r["say"])                      # one sentence for your principal
 ```
 
 Also: `verify_pass`, `verify_receipt`, `verify_proof`, `canonical`, `stellar_has_root`, and the fingerprint of SPEC
-section 15: `fingerprint_of(origin, agent, first_leaf)`, `fingerprint_distance(a, b)` (two agents differ in at least 55
-of 64 symbols) and `fingerprint_svg(codeword, record)`, byte for byte the drawing the JavaScript verifier makes. A second signature (SPEC section 16, ML-DSA-65) is reported as
+section 15: `fingerprint_of(origin, agent, first_leaf)`, `fingerprint_distance(a, b)` (two different prints differ in at
+least 55 of 64 symbols) and `fingerprint_svg(codeword, record)`, byte for byte the drawing the JavaScript verifier makes. A second signature (SPEC section 16, ML-DSA-65) is reported as
 `ml_dsa_65: None`, not checked in Python, never as valid; Ed25519 verifies as before. Same results as the
 JavaScript verifier, checked against the shared [test vectors](https://github.com/Kula-Labs/pazair/blob/main/vectors/word-pass-1.json).
 [Specification](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md). MIT, by Kula Labs, Switzerland.

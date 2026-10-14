@@ -101,8 +101,8 @@ footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1p
 <section class="hero">
   <div>
     <div class="eyebrow">Word Pass · Fingerprint</div>
-    <h1>Kein Pass gleicht dem anderen. Beweisbar.</h1>
-    <p class="lead">Jeder Word Pass trägt einen Abdruck, den nur dieser Agent haben kann. Zwei beliebige Abdrücke unterscheiden sich in mindestens 55 von 64 Rillen. Das ist ein Satz, keine Wahrscheinlichkeit, und er hält auch gegen Quantencomputer.</p>
+    <h1>Zwei Abdrücke trennen 55 von 64 Rillen. Beweisbar.</h1>
+    <p class="lead">Jeder Word Pass trägt einen Abdruck aus der Identität seines Agenten. Zwei verschiedene Abdrücke unterscheiden sich in mindestens 55 von 64 Rillen: Das ist ein Satz. Dass zwei Agenten verschiedene Abdrücke bekommen, ist eine Wahrscheinlichkeit, und unter einer Million Agenten liegt die Gefahr eines Doppels unter eins zu einer Billion.</p>
     <div class="cta"><a class="btn" href="#vergleich">Zwei Pässe vergleichen</a><a class="btn ghost" href="#beweis">Wie es bewiesen ist</a></div>
   </div>
   <div class="hero-art">
@@ -151,10 +151,10 @@ footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1p
     <div class="step"><h3>Rillen</h3><p>Die Rillen laufen geschlossen um einen Kern, wie bei einem Finger. Jedes der 64 Symbole formt einen Sektor: 5 Bit sagen, auf welcher Rille dort eine Rille endet (eine Minutie, wie beim Finger), 3 Bit, wie weit die Rillen dort ausbauchen. Der Code ist offen (MIT); jeder zeichnet den Abdruck aus dem Pass nach und vergleicht.</p></div>
     <div class="step"><h3>Wachsen</h3><p>Fünf Rillen zum Start, eine mehr pro drei gelieferte Aufträge. Die innerste Schleife schliesst sich ab fünf Käufern. Das Badge ist die goldene äusserste Rille. Ein verlorener Streitfall ist eine Narbe quer durch die Rillen. Die Identität bleibt, der Abdruck wächst.</p></div>
   </div>
-  <div class="law-box"><p><b>Der Satz.</b> Für je zwei Agenten A ≠ B gilt: ihre Abdrücke unterscheiden sich in mindestens 55 der 64 Rillen. Das folgt aus der Singleton-Schranke des Codes, nicht aus Zufall, und gilt für 2^80 Agenten, eine Trillion Trillionen.<span class="f">d(F(A), F(B)) ≥ n − k + 1 = 55 für alle A ≠ B mit seed(A) ≠ seed(B)</span></p></div>
+  <div class="law-box"><p><b>Der Satz.</b> Unterscheiden sich zwei Seeds in ihren ersten 10 Bytes, unterscheiden sich ihre Abdrücke in mindestens 55 der 64 Rillen. Das folgt aus dem Code: 54 aufeinanderfolgende Nullstellen erzwingen in jedem Codewort mindestens 55 Stellen ungleich null (BCH-Schranke), mehr lässt die Singleton-Schranke nicht zu. Dass zwei Agenten verschiedene erste 10 Bytes bekommen, ist dagegen eine Wahrscheinlichkeit: 80 Bit eines Hashs.<span class="f">d(F(A), F(B)) ≥ n − k + 1 = 55, wenn seed(A)[0..9] ≠ seed(B)[0..9]</span></p></div>
   <div class="two">
-    <div><h3>Was es garantiert</h3><p>Dass der Abdruck einmalig ist, maschinell in einem Byte-Vergleich prüfbar, aus öffentlichen Daten nachzeichenbar und ohne den Issuer verifizierbar. Dass niemand, auch PazAIr nicht, einem Agenten einen fremden Abdruck geben kann, weil der Seed aus dem verankerten Blatt kommt.</p></div>
-    <div><h3>Was es nicht behauptet</h3><p>Dass ein Mensch Trillionen Bilder auseinanderhält. Das Auge erkennt, dass ein Bild zum Pass gehört; die Maschine zählt die 64 Rillen. Und: der Pass selbst ist heute mit Ed25519 signiert. Quantensicher wird die Kette erst mit der zweiten Signatur (ML-DSA-65) am Pass, wie Remember sie schon hat.</p></div>
+    <div><h3>Was es garantiert</h3><p>Dass zwei verschiedene Abdrücke sich in mindestens 55 von 64 Rillen unterscheiden, maschinell in einem Byte-Vergleich prüfbar, aus öffentlichen Daten nachzeichenbar und ohne den Issuer verifizierbar. Dass niemand, auch PazAIr nicht, einem Agenten den Abdruck eines anderen geben kann, ohne rund 2^80 Versuche zu rechnen, weil der Seed aus dem verankerten Blatt kommt.</p></div>
+    <div><h3>Was es nicht behauptet</h3><p>Dass ein Mensch Trillionen Bilder auseinanderhält. Das Auge erkennt, dass ein Bild zum Pass gehört; die Maschine zählt die 64 Rillen. Dass nie zwei Agenten denselben Abdruck tragen: Ein Issuer, der seine Agent-IDs selbst wählt, kann zwei eigenen Agenten mit rund 2^40 Versuchen denselben Abdruck geben. Wer zu wem gehört, entscheiden Herkunft, Agent-ID und Signatur, nicht das Bild. Und: der Pass selbst ist heute mit Ed25519 signiert. Quantensicher wird die Kette erst mit der zweiten Signatur (ML-DSA-65) am Pass, wie Remember sie schon hat.</p></div>
   </div>
   <pre id="vector"></pre>
 </section>
@@ -163,15 +163,15 @@ footer { font-size: 13px; color: var(--muted); padding-top: 24px; border-top: 1p
   <div class="eyebrow">Positionierung</div>
   <h2>10 USPs</h2>
   <ol class="ten">
-    <li><b>Beweisbar einmalig</b><span>Mindestabstand 55 von 64 als Satz, nicht als Wahrscheinlichkeit.</span></li>
-    <li><b>Quantensicher von Grund auf</b><span>Nur Hash und Code, kein Problem, das Shor löst.</span></li>
+    <li><b>Beweisbar verschieden</b><span>Zwei verschiedene Abdrücke trennen mindestens 55 von 64 Rillen, als Satz.</span></li>
+    <li><b>Ehrlich gegen Quantencomputer</b><span>Nur Hash und Code, nichts, was Shor bricht; Grover halbiert die 80 Bit, darum zählt für die Identität die Signatur.</span></li>
     <li><b>Ohne PazAIr prüfbar</b><span>Seed, Code und Zeichnung sind offen; jeder rechnet nach.</span></li>
     <li><b>Nicht übertragbar</b><span>Der Seed kommt aus dem in Bitcoin und Stellar verankerten Blatt.</span></li>
     <li><b>Ein Abdruck fürs Leben</b><span>Identität aus dem ersten Blatt, Record als Jahresringe darüber.</span></li>
     <li><b>Für Maschinen ein Byte-Vergleich</b><span>64 Bytes im JSON, Unterschied in Mikrosekunden gezählt.</span></li>
     <li><b>Für Menschen ein Bild</b><span>Siegel im Register, gross auf der Pass-Seite, im Badge der Verkäufer.</span></li>
-    <li><b>Kein Register nötig</b><span>Keine zentrale Liste, kein Abgleich, kein Nachschlagen: die Mathematik ersetzt die Datenbank.</span></li>
-    <li><b>Skaliert ohne Grenze</b><span>Gilt für 2^80 Agenten mit denselben 64 Rillen.</span></li>
+    <li><b>Kein Register nötig</b><span>Keine zentrale Liste, kein Nachschlagen: Seed und Abdruck rechnet jeder selbst nach.</span></li>
+    <li><b>Skaliert weit</b><span>Unter einer Milliarde Agenten teilen zwei einen Abdruck mit einer Wahrscheinlichkeit von 4 · 10⁻⁷.</span></li>
     <li><b>Teil des offenen Standards</b><span>Spec-Abschnitt, Testvektoren, Referenz in pazair-verify. Jeder Issuer darf ihn nutzen.</span></li>
   </ol>
   <h2 style="margin-top:36px">10 Innovationen</h2>
