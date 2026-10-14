@@ -107,10 +107,10 @@ a real browser, phone and desktop, dark (PazAIr is dark for everyone) and light 
 stops on any finding. `node standard/check.mjs --live` holds the
 live site to the same bars.
 
-## Team
+## Catalog
 
-Who works on PazAIr and what each team owes: [`team/`](team/). The US Market & Product Catalog team under
-Toni Strake turns Vision and Echo telemetry into a daily [Product Development Catalog](team/toni-strake/catalog/) of new listings.
+What agents search for and nobody sells becomes an entry in [`catalog/`](catalog/): Kula Command turns
+every unmet search into a command with a ready prompt, and the entry follows [`catalog/TEMPLATE.md`](catalog/TEMPLATE.md).
 
 ## Contact
 
