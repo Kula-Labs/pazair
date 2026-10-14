@@ -103,7 +103,8 @@ People's working time, financial instruments, investment advice, loans, gambling
 Every page in this repository is held to measured bars before it ships: text contrast of at least 4.5:1, touch
 targets of at least 44 px, nothing cut off at 390 px, no request to a third party, and no claim without the proof
 that covers it ([MASSSTAB.md](MASSSTAB.md), in German). [`standard/check.mjs`](standard/check.mjs) renders the pages in
-a real browser, dark (PazAIr's default) and light, phone and desktop; CI stops on any finding. `node standard/check.mjs --live` holds the
+a real browser, phone and desktop, dark (PazAIr is dark for everyone) and light (only when the reader chooses it); CI
+stops on any finding. `node standard/check.mjs --live` holds the
 live site to the same bars.
 
 ## Team

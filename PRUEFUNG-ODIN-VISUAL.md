@@ -9,9 +9,9 @@ zu prüfen. Es arbeitet nach seinem Visual Master Audit V3, gnadenlos wie bei Jo
 Der Massstab, der aus beiden folgt, steht in [`MASSSTAB.md`](MASSSTAB.md).
 
 **Wie geprüft wurde.** Die Linsen von The Last Commit sind nach der Verfassung von ODIN Ω Funktionsetiketten. Das
-Visual-Gremium unterschreibt jeden Fund mit seinen acht Stimmen (Teil I). **Dunkel ist bei PazAIr Standard**
-(`landing.ts:27`: «dark by default, light when the reader prefers it»), darum wurde jede Seite zuerst dunkel gerendert
-und abgenommen, danach hell, denn wer hell bevorzugt, sieht hell. Jede Aussage trägt einen Beweisgrad: **[GESEHEN]**
+Visual-Gremium unterschreibt jeden Fund mit seinen acht Stimmen (Teil I). **Dunkel ist bei PazAIr Standard**,
+seit dem Entscheid vom 14. Oktober für alle (Fund 7). Darum wurde jede Seite zuerst dunkel gerendert und abgenommen,
+danach hell, denn hell muss halten, wenn ein Leser es wählt. Jede Aussage trägt einen Beweisgrad: **[GESEHEN]**
 heisst gerendert in Chromium 141, mit Bildschirm, Zustand und Breite. **[GEMESSEN]** heisst von `standard/check.mjs`
 gezählt. **[CODE]** heisst aus dem Quellcode, mit Datei und Zeile. **[UNVERIFIZIERT]** steht nur in Abschnitt 6.
 
@@ -57,11 +57,10 @@ Chromium-Emulation) und ein Screenreader-Durchgang auf einem Gerät.
 | Stand | Urteil | Grund |
 |---|---|---|
 | Live, 14.10.2026 | **NOT READY · KEINE FREIGABE** | zwei V0 nach G1 (Funde 1 und 2) |
-| Server mit Patch (lokale Vorschau mit den echten Listings) | **NEEDS REFINEMENT · FREIGABE MIT SPERRE G3**, sobald deployt | 13 von 14 gemessenen Seiten ohne Befund; offen sind `/market` (V2) und der dunkle Standard (V1, Owner-Entscheid) |
+| Server mit Patch (lokale Vorschau mit den echten Listings) | **PROFESSIONAL · FREIGABE**, sobald deployt | 13 von 14 gemessenen Seiten ohne Befund, alle dunkel auch bei hellem System; offen ist nur `/market` (V2) |
 | Dieses Repository nach diesem Commit | **PROFESSIONAL · FREIGABE** | beide Beispielseiten und die Marken halten jede Zahl in 4 Ansichten [GEMESSEN] |
 
-Ist der dunkle Standard entschieden, wird daraus PROFESSIONAL. MASTERCLASS gibt es erst, wenn auch `/market` auf dem
-Handy lesbar ist (kein V2 mehr) und der Patch live ist.
+MASTERCLASS gibt es erst, wenn `/market` auf dem Handy lesbar ist (kein V2 mehr) und der Patch live ist.
 
 ### 2. Härteste Funde
 
@@ -102,9 +101,11 @@ das Logo 25 px. Über alle 14 Seiten waren es 144 [GEMESSEN]. FIX: eine Regel f�
 ist dunkel, die helle greift bei `prefers-color-scheme: light`. Ein Browser ohne Dunkel-Einstellung meldet aber «light»:
 Wer sein System nicht auf dunkel gestellt hat, und das ist die Grundeinstellung der meisten Desktops, sieht PazAIr hell.
 BEWEIS: [GESEHEN] `/` bei 390 px: ohne Präferenz und hell Grund `rgb(247,246,242)`, nur mit dunkel `rgb(10,15,31)`.
-WIRKUNG: Der Standard der Marke erreicht einen grossen Teil der Besucher nicht. FIX (Zustandslogik): dunkel für alle, hell
-nur auf ausdrückliche Wahl, oder die heutige Regel bewusst bestätigen. Das entscheidet der Owner. Der Prüfer hält ab
-heute fest, dass die Grundpalette jeder Seite dunkel ist. LINSEN: V-A, V-E, V-H. STAND: **Owner-Entscheid**.
+WIRKUNG: Der Standard der Marke erreichte einen grossen Teil der Besucher nicht. ENTSCHEID des Owners, 14.10.: **dunkel
+für alle**. FIX (Zustandslogik): Jede Seite startet dunkel, was auch immer das System meldet. Hell gibt es nur auf
+ausdrückliche Wahl, über einen Schalter in der Leiste, auf dem Gerät gemerkt und vor dem ersten Bild angewendet.
+Der Prüfer misst ab heute mit einem System auf hell. LINSEN: V-A, V-E, V-H. STAND: im Patch (Commit 4), Schliesstest;
+die Beispielseiten hier ebenso.
 
 **Dazu, ausserhalb der sieben · V2 · G6: Der Markt als Miniatur.** `/market` zeichnet jeden Stand als kleines Ladenbild mit 8 bis 11 px
 Schrift (124 Elemente). Die Standnummern erreichen 4,24:1 statt 4,5:1, die Ladenlinks sind zu klein [GEMESSEN]. FIX
@@ -146,7 +147,7 @@ Zwei Stimmen gegen zwei, drei Fälle, entschieden nach den Regeln des Gremiums:
    [GEMESSEN auf `/`: 307 / 17 / 165 Elemente].
 2. **Grössen:** Grundtext 16 px. Etiketten lagen bei 11,5 px, jetzt bei 12 px [GEMESSEN].
 3. **Farbe dunkel, der Standard:** Grund `#0a0f1f`, Tinte `#ecebe6`, Gold `#d1a04a` [CODE `landing.ts` STYLE].
-4. **Farbe hell, die Variante:** Grund `#f7f6f2`, Tinte `#17161c`, Gold `#84590c` [CODE].
+4. **Farbe hell, nur auf Wahl:** Grund `#f7f6f2`, Tinte `#17161c`, Gold `#84590c` [CODE].
 5. **Status:** Grün und Rot immer mit ✓ und ✗, nie nur über Farbe [GESEHEN, Selbstprüfung].
 6. **Raster:** `.wrap` 68rem, Karten mit 18 px Radius, Pillen rund [CODE].
 7. **Komponenten:** Konsole, Shell-Terminals, Word-Pass-Karte, die Route mit fünf Stationen [GESEHEN].
@@ -184,8 +185,8 @@ Zwei Stimmen gegen zwei, drei Fälle, entschieden nach den Regeln des Gremiums:
 
 ### 7. Freigabe
 
-Live (14.10.): **KEINE FREIGABE**, G1. Nach dem Deploy des Patches: **FREIGABE MIT SPERRE G3**, bis der Owner den
-dunklen Standard entschieden hat (Fund 7); `/market` bleibt V2 und offen. Dieses Repository: **FREIGABE**.
+Live (14.10.): **KEINE FREIGABE**, G1. Nach dem Deploy des Patches: **FREIGABE**; `/market` bleibt V2 und offen.
+Dieses Repository: **FREIGABE**.
 
 > Beim ersten Öffnen: Werk oder Attrappe? Am 14. Oktober ein Werk mit einer Attrappen-Zeile in der Konsole. Mit dem
 > Patch ein Werk.
@@ -272,12 +273,13 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 
 ### Entscheidung
 
-- **Jetzt:** den Patch für `jobflow-a2a` prüfen und mergen. Er hat drei Commits; der Commit zu P2-4 ist ein
+- **Jetzt:** den Patch für `jobflow-a2a` prüfen und mergen. Er hat vier Commits; der Commit zu P2-4 ist ein
   Designentscheid und lässt sich einzeln ablehnen. Cloudflare Web Analytics ausschalten oder in `/privacy` nennen.
 - **Danach:** `/market` auf dem Handy lesbar machen. Eine gemeinsame Hülle aus Tokens, Leiste und Fuss für die 9 Seiten
   mit eigener Hülle. Ein Leitsatz statt vier.
 - **Nicht bauen:** neue Sektionen auf der Startseite.
-- **Menschlich klären:** ob PazAIr für alle dunkel ist oder dem System des Lesers folgt (Fund 7); welcher Leitsatz gilt («Where agents keep their word», «Any agent can pay» oder «the economic
+- **Entschieden am 14.10.:** dunkel für alle, hell nur auf Wahl (Fund 7).
+- **Menschlich klären:** welcher Leitsatz gilt («Where agents keep their word», «Any agent can pay» oder «the economic
   infrastructure of AI agents») und ob Krypto im README überhaupt erwähnt bleibt, solange es aus ist.
 
 ### Restenergie

@@ -35,12 +35,13 @@ Jede Zahl kann ein Dritter nachmessen. Keine davon ist Geschmack.
 | Aufbau | `lang`, `<title>`, Viewport, genau ein `<main>`, genau ein `<h1>` | Screenreader, Suche |
 | Formulare | jedes Feld hat ein Label | Screenreader |
 | Drittanbieter | keine Anfrage an fremde Hosts (Schriften, Tracker) | Datenschutz, Offline |
-| Dunkel als Standard | die Grundpalette (`:root` ohne Media Query) ist dunkel; hell ist die Variante | Hausregel «dark by default, light when the reader prefers it» |
+| Dunkel für alle | jede Seite startet dunkel, auch wenn das System des Lesers hell meldet; hell nur auf ausdrückliche Wahl | Owner-Entscheid, 14. Oktober 2026 |
 
-**Dunkel ist Standard.** Jede Seite wird dunkel gestaltet, dunkel abgenommen und dunkel zuerst gemessen. Die helle
-Fassung ist eine Variante für Leser, deren System hell meldet, und hält dieselben Zahlen. Offen ist ein Owner-Entscheid:
-Ein Browser ohne Dunkel-Einstellung meldet «hell», darum sehen heute alle mit hellem System PazAIr hell. Soll PazAIr für
-alle dunkel sein, wird diese Zeile strenger: dann muss eine Seite auch bei hellem System dunkel starten.
+**Dunkel für alle** (Owner, 14. Oktober 2026). Jede Seite wird dunkel gestaltet, dunkel abgenommen und startet dunkel,
+was auch immer das System des Lesers meldet. Hell gibt es nur auf ausdrückliche Wahl: ein Schalter in der Leiste, die
+Wahl auf dem Gerät gemerkt (`pazair-theme`) und vor dem ersten Bild angewendet. Die helle Fassung hält dieselben
+Zahlen. Der Prüfer misst jede Ansicht mit einem System auf hell: dunkel muss trotzdem dunkel sein, hell erst nach der
+Wahl.
 
 ## Die sechs Sichtregeln für PazAIr
 
@@ -51,7 +52,7 @@ eine Behauptung, bis ihr Beleg sichtbar ist.
 |---|---|---|
 | **G1 Wahrheit** | Ein grünes Licht, «live», «verified» oder eine Zahl, deren Beleg genau diese Aussage nicht deckt. Eine Demo, die nicht als Beispiel markiert ist. Eine abgeschaltete Funktion, die irgendwo angeboten wird. | V0 |
 | **G2 Blickfang** | Der erste Blick auf einer Kernseite fällt auf Dekoration statt auf das, was man tun kann: fragen, verbinden, verkaufen, prüfen. | V1 |
-| **G3 Ein Gesicht** | Seiten mit eigener Leiste, eigenem Fuss oder eigenen Farbwerten statt der gemeinsamen. Eine Seite, die hell gestaltet ist statt dunkel. | V2; der dunkle Standard V1 |
+| **G3 Ein Gesicht** | Seiten mit eigener Leiste, eigenem Fuss oder eigenen Farbwerten statt der gemeinsamen. Eine Seite, die hell startet. | V2; der dunkle Standard V1 |
 | **G4 Formular** | Ein Feld ohne Namen, ein Haken ohne Inhalt, eine Zusage ohne Fundstelle in `/terms`. | V1 |
 | **G5 Leer und Fehler** | Ein Zustand, der nicht sagt, was fehlt und was zu tun ist. Rohes JSON für einen Menschen, der einen geteilten Link öffnet. | V2 |
 | **G6 Daumen** | Auf 390 px ist die nächste Handlung nicht erreichbar, ein Ziel ist unter 44 px, oder Text wird abgeschnitten. | V1 |
@@ -103,7 +104,7 @@ selbst deployen.
 
 ## 10 Innovationen
 
-Stand 14. Oktober 2026: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server. Sie sind gebaut und getestet (Patch für
+Stand 14. Oktober 2026: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server, ebenso «dunkel für alle». Sie sind gebaut und getestet (Patch für
 `Kula-Labs/jobflow-a2a`), aber noch nicht deployt. Die übrigen gelten in diesem Repository ab dem Merge.
 
 1. **Die Konsole lügt nicht mehr.** Die erste Zeile auf der Startseite ist die echte Antwort des Marktes, live

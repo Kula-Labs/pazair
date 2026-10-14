@@ -27,7 +27,9 @@ const BARS = {
   minText: 12, // px, nothing a person has to read is smaller
 };
 const VIEWPORTS = [{ name: '390', width: 390, height: 844 }, { name: '1440', width: 1440, height: 900 }];
-// Dark is PazAIr's default ("dark by default, light when the reader prefers it"): measured first, and light must hold too.
+// Dark for everyone (owner, 14 October 2026): every view runs on a system set to light, the case where a page that
+// followed the system would turn light. "dark" is the page as every reader first sees it and must be dark; "light" is
+// the page after the reader chose light with the switch (stored as pazair-theme), and must hold the same bars.
 const THEMES = ['dark', 'light'];
 
 // ---- colour arithmetic (WCAG 2.x relative luminance) ----
@@ -114,20 +116,6 @@ function measure([BARS, phone]) {
   return found;
 }
 
-// Dark is PazAIr's default: the base palette (the :root rule outside any media query) is dark, light is the variant
-// for readers whose system asks for it. A page whose base --bg is light was designed light first.
-function darkBase() {
-  const rules = [...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch { return []; } });
-  const base = rules.find((r) => r instanceof CSSStyleRule && r.selectorText.trim() === ':root' && r.style.getPropertyValue('--bg').trim());
-  if (!base) return null; // no --bg token: nothing to judge
-  const v = base.style.getPropertyValue('--bg').trim();
-  const probe = document.createElement('i'); probe.style.color = v; document.body.append(probe);
-  const c = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number); probe.remove();
-  const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
-  const l = 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
-  return l > 0.2 ? `the base palette is light (--bg ${v}); PazAIr is dark by default, light only when the reader's system asks for it` : null;
-}
-
 function findChrome() {
   // First the Chromium that belongs to this playwright-core (npx playwright-core install chromium, as in CI), so a
   // result never depends on which Chrome a machine happens to have; then the usual places.
@@ -147,7 +135,8 @@ const targets = args.has('--live')
 const findings = args.has('--live') ? [] : checkBrand();
 const browser = await chromium.launch({ executablePath: findChrome() });
 for (const theme of THEMES) for (const vp of VIEWPORTS) {
-  const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: theme, reducedMotion: 'reduce' });
+  const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, colorScheme: 'light', reducedMotion: 'reduce' });
+  if (theme === 'light') await context.addInitScript(() => { try { localStorage.setItem('pazair-theme', 'light'); } catch { /* storage refused: the attribute below still applies */ } });
   // Offline: a page from this repository must stand without the network (the viewer falls back to its snapshot).
   // Every request that leaves the file is recorded; one to a third party (a font host, a tracker) is a finding.
   const asked = new Set();
@@ -156,9 +145,13 @@ for (const theme of THEMES) for (const vp of VIEWPORTS) {
     const page = await context.newPage();
     try {
       await page.goto(t.url, { waitUntil: args.has('--live') ? 'networkidle' : 'load', timeout: 45000 });
+      if (theme === 'light') await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
       await page.waitForTimeout(400);
       for (const f of await page.evaluate(measure, [BARS, vp.width < 800])) findings.push({ page: t.name, view: `${vp.name} ${theme}`, ...f });
-      if (theme === 'dark' && vp.width < 800) { const d = await page.evaluate(darkBase); if (d) findings.push({ page: t.name, bar: 'dark default', detail: d }); }
+      if (theme === 'dark') {
+        const bg = await page.evaluate(() => { for (const el of [document.body, document.documentElement]) { const c = getComputedStyle(el).backgroundColor.match(/[\d.]+/g)?.map(Number); if (c && (c[3] ?? 1) > 0) return c; } return [255, 255, 255]; });
+        if (lum({ r: bg[0], g: bg[1], b: bg[2] }) > 0.2) findings.push({ page: t.name, view: `${vp.name} dark`, bar: 'dark default', detail: `starts light (background rgb(${bg.slice(0, 3).join(',')})) on a system set to light; PazAIr is dark for everyone, light only by the reader's choice` });
+      }
     } catch (e) { findings.push({ page: t.name, view: `${vp.name} ${theme}`, bar: 'load', detail: String(e.message || e).split('\n')[0] }); }
     await page.close();
   }
