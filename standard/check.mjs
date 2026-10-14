@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The visual standard of PazAIr (MASSSTAB.md), measured, not judged. Every page a person sees from this repository is
-// rendered in a real browser at 390 and 1440 px, light and dark, and held to the same bars the audit of 14 October
+// rendered in a real browser at 390 and 1440 px, dark (the default) and light, and held to the same bars the audit of 14 October
 // 2026 used. A bar that fails stops CI: the standard can rise, it cannot quietly fall back.
 //
 //   node check.mjs              # every examples/*.html, offline (the network is cut, pages must stand on their own)
@@ -27,7 +27,8 @@ const BARS = {
   minText: 12, // px, nothing a person has to read is smaller
 };
 const VIEWPORTS = [{ name: '390', width: 390, height: 844 }, { name: '1440', width: 1440, height: 900 }];
-const THEMES = ['light', 'dark'];
+// Dark is PazAIr's default ("dark by default, light when the reader prefers it"): measured first, and light must hold too.
+const THEMES = ['dark', 'light'];
 
 // ---- colour arithmetic (WCAG 2.x relative luminance) ----
 const hex = (h) => { const x = h.replace('#', ''); const f = x.length === 3 ? [...x].map((c) => c + c).join('') : x; return { r: parseInt(f.slice(0, 2), 16), g: parseInt(f.slice(2, 4), 16), b: parseInt(f.slice(4, 6), 16) }; };
@@ -113,6 +114,20 @@ function measure([BARS, phone]) {
   return found;
 }
 
+// Dark is PazAIr's default: the base palette (the :root rule outside any media query) is dark, light is the variant
+// for readers whose system asks for it. A page whose base --bg is light was designed light first.
+function darkBase() {
+  const rules = [...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch { return []; } });
+  const base = rules.find((r) => r instanceof CSSStyleRule && r.selectorText.trim() === ':root' && r.style.getPropertyValue('--bg').trim());
+  if (!base) return null; // no --bg token: nothing to judge
+  const v = base.style.getPropertyValue('--bg').trim();
+  const probe = document.createElement('i'); probe.style.color = v; document.body.append(probe);
+  const c = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number); probe.remove();
+  const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+  const l = 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  return l > 0.2 ? `the base palette is light (--bg ${v}); PazAIr is dark by default, light only when the reader's system asks for it` : null;
+}
+
 function findChrome() {
   // First the Chromium that belongs to this playwright-core (npx playwright-core install chromium, as in CI), so a
   // result never depends on which Chrome a machine happens to have; then the usual places.
@@ -143,6 +158,7 @@ for (const theme of THEMES) for (const vp of VIEWPORTS) {
       await page.goto(t.url, { waitUntil: args.has('--live') ? 'networkidle' : 'load', timeout: 45000 });
       await page.waitForTimeout(400);
       for (const f of await page.evaluate(measure, [BARS, vp.width < 800])) findings.push({ page: t.name, view: `${vp.name} ${theme}`, ...f });
+      if (theme === 'dark' && vp.width < 800) { const d = await page.evaluate(darkBase); if (d) findings.push({ page: t.name, bar: 'dark default', detail: d }); }
     } catch (e) { findings.push({ page: t.name, view: `${vp.name} ${theme}`, bar: 'load', detail: String(e.message || e).split('\n')[0] }); }
     await page.close();
   }

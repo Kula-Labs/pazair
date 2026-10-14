@@ -1,7 +1,7 @@
 # Der Massstab
 
-Gilt ab dem 14. Oktober 2026, nach dem ersten Audit von PazAIr (ODIN Ω mit The Last Commit, dazu das Visual-Gremium,
-das schon Jobflow geprüft hat). Bericht: [`PRUEFUNG-ODIN-VISUAL.md`](PRUEFUNG-ODIN-VISUAL.md).
+Gilt ab dem 14. Oktober 2026, nach dem ersten Audit von PazAIr: ODIN Ω mit The Last Commit, und das Visual-Gremium,
+das Jobflow abgenommen hat und sich bereit erklärt hat, auch PazAIr zu prüfen. Bericht: [`PRUEFUNG-ODIN-VISUAL.md`](PRUEFUNG-ODIN-VISUAL.md).
 
 > **Was PazAIr zeigt, ist wahr, lesbar und mit dem Daumen erreichbar. Eine Maschine misst es, bei jedem Commit.**
 
@@ -10,7 +10,7 @@ das schon Jobflow geprüft hat). Bericht: [`PRUEFUNG-ODIN-VISUAL.md`](PRUEFUNG-O
 Ein Massstab, den nur Menschen prüfen, sinkt mit dem ersten müden Abend. Darum misst ihn eine Maschine:
 
 - **Dieses Repository:** `standard/check.mjs` rendert jede Seite aus `examples/` in einem echten Browser, bei 390 und
-  1440 px, hell und dunkel, ohne Netz, und prüft die Marken in `brand/`. Ein einziger Befund lässt CI scheitern
+  1440 px, dunkel und hell, ohne Netz, und prüft die Marken in `brand/`. Ein einziger Befund lässt CI scheitern
   (Job `standard` in `.github/workflows/test.yml`).
 - **Die Live-Seite:** `node standard/check.mjs --live` legt dieselben Zahlen an pazair.kulalabs.ch an. Das ist ein
   Bericht für den Owner, kein CI-Gate, denn die Seite kommt aus einem anderen Repository.
@@ -35,17 +35,23 @@ Jede Zahl kann ein Dritter nachmessen. Keine davon ist Geschmack.
 | Aufbau | `lang`, `<title>`, Viewport, genau ein `<main>`, genau ein `<h1>` | Screenreader, Suche |
 | Formulare | jedes Feld hat ein Label | Screenreader |
 | Drittanbieter | keine Anfrage an fremde Hosts (Schriften, Tracker) | Datenschutz, Offline |
+| Dunkel als Standard | die Grundpalette (`:root` ohne Media Query) ist dunkel; hell ist die Variante | Hausregel «dark by default, light when the reader prefers it» |
+
+**Dunkel ist Standard.** Jede Seite wird dunkel gestaltet, dunkel abgenommen und dunkel zuerst gemessen. Die helle
+Fassung ist eine Variante für Leser, deren System hell meldet, und hält dieselben Zahlen. Offen ist ein Owner-Entscheid:
+Ein Browser ohne Dunkel-Einstellung meldet «hell», darum sehen heute alle mit hellem System PazAIr hell. Soll PazAIr für
+alle dunkel sein, wird diese Zeile strenger: dann muss eine Seite auch bei hellem System dunkel starten.
 
 ## Die sechs Sichtregeln für PazAIr
 
-Übertragen aus dem Visual Master Audit V3. Jobflow sperrt eine Rechnung, bis der Beweis vollständig ist. PazAIr sperrt
+Übertragen aus dem Visual Master Audit V3 des Gremiums, das Jobflow abgenommen hat. Jobflow sperrt eine Rechnung, bis der Beweis vollständig ist. PazAIr sperrt
 eine Behauptung, bis ihr Beleg sichtbar ist.
 
 | Regel | Was verletzt sie | Stufe |
 |---|---|---|
 | **G1 Wahrheit** | Ein grünes Licht, «live», «verified» oder eine Zahl, deren Beleg genau diese Aussage nicht deckt. Eine Demo, die nicht als Beispiel markiert ist. Eine abgeschaltete Funktion, die irgendwo angeboten wird. | V0 |
 | **G2 Blickfang** | Der erste Blick auf einer Kernseite fällt auf Dekoration statt auf das, was man tun kann: fragen, verbinden, verkaufen, prüfen. | V1 |
-| **G3 Ein Gesicht** | Seiten mit eigener Leiste, eigenem Fuss oder eigenen Farbwerten statt der gemeinsamen. | V2 |
+| **G3 Ein Gesicht** | Seiten mit eigener Leiste, eigenem Fuss oder eigenen Farbwerten statt der gemeinsamen. Eine Seite, die hell gestaltet ist statt dunkel. | V2; der dunkle Standard V1 |
 | **G4 Formular** | Ein Feld ohne Namen, ein Haken ohne Inhalt, eine Zusage ohne Fundstelle in `/terms`. | V1 |
 | **G5 Leer und Fehler** | Ein Zustand, der nicht sagt, was fehlt und was zu tun ist. Rohes JSON für einen Menschen, der einen geteilten Link öffnet. | V2 |
 | **G6 Daumen** | Auf 390 px ist die nächste Handlung nicht erreichbar, ein Ziel ist unter 44 px, oder Text wird abgeschnitten. | V1 |
@@ -88,7 +94,7 @@ selbst deployen.
 2. **Ein Gate für Behauptungen.** PazAIr zeigt kein grünes Licht ohne den Beleg, der genau dieses Licht deckt.
 3. **Abgeschaltet heisst unsichtbar.** Eine Funktion, die Recht oder Owner pausiert haben, verschwindet aus jedem Text.
 4. **Eigengeschäft getrennt.** Was der Betreiber bei sich selbst kauft, zählt nie als Nachfrage.
-5. **Gerendert, nicht vermutet.** Geprüft wird im echten Browser, bei 390 und 1440 px, hell und dunkel.
+5. **Gerendert, nicht vermutet.** Geprüft wird im echten Browser, bei 390 und 1440 px, dunkel zuerst, dann hell.
 6. **Offline-fest.** Die Beispielseiten müssen ohne Netz stehen; eine Anfrage an fremde Hosts ist ein Befund.
 7. **Der Daumen als Einheit.** 44 px sind keine Empfehlung, sondern eine Grenze, die CI durchsetzt.
 8. **Ein Befund, ein Schliesstest.** Jeder behobene Befund lässt einen Test zurück, der ihn nie wieder zulässt.
@@ -110,7 +116,8 @@ Stand 14. Oktober 2026: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server. Sie si
    geprüft.
 5. **Testkäufe als eigene Grösse.** `/v1/stats` zählt die Käufe des Referenz-Agenten als `test_orders`. Die Startseite
    zeigt nur, was andere gekauft haben.
-6. **Sichtregeln als Code.** G1 bis G6 sind Funktionen im Prüfer, kein PDF in einer Schublade.
+6. **Sichtregeln als Code.** Was an G3, G4 und G6 messbar ist, prüft `check.mjs`; G1 hat Schliesstests auf dem Server.
+   Den Blick (G2) und das Urteil behält das Gremium.
 7. **Die Prüfung ist Kula-Flow-Futter.** Der JSON-Bericht ist dafür gebaut, dass Vision ihn täglich liest: welche
    Seite, welche Regel, welcher Messwert. Angeschlossen ist er noch nicht.
 8. **Keine Schrift von Google.** Die Beispielseiten laden nichts von fremden Hosts. Das gilt auch für Schriften, deren

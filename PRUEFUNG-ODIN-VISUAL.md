@@ -1,14 +1,19 @@
 # Erstes Audit von PazAIr: ODIN Ω, The Last Commit und das Visual-Gremium
 
 14. Oktober 2026. Geprüft wurde, was ein Mensch und ein Agent von PazAIr sehen: die Live-Seite pazair.kulalabs.ch, ihr
-Server-Code (`Kula-Labs/jobflow-a2a` @ `78b798c`) und die sichtbaren Flächen dieses Repositorys (@ `d117512`). Prüfaufträge:
-ODIN Ω 1.0 (Meta-Auditor, mit den zehn Linsen von The Last Commit) und der Kula Visual Master Audit V3, derselbe, der
-Jobflow geprüft hat. Der Massstab, der daraus folgt, steht in [`MASSSTAB.md`](MASSSTAB.md).
+Server-Code (`Kula-Labs/jobflow-a2a` @ `78b798c`) und die sichtbaren Flächen dieses Repositorys (@ `d117512`).
 
-**Was diese Prüfung ist.** Die Namen der Crew und der Gremien sind Prüflinsen, keine Personen. Jede Aussage trägt einen
-Beweisgrad: **[GESEHEN]** heisst gerendert in Chromium 141, mit Bildschirm, Zustand und Breite. **[GEMESSEN]** heisst von
-`standard/check.mjs` gezählt. **[CODE]** heisst aus dem Quellcode, mit Datei und Zeile. **[UNVERIFIZIERT]** steht nur in
-Abschnitt 6.
+Zwei Teams haben geprüft. **ODIN Ω 1.0**, der Meta-Auditor, mit den zehn Linsen von The Last Commit, prüfte Code,
+Sicherheit, Wahrheit und Geld. **Das Visual-Gremium**, das Jobflow abgenommen hat, hat sich bereit erklärt, auch PazAIr
+zu prüfen. Es arbeitet nach seinem Visual Master Audit V3, gnadenlos wie bei Jobflow: nur was Augen sehen und Finger tun.
+Der Massstab, der aus beiden folgt, steht in [`MASSSTAB.md`](MASSSTAB.md).
+
+**Wie geprüft wurde.** Die Linsen von The Last Commit sind nach der Verfassung von ODIN Ω Funktionsetiketten. Das
+Visual-Gremium unterschreibt jeden Fund mit seinen acht Stimmen (Teil I). **Dunkel ist bei PazAIr Standard**
+(`landing.ts:27`: «dark by default, light when the reader prefers it»), darum wurde jede Seite zuerst dunkel gerendert
+und abgenommen, danach hell, denn wer hell bevorzugt, sieht hell. Jede Aussage trägt einen Beweisgrad: **[GESEHEN]**
+heisst gerendert in Chromium 141, mit Bildschirm, Zustand und Breite. **[GEMESSEN]** heisst von `standard/check.mjs`
+gezählt. **[CODE]** heisst aus dem Quellcode, mit Datei und Zeile. **[UNVERIFIZIERT]** steht nur in Abschnitt 6.
 
 ## Urteil in einem Satz
 
@@ -21,11 +26,25 @@ aber noch nicht deployt.
 
 ## Teil I: Visual-Gremium
 
+Acht Stimmen, die bei Jobflow das Abnahmegremium mit Vetorecht waren. Sie schreiben keine eigenen Kapitel; sie
+unterschreiben Funde.
+
+| Stimme | prüft | unterschreibt |
+|---|---|---|
+| **V-A Couture** | Harmonie, Proportion | Funde 4, 7 und der Markt |
+| **V-B Tailor** | Raster, Ausrichtung, Abstände | Funde 3, 6 |
+| **V-C Ikebana** | Leere, Ruhe, Dichte | Fund 4 und der Markt |
+| **V-D Kalligrafie** | Typo, Hierarchie, Lesbarkeit | Fund 5 und der Markt |
+| **V-E Glas/Licht** | Kontrast, Tiefe, falscher Glow | Funde 1, 2, 7 |
+| **V-F Juwelier** | was das Auge zuerst trifft | Funde 1, 4 |
+| **V-G Schuhmacher/UX** | Kernwege, Daumen, Fehlertoleranz | Funde 3, 4, 5, 6 |
+| **V-H Grand Master** | fertiges Werk oder Attrappe | Funde 1, 2, 7, das Urteil |
+
 ### 0. Preflight
 
 | Oberfläche | Quelle | Ansichten | Rolle |
 |---|---|---|---|
-| 26 Live-Routen: `/`, `/ask`, `/muse`, `/connect`, `/sell`, `/sell/konto`, `/sell/answers`, `/market`, `/passes`, `/pass/<id>`, `/paz`, `/fingerprint`, `/remember`, `/transparency`, `/demand`, `/earn`, `/security`, `/terms`, `/privacy`, `/impressum`, `/reference`, `/proposals`, `/insights`, `/onboarding`, `/warranty`, 404 | gerendert, live | 390 und 1440 px, hell und dunkel, 104 Aufnahmen | Gast (Mensch), Agent (JSON, `llms.txt`) |
+| 26 Live-Routen: `/`, `/ask`, `/muse`, `/connect`, `/sell`, `/sell/konto`, `/sell/answers`, `/market`, `/passes`, `/pass/<id>`, `/paz`, `/fingerprint`, `/remember`, `/transparency`, `/demand`, `/earn`, `/security`, `/terms`, `/privacy`, `/impressum`, `/reference`, `/proposals`, `/insights`, `/onboarding`, `/warranty`, 404 | gerendert, live | 390 und 1440 px, dunkel (Standard) und hell, 104 Aufnahmen | Gast (Mensch), Agent (JSON, `llms.txt`) |
 | `examples/word-pass-viewer.html`, `examples/fingerprint.html` | gerendert, ohne Netz | dieselben 4 Ansichten | Gast |
 | `brand/*.svg` | statisch | n/a | n/a |
 
@@ -38,58 +57,79 @@ Chromium-Emulation) und ein Screenreader-Durchgang auf einem Gerät.
 | Stand | Urteil | Grund |
 |---|---|---|
 | Live, 14.10.2026 | **NOT READY · KEINE FREIGABE** | zwei V0 nach G1 (Funde 1 und 2) |
-| Server mit Patch (lokale Vorschau mit den echten Listings) | **PROFESSIONAL · FREIGABE**, sobald deployt | 13 von 14 gemessenen Seiten ohne Befund; offen ist nur `/market` (V2) |
+| Server mit Patch (lokale Vorschau mit den echten Listings) | **NEEDS REFINEMENT · FREIGABE MIT SPERRE G3**, sobald deployt | 13 von 14 gemessenen Seiten ohne Befund; offen sind `/market` (V2) und der dunkle Standard (V1, Owner-Entscheid) |
 | Dieses Repository nach diesem Commit | **PROFESSIONAL · FREIGABE** | beide Beispielseiten und die Marken halten jede Zahl in 4 Ansichten [GEMESSEN] |
 
-MASTERCLASS gibt es erst, wenn `/market` auf dem Handy lesbar ist (kein V2 mehr) und der Patch live ist.
+Ist der dunkle Standard entschieden, wird daraus PROFESSIONAL. MASTERCLASS gibt es erst, wenn auch `/market` auf dem
+Handy lesbar ist (kein V2 mehr) und der Patch live ist.
 
 ### 2. Härteste Funde
 
 **1 · V0 · G1: Die Konsole erfand den Markt.** ELEMENT: Hero-Konsole auf `/`, Kopf «MCP · A2A · REST, live» mit
 grünem Punkt. PROBLEM: Die erste Antwort «3 sellers · ranked by kept word» war gescriptet. Dieselbe Frage
 (`/v1/ask?goal=timestamp this contract`) lieferte live 7 Listings von **einem** Verkäufer, Kula Labs. BEWEIS: [GESEHEN]
-`/`, 390 und 1440, hell und dunkel; [CODE] `landing.ts:491–497`. WIRKUNG: Auf der einen Seite, deren Versprechen
+`/`, 390 und 1440, dunkel und hell; [CODE] `landing.ts:491–497`. WIRKUNG: Auf der einen Seite, deren Versprechen
 «Beweis statt Behauptung» ist, stand die einzige erfundene Zahl. FIX: Die erste Antwortzeile wird live gefragt und nennt
 Listings, Verkäufer und, wenn es so ist, «Kula Labs, who runs PazAIr». Was danach kommt, ist als «example ids»
-markiert. LINSEN: V-F, V-H, Hex, Ledger. STAND: im Patch, Schliesstest.
+markiert. LINSEN: V-E, V-F, V-H; Hex, Ledger. STAND: im Patch, Schliesstest.
 
 **2 · V0 · G1: Krypto angeboten, obwohl abgeschaltet.** `CRYPTO_PAYMENTS = "off"` gilt bis zur Antwort der Aufsicht.
 Trotzdem boten `/muse`, `/sell/answers`, `/sell/antworten`, `/v1/answers`, `/v1/fees` (JSON und HTML), `llms.txt` und
 dieses README XRP und RLUSD an. BEWEIS: [CODE] `docs.ts:504`, `answers.ts:57/84`, `docs.ts:255`, `app.ts:545`;
 README:55. FIX: Der bestehende Filter fasst jetzt alle Passagen. Ein Test liest jede öffentliche Seite, Antwort und
-Anleitung mit ausgeschaltetem Krypto und schlägt bei jedem Krypto-Wort an. STAND: Server im Patch; README in diesem
-Commit.
+Anleitung mit ausgeschaltetem Krypto und schlägt bei jedem Krypto-Wort an. LINSEN: V-E, V-H; Ledger. STAND: Server im
+Patch; README in diesem Commit.
 
 **3 · V1 · G6: Auf dem Handy gab es keine Navigation.** Unter 640 px waren alle acht Links der Leiste nur ausgeblendet
 (`display:none`), ein Ersatz fehlte. BEWEIS: [GESEHEN] alle Seiten mit Leiste, 390; [CODE] `NAV_STYLE`. FIX: ein Menü
-mit 44-px-Zeilen und daneben ein kurzer Knopf «Connect». STAND: im Patch.
+mit 44-px-Zeilen und daneben ein kurzer Knopf «Connect». LINSEN: V-B, V-G. STAND: im Patch.
 
 **4 · V1 · G2: 3-Sekunden-Test auf `/` bei 390 px: Nein.** Der erste Blick traf den Fuchs (136 px, ganz oben), dann
 drei verschiedene Leitsätze. Der Knopf `ask_market` lag angeschnitten am unteren Rand. FIX: Auf dem Handy steht Paz klein
 neben dem Motto. Motto, Satz, Feld, Knopf und die erste echte Antwort passen in den ersten Bildschirm; der Knopf liegt
 bei 531–575 von 844 px [GEMESSEN, Vorschau]. Der «>_»-Chip braucht eine Backtick-Taste und fällt auf Touch-Geräten weg.
-3-Sekunden-Test danach: **Ja** [GESEHEN, Vorschau 360 und 390].
+3-Sekunden-Test danach: **Ja** [GESEHEN, Vorschau 360 und 390, dunkel]. LINSEN: V-A, V-C, V-F, V-G.
 
 **5 · V1 · G4: Das Verkaufsformular nannte seine Felder nicht.** Auf `/sell` hatten 11 Felder ein `<label>` ohne
 `for`. Ein Screenreader liest dort nur «Eingabefeld». BEWEIS: [GEMESSEN]; [CODE] `sell.ts:55–68`. FIX: jedes Label an
-sein Feld gebunden, auch im Import-Formular. STAND: im Patch.
+sein Feld gebunden, auch im Import-Formular. LINSEN: V-D, V-G. STAND: im Patch.
 
 **6 · V1 · G6: Tippziele unter 44 px.** Allein `/` hatte bei 390 px 46 zu kleine Ziele: Knöpfe 40 px, «run ↻» 21 px,
 das Logo 25 px. Über alle 14 Seiten waren es 144 [GEMESSEN]. FIX: eine Regel für alle Seiten, 44 px auf dem Handy und
-24 px mit Maus. STAND: im Patch; ausserhalb von `/market` gemessen 0.
+24 px mit Maus. LINSEN: V-B, V-G. STAND: im Patch; ausserhalb von `/market` gemessen 0.
 
-**7 · V2 · G6: Der Markt als Miniatur.** `/market` zeichnet jeden Stand als kleines Ladenbild mit 8 bis 11 px
+**7 · V1 · G3: Dunkel ist Standard, aber nur im Code.** ELEMENT: das Farbschema jeder Seite. PROBLEM: Die Grundpalette
+ist dunkel, die helle greift bei `prefers-color-scheme: light`. Ein Browser ohne Dunkel-Einstellung meldet aber «light»:
+Wer sein System nicht auf dunkel gestellt hat, und das ist die Grundeinstellung der meisten Desktops, sieht PazAIr hell.
+BEWEIS: [GESEHEN] `/` bei 390 px: ohne Präferenz und hell Grund `rgb(247,246,242)`, nur mit dunkel `rgb(10,15,31)`.
+WIRKUNG: Der Standard der Marke erreicht einen grossen Teil der Besucher nicht. FIX (Zustandslogik): dunkel für alle, hell
+nur auf ausdrückliche Wahl, oder die heutige Regel bewusst bestätigen. Das entscheidet der Owner. Der Prüfer hält ab
+heute fest, dass die Grundpalette jeder Seite dunkel ist. LINSEN: V-A, V-E, V-H. STAND: **Owner-Entscheid**.
+
+**Dazu, ausserhalb der sieben · V2 · G6: Der Markt als Miniatur.** `/market` zeichnet jeden Stand als kleines Ladenbild mit 8 bis 11 px
 Schrift (124 Elemente). Die Standnummern erreichen 4,24:1 statt 4,5:1, die Ladenlinks sind zu klein [GEMESSEN]. FIX
 (Form): auf dem Handy eine lesbare Liste der Stände statt der Miniaturen, auf dem Desktop die Standschrift auf 12 px.
-STAND: **offen**.
+LINSEN: V-A, V-C, V-D. STAND: **offen**.
+
+### Meisterrat
+
+Zwei Stimmen gegen zwei, drei Fälle, entschieden nach den Regeln des Gremiums:
+
+- **Fuchs gegen 3-Sekunden-Test.** V-A will Paz als Hero in voller Grösse; V-F und V-G wollen Feld und Knopf im ersten
+  Bildschirm. Regel: Ruhe schlägt Komposition, wenn der 3-Sekunden-Test sonst scheitert. Entscheid: Paz bleibt, klein
+  neben dem Motto.
+- **Die getippte Konsole.** Die Szene wirkt (V-A), aber sie erfand eine Zahl (V-E, V-H). Regel: Fokus auf Gate und Geld
+  schlägt jede Ästhetik. Entscheid: Die Szene bleibt, ihre erste Zeile wird echt.
+- **Die Miniaturen auf `/market`.** V-A und V-C halten die Illustration für die stärkste Seite, V-D und V-G messen 8 bis
+  11 px. Gleichstand; V-H entscheidet: Die Illustration bleibt auf dem Desktop, das Handy bekommt eine lesbare Liste.
 
 ### 3. Was steht
 
 1. **Die Farbwerte halten.** Jeder Text-Token erreicht in beiden Themes mindestens 5,5:1. Dunkel: Gedämpft 7,57,
    Gold 8,03. Hell: Gedämpft 6,16, Gold 5,69, Grün 6,09, Knopf 6,15 [GEMESSEN]. Der Lauf vom 13. Oktober hat das schon
    behoben.
-2. **Dunkel und hell überall.** Alle 26 Seiten folgen `prefers-color-scheme`. Wo sich etwas bewegt, wird
-   `prefers-reduced-motion` respektiert [GESEHEN, CODE].
+2. **Dunkel zuerst, hell hält.** Alle 26 Seiten sind dunkel gebaut und halten auch hell jede Kontrastgrenze. Wo sich
+   etwas bewegt, wird `prefers-reduced-motion` respektiert [GESEHEN, CODE].
 3. **Der Fehlerzustand spricht.** Die 404-Seite sagt, was fehlt und wohin man geht [GESEHEN 390/1440].
 4. **Kleine Zahlen, wahr gezeigt.** `/transparency` zeigt «Agents registered 4», `/passes` «None yet». Nichts wird
    geschönt [GESEHEN].
@@ -105,8 +145,8 @@ STAND: **offen**.
 1. **Typo:** System-Sans für Text, Georgia kursiv für Motto und Legende, Monospace für die Sprache der Agenten
    [GEMESSEN auf `/`: 307 / 17 / 165 Elemente].
 2. **Grössen:** Grundtext 16 px. Etiketten lagen bei 11,5 px, jetzt bei 12 px [GEMESSEN].
-3. **Farbe dunkel:** Grund `#0a0f1f`, Tinte `#ecebe6`, Gold `#d1a04a` [CODE `landing.ts` STYLE].
-4. **Farbe hell:** Grund `#f7f6f2`, Tinte `#17161c`, Gold `#84590c` [CODE].
+3. **Farbe dunkel, der Standard:** Grund `#0a0f1f`, Tinte `#ecebe6`, Gold `#d1a04a` [CODE `landing.ts` STYLE].
+4. **Farbe hell, die Variante:** Grund `#f7f6f2`, Tinte `#17161c`, Gold `#84590c` [CODE].
 5. **Status:** Grün und Rot immer mit ✓ und ✗, nie nur über Farbe [GESEHEN, Selbstprüfung].
 6. **Raster:** `.wrap` 68rem, Karten mit 18 px Radius, Pillen rund [CODE].
 7. **Komponenten:** Konsole, Shell-Terminals, Word-Pass-Karte, die Route mit fünf Stationen [GESEHEN].
@@ -124,7 +164,7 @@ STAND: **offen**.
 1. Eine Zahl unter einem Live-Punkt, die niemand gefragt hat.
 2. Ein Angebot, das der Betreiber selbst abgeschaltet hat.
 3. Eine Navigation, die auf dem Handy einfach verschwindet.
-4. Fünf Kopien derselben Farbwerte.
+4. Einen Standard, den nur sieht, wer sein System dunkel gestellt hat.
 5. Vier Leitsätze im ersten Bildschirm, wo einer reichen muss: «Where agents keep their word», «Clever enough to trick
    anyone», «the economic infrastructure of AI agents» und, im README, «When your agent does not know how to do a task».
    Dazu kommt der Satz aus `POSITIONIERUNG.md`: «Any agent can pay».
@@ -144,8 +184,8 @@ STAND: **offen**.
 
 ### 7. Freigabe
 
-Live (14.10.): **KEINE FREIGABE**, G1. Nach dem Deploy des Patches: **FREIGABE**, `/market` bleibt V2 und offen.
-Dieses Repository: **FREIGABE**.
+Live (14.10.): **KEINE FREIGABE**, G1. Nach dem Deploy des Patches: **FREIGABE MIT SPERRE G3**, bis der Owner den
+dunklen Standard entschieden hat (Fund 7); `/market` bleibt V2 und offen. Dieses Repository: **FREIGABE**.
 
 > Beim ersten Öffnen: Werk oder Attrappe? Am 14. Oktober ein Werk mit einer Attrappen-Zeile in der Konsole. Mit dem
 > Patch ein Werk.
@@ -237,7 +277,7 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 - **Danach:** `/market` auf dem Handy lesbar machen. Eine gemeinsame Hülle aus Tokens, Leiste und Fuss für die 9 Seiten
   mit eigener Hülle. Ein Leitsatz statt vier.
 - **Nicht bauen:** neue Sektionen auf der Startseite.
-- **Menschlich klären:** welcher Leitsatz gilt («Where agents keep their word», «Any agent can pay» oder «the economic
+- **Menschlich klären:** ob PazAIr für alle dunkel ist oder dem System des Lesers folgt (Fund 7); welcher Leitsatz gilt («Where agents keep their word», «Any agent can pay» oder «the economic
   infrastructure of AI agents») und ob Krypto im README überhaupt erwähnt bleibt, solange es aus ist.
 
 ### Restenergie
@@ -252,7 +292,7 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 - Live: pazair.kulalabs.ch, 14.10.2026, 02:10 bis 02:55 UTC (Renders, `/v1/stats`, `/v1/ask`,
   `/.well-known/pazair-facts.json`, `/reference.json`, `/transparency.json`, Horizon).
 - Code: `Kula-Labs/jobflow-a2a` @ `78b798c`, `Kula-Labs/pazair` @ `d117512`.
-- Messung: Chromium 141.0.7390.37 über Playwright 1.56.1, `standard/check.mjs`, WCAG 2.2.
+- Messung: Chromium 141.0.7390.37 über Playwright 1.56.1, `standard/check.mjs`, WCAG 2.2; dunkel zuerst, dann hell.
 - Zahlen der Sperrklinke: live 366 Befunde auf 14 Seiten (225 davon auf `/market`). Mit dem Patch in der lokalen
   Vorschau mit den echten Listings: 0 auf 13 Seiten, 183 auf `/market`. Die Beispielseiten dieses Repositorys hatten
   vorher 61 Befunde, jetzt 0.
