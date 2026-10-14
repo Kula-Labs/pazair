@@ -15,6 +15,7 @@ jobs:
       - run: npm test
       - run: rm -rf node_modules && npm test   # and without it: ML-DSA-65 reports "not checked", never "valid"
       - run: node scripts/make-credential-vector.mjs && git diff --exit-code ../vectors/credential-1.json   # SPEC 18: the credential vector reproduces byte for byte
+      - run: node scripts/make-buyer-vector.mjs && git diff --exit-code ../vectors/buyer-word-1.json   # SPEC 4: the buyer's word vector reproduces byte for byte
   issuer:
     runs-on: ubuntu-latest
     strategy: { matrix: { node: [20, 22, 24] } }

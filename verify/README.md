@@ -127,6 +127,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `fingerprintSvg(codeword, record?)` | The reference drawing, the same bytes for the same input; `recordOf(pass)` reads the record it grows with |
 | `verifyPass(anchored, { keys?, pqKeys? })` | signature, the second signature when present, Merkle proof into the day's root; returns the anchors to check on Bitcoin and Stellar |
 | `verifyProof(leaf, proof, root)` | a Merkle path |
+| `buyerWordOf(pass)` | Section 4, the buyer's word: `kept_pct` and `pays_99` / `pays_95` from `as_buyer` (paid orders, chargebacks); `checkWordPass` returns it as `buyer_trust` next to the seller's `trust` |
 | `verifyCredential(vc, { fetch?, didDocument?, keysDocument?, now? })` | Section 18: the pass as a W3C Verifiable Credential: VC 2.0, the did:web resolved, the `eddsa-jcs-2022` proof, the subject on the issuer's origin, `validFrom`/`validUntil`, the pass inside; a verdict and a sentence |
 | `verifyDataIntegrity(doc, didDocument)` / `signDataIntegrity(doc, privateKey, verificationMethod, created?)` | any W3C Data Integrity proof with `eddsa-jcs-2022`, checked or made (the W3C Recommendation's vector holds) |
 | `resolveDidWeb(did, fetch?)`, `didWebUrl(did)`, `multikeyOf(x)`, `multikeyToX(multibase)`, `base58btcEncode`/`base58btcDecode` | did:web, Multikey (Ed25519) and base58btc, the pieces of section 18 |

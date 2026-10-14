@@ -1,0 +1,163 @@
+{
+  "about": "Test vectors for SPEC section 4, the buyer's word: buyer_word follows from as_buyer (paid_orders, sellers, chargebacks). Only a chargeback on a delivered order breaks it; an honest dispute, won or lost, does not. Signed with the test key of word-pass-1.json.",
+  "cases": [
+    {
+      "as_buyer": {
+        "paid_orders": 0,
+        "sellers": 0,
+        "chargebacks": 0
+      },
+      "buyer_word": {
+        "kept_pct": null,
+        "badge": null
+      }
+    },
+    {
+      "as_buyer": {
+        "paid_orders": 10,
+        "sellers": 5,
+        "chargebacks": 0
+      },
+      "buyer_word": {
+        "kept_pct": 100,
+        "badge": "pays_99"
+      }
+    },
+    {
+      "as_buyer": {
+        "paid_orders": 10,
+        "sellers": 4,
+        "chargebacks": 0
+      },
+      "buyer_word": {
+        "kept_pct": 100,
+        "badge": null
+      }
+    },
+    {
+      "as_buyer": {
+        "paid_orders": 19,
+        "sellers": 5,
+        "chargebacks": 1
+      },
+      "buyer_word": {
+        "kept_pct": 95,
+        "badge": "pays_95"
+      }
+    },
+    {
+      "as_buyer": {
+        "paid_orders": 9,
+        "sellers": 5,
+        "chargebacks": 1
+      },
+      "buyer_word": {
+        "kept_pct": 90,
+        "badge": null
+      }
+    },
+    {
+      "as_buyer": {
+        "paid_orders": 12,
+        "sellers": 6,
+        "chargebacks": 1
+      },
+      "buyer_word": {
+        "kept_pct": 92.3,
+        "badge": null
+      }
+    },
+    {
+      "as_buyer": {
+        "paid_orders": 0,
+        "sellers": 0,
+        "chargebacks": 2
+      },
+      "buyer_word": {
+        "kept_pct": 0,
+        "badge": null
+      }
+    }
+  ],
+  "pass": {
+    "v": 1,
+    "issuer": "example",
+    "kind": "word_pass",
+    "kid": "a1171dbbeb4c3fc2",
+    "agent": "ag_muse",
+    "name": "Muse",
+    "verified_name": null,
+    "since": "2026-10-01T00:00:00.000Z",
+    "as_seller": {
+      "delivered": 0,
+      "not_delivered": 0,
+      "success_rate": null,
+      "median_delivery_ms": null,
+      "buyers": 0,
+      "first_sale": null,
+      "last_sale": null
+    },
+    "as_buyer": {
+      "paid_orders": 12,
+      "sellers": 6,
+      "chargebacks": 0,
+      "disputes_opened": 1,
+      "disputes_upheld_for_seller": 1
+    },
+    "disputes_lost": 0,
+    "word": {
+      "kept_pct": null,
+      "badge": null
+    },
+    "buyer_word": {
+      "kept_pct": 100,
+      "badge": "pays_99"
+    },
+    "day": "2026-10-14",
+    "issued_at": "2026-10-14T03:17:00.000Z",
+    "sig": "u5huNc-4BGBahEcsGkZUyn6gcQ8Y0nV0k1PZthmm4lfmcuMXLGVZa1T7t41TJU15e06wtWNAYZNKVwGPwCK9CA"
+  },
+  "say": "Muse (Word Pass by example): no record as a seller yet; no sales yet, 12 paid purchases. As a buyer: paid for 99 % or more of 12 delivered orders from 6 sellers, 0 chargebacks.",
+  "forged": {
+    "change": "as_buyer.paid_orders = 9, buyer_word still pays_99, signed again",
+    "pass": {
+      "v": 1,
+      "issuer": "example",
+      "kind": "word_pass",
+      "kid": "a1171dbbeb4c3fc2",
+      "agent": "ag_muse",
+      "name": "Muse",
+      "verified_name": null,
+      "since": "2026-10-01T00:00:00.000Z",
+      "as_seller": {
+        "delivered": 0,
+        "not_delivered": 0,
+        "success_rate": null,
+        "median_delivery_ms": null,
+        "buyers": 0,
+        "first_sale": null,
+        "last_sale": null
+      },
+      "as_buyer": {
+        "paid_orders": 9,
+        "sellers": 6,
+        "chargebacks": 0,
+        "disputes_opened": 1,
+        "disputes_upheld_for_seller": 1
+      },
+      "disputes_lost": 0,
+      "word": {
+        "kept_pct": null,
+        "badge": null
+      },
+      "buyer_word": {
+        "kept_pct": 100,
+        "badge": "pays_99"
+      },
+      "day": "2026-10-14",
+      "issued_at": "2026-10-14T03:17:00.000Z",
+      "sig": "RJ9kqy5pabA66JS9UE5Uv_CXwQpQGMq-CTg-rBvhiPD4FIOpjpsJcOsfPYdTTifSxDiNCAP9ZXap38R4DNSMDQ"
+    },
+    "word_consistent": false
+  }
+}

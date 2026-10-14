@@ -10,6 +10,8 @@ export function fetchKeysDocument(origin?: string, f?: typeof fetch): Promise<{ 
 export function verifyHolderProof(proof: unknown, opts: { keys?: Jwk[]; pqKeys?: PqKey[]; agent: string; nonce: string; aud?: string; now?: number }): Promise<{ ok: boolean; reason: string }>;
 export function verifyReceipt(receipt: Record<string, unknown>, opts?: { keys?: Jwk[]; pqKeys?: PqKey[]; delivery?: unknown }): Promise<{ valid: boolean; signature_valid: boolean; pq_signed: boolean; ml_dsa_65: boolean | null; delivery_matches: boolean | null }>;
 export function wordOf(pass: Record<string, unknown>): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
+/** SPEC section 4, the buyer's word: from as_buyer (paid orders, chargebacks); pays_99 / pays_95 from 10 paid orders and 5 sellers. */
+export function buyerWordOf(pass: Record<string, unknown>): { kept_pct: number | null; badge: 'pays_99' | 'pays_95' | null };
 export function verifyMandate(receipt: Record<string, unknown>, mandate: Record<string, unknown>, opts?: { keys?: Jwk[]; end?: Record<string, unknown> }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
 export function verifyAward(receipt: Record<string, unknown>, tender: Record<string, unknown>, award: Record<string, unknown>, opts?: { keys?: Jwk[]; qa?: Record<string, unknown>[] }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
 export function receiptHash(receipt: Record<string, unknown>): Promise<string>;
@@ -19,6 +21,8 @@ export function verifyProof(leaf: string, proof: Step[], root: string): Promise<
 export function verifyPass(anchored: Record<string, unknown>, opts?: { keys?: Jwk[]; pqKeys?: PqKey[]; anchoredBefore?: string }): Promise<{ valid: boolean; signature_valid: boolean; pq_signed: boolean; ml_dsa_65: boolean | null; word_consistent: boolean; in_root: boolean | null; word: unknown; anchors: { root: string; day: string; bitcoin_ots: string | null; stellar_tx: string | null } | null }>;
 export type PassCheck = {
   trust: 'kept_its_word' | 'signed_unanchored' | 'no_badge_yet' | 'invalid' | 'unreachable';
+  /** The buyer's word (SPEC 4), for whoever sells to this agent; absent when the pass is invalid or unreachable. */
+  buyer_trust?: 'pays_its_way' | 'signed_unanchored' | 'no_buyer_badge_yet';
   say: string; issuer: string | null;
   checks: { signature: boolean; ml_dsa_65: boolean | null; in_root: boolean | null; day: string | null; stellar: boolean | null; stellar_account_bound: boolean; bitcoin_ots: boolean; bitcoin: boolean | null; bitcoin_block?: BitcoinBlock; holder: boolean | null; word: boolean } | null;
   pass: Record<string, unknown> | null;

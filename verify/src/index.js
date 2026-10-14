@@ -70,6 +70,17 @@ export function wordOf(pass) {
   return { kept_pct: kept, badge: enough && kept >= 99 ? 'word_kept_99' : enough && kept >= 95 ? 'word_kept_95' : null };
 }
 
+/**
+ * SPEC section 4, the buyer's word: paid for what was delivered. Broken only by a chargeback on a delivered order;
+ * pays_99 / pays_95 from 10 paid orders and 5 different sellers, as they follow from as_buyer.
+ */
+export function buyerWordOf(pass) {
+  const b = pass?.as_buyer ?? {}, paid = Number(b.paid_orders ?? 0), closed = paid + Number(b.chargebacks ?? 0);
+  if (!closed) return { kept_pct: null, badge: null };
+  const kept = Math.floor((paid / closed) * 1000) / 10, enough = paid >= 10 && Number(b.sellers ?? 0) >= 5;
+  return { kept_pct: kept, badge: enough && kept >= 99 ? 'pays_99' : enough && kept >= 95 ? 'pays_95' : null };
+}
+
 /** Section 3.1: the hash a parent receipt names in `inputs`, the child receipt with its signature. */
 export const receiptHash = (receipt) => sha256hex(canonical(receipt));
 
@@ -188,7 +199,9 @@ export async function verifyPass(anchored, { keys, pqKeys, anchoredBefore } = {}
   const in_root = anchored?.proof && anchored?.root?.root ? await verifyProof(await leafOf(pass), anchored.proof, anchored.root.root) : null;
   const signature_valid = pass?.kind === 'word_pass' && (await verifySignature(pass, keys, { anchoredBefore: in_root ? anchoredBefore : undefined }));
   const pq = await verifyPqSignature(pass, pqKeys, { anchoredBefore: in_root ? anchoredBefore : undefined });
-  const w = wordOf(pass), word_consistent = pass?.word == null || ((pass.word.kept_pct ?? null) === w.kept_pct && (pass.word.badge ?? null) === w.badge); // no word, no claim
+  const w = wordOf(pass), bw = buyerWordOf(pass);
+  const word_consistent = (pass?.word == null || ((pass.word.kept_pct ?? null) === w.kept_pct && (pass.word.badge ?? null) === w.badge)) // no word, no claim
+    && (pass?.buyer_word == null || ((pass.buyer_word.kept_pct ?? null) === bw.kept_pct && (pass.buyer_word.badge ?? null) === bw.badge));
   return {
     valid: signature_valid && pq.valid !== false && in_root !== false && word_consistent,
     signature_valid,
@@ -362,15 +375,21 @@ async function checkWordPassUnsafe(url, { fetch: f = fetch, keys, proof, nonce, 
   const where = checks.in_root ? `in the Merkle root of ${checks.day}${stellar ? (account ? ", found on Stellar from the issuer's anchor account" : ', found on Stellar') : ''}${btc?.block ? `, confirmed in Bitcoin block ${btc.block.height} (${btc.block.time.slice(0, 10)})` : checks.bitcoin_ots ? ', stamped in Bitcoin (block confirmation pending)' : ''}` : 'not anchored yet';
   const whose = held?.ok ? ' The agent showing it proved it is this agent.' : ' To be sure it is theirs, give them a fresh nonce and ask for a holder proof (prove_word_pass).';
   const anchored_ok = stellar === true || btc?.ok === true;
-  return { trust: !pass.word?.badge ? 'no_badge_yet' : anchored_ok ? 'kept_its_word' : 'signed_unanchored', issuer, checks, pass, say: `${sayPass(pass, issuer)} Checked: signature of ${issuer} valid${checks.ml_dsa_65 ? ' (Ed25519 and ML-DSA-65)' : ''}, ${where}.${whose}` };
+  // trust is the seller's verdict, as it always was; buyer_trust is the buyer's word (SPEC 4), for whoever sells to it.
+  const buyer_trust = !pass.buyer_word?.badge ? 'no_buyer_badge_yet' : anchored_ok ? 'pays_its_way' : 'signed_unanchored';
+  return { trust: !pass.word?.badge ? 'no_badge_yet' : anchored_ok ? 'kept_its_word' : 'signed_unanchored', buyer_trust, issuer, checks, pass, say: `${sayPass(pass, issuer)} Checked: signature of ${issuer} valid${checks.ml_dsa_65 ? ' (Ed25519 and ML-DSA-65)' : ''}, ${where}.${whose}` };
 }
 
 /** One plain sentence about a pass. */
 export function sayPass(p, by = p.issuer) {
   const s = p.as_seller ?? {}, w = p.word ?? {}, n = (x, one, many = one + 's') => `${x} ${x === 1 ? one : many}`;
   const record = s.delivered ? `${n(s.delivered, 'paid order')} delivered to ${n(s.buyers, 'buyer')}, ${n(p.disputes_lost ?? 0, 'dispute')} lost` : `no sales yet, ${n(p.as_buyer?.paid_orders ?? 0, 'paid purchase')}`;
-  const head = w.badge === 'word_kept_99' ? 'kept its word on 99 % or more' : w.badge === 'word_kept_95' ? 'kept its word on 95 % or more' : w.kept_pct != null ? `kept its word on ${w.kept_pct} % (no badge yet)` : 'new, no record yet';
-  return `${p.name} (Word Pass by ${by}): ${head}; ${record}.`;
+  const head = w.badge === 'word_kept_99' ? 'kept its word on 99 % or more' : w.badge === 'word_kept_95' ? 'kept its word on 95 % or more' : w.kept_pct != null ? `kept its word on ${w.kept_pct} % (no badge yet)` : p.as_buyer?.paid_orders || p.as_buyer?.chargebacks ? 'no record as a seller yet' : 'new, no record yet';
+  const bw = p.buyer_word, b = p.as_buyer ?? {}, cb = Number(b.chargebacks ?? 0);
+  const buyer = bw && bw.kept_pct != null
+    ? ` As a buyer: ${bw.badge === 'pays_99' ? 'paid for 99 % or more' : bw.badge === 'pays_95' ? 'paid for 95 % or more' : `paid for ${bw.kept_pct} % (no buyer's badge yet)`} of ${n(Number(b.paid_orders ?? 0) + cb, 'delivered order')} from ${n(Number(b.sellers ?? 0), 'seller')}, ${n(cb, 'chargeback')}.`
+    : '';
+  return `${p.name} (Word Pass by ${by}): ${head}; ${record}.${buyer}`;
 }
 
 // Remember: the chain of daily roots, checked without the issuer (SPEC section 14).
