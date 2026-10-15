@@ -116,9 +116,10 @@ selbst deployen.
 
 ## 10 Innovationen
 
-Stand 14. Oktober 2026, 16:51 UTC: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server, ebenso «dunkel für alle». Sie
-sind live (`Kula-Labs/jobflow-a2a#232`), nachgemessen im [Bericht, Teil III](PRUEFUNG-ODIN-VISUAL.md#teil-iii-nachmessung-nach-dem-deploy).
-Die übrigen gelten in diesem Repository.
+Stand 15. Oktober 2026, 14:53 UTC: Die Punkte 1, 2, 4, 5 und 9 betreffen den Server, ebenso «dunkel für alle». Sie
+sind live (`Kula-Labs/jobflow-a2a#232`, Folgepunkte in `#233`), nachgemessen im
+[Bericht, Teil III](PRUEFUNG-ODIN-VISUAL.md#teil-iii-nachmessung-nach-dem-deploy): 10 Befunde, 13 von 14 Seiten ohne
+Befund. Die übrigen gelten in diesem Repository.
 
 1. **Die Konsole lügt nicht mehr.** Die erste Zeile auf der Startseite ist die echte Antwort des Marktes, live
    gefragt. Was danach kommt, ist als Beispiel markiert.

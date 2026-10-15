@@ -25,8 +25,8 @@ aber noch nicht deployt.
 **Nachtrag, 14. Oktober, 16:51 UTC.** Der Patch ist live (`Kula-Labs/jobflow-a2a#232`). Die Nachmessung mit demselben
 Prüfer: 366 Befunde vorher, 233 danach, 11 von 14 Seiten ohne Befund, beide V0 aus dem Audit geschlossen. Sie fand
 auch, was die Vorschau nicht sah, darunter einen Satz auf `/fingerprint`, der mehr verspricht als der Beweis (G1, V0).
-Ein Folgepatch schliesst alles, was sie fand: in der Vorschau mit Live-Daten 0 Befunde auf 14 Seiten. Er ist gebaut und
-getestet, aber noch nicht deployt. Siehe [Teil III](#teil-iii-nachmessung-nach-dem-deploy).
+Ein Folgepatch schliesst, was sie fand. Er ist seit dem 15. Oktober, 14:53 UTC, live (`Kula-Labs/jobflow-a2a#233`):
+**10 Befunde, 13 von 14 Seiten ohne Befund, kein V0 mehr, FREIGABE.** Siehe [Teil III](#teil-iii-nachmessung-nach-dem-deploy).
 
 ---
 
@@ -65,8 +65,11 @@ Chromium-Emulation) und ein Screenreader-Durchgang auf einem Gerät.
 | Live, 14.10.2026 | **NOT READY · KEINE FREIGABE** | zwei V0 nach G1 (Funde 1 und 2) |
 | Server mit Patch (lokale Vorschau mit den echten Listings) | **PROFESSIONAL · FREIGABE**, sobald deployt | 13 von 14 gemessenen Seiten ohne Befund, alle dunkel auch bei hellem System; offen ist nur `/market` (V2) |
 | Dieses Repository nach diesem Commit | **PROFESSIONAL · FREIGABE** | beide Beispielseiten und die Marken halten jede Zahl in 4 Ansichten [GEMESSEN] |
+| Live, 14.10.2026, nach #232 | **KEINE FREIGABE** | ein Satz auf `/fingerprint` (G1, V0), dazu G6 auf drei Seiten (Teil III) |
+| Live, 15.10.2026, nach #233 | **PROFESSIONAL · FREIGABE** | 13 von 14 Seiten ohne Befund, kein V0 und kein V1; 10 Schriftgrössen auf `/market` (V3) [GEMESSEN] |
 
-MASTERCLASS gibt es erst, wenn `/market` auf dem Handy lesbar ist (kein V2 mehr) und der Patch live ist.
+MASTERCLASS gibt es erst, wenn `/market` auf dem Handy lesbar ist (kein V2 mehr) und der Patch live ist. Stand 15.10.:
+beides erfüllt; es fehlen die letzten 10 Schriftgrössen und der 3-Sekunden-Test des Gremiums auf einem Handy.
 
 ### 2. Härteste Funde
 
@@ -198,6 +201,9 @@ Nachgemessen nach dem Deploy (Teil III): live weiter **KEINE FREIGABE**, G1, weg
 den das Audit übersehen hatte; dazu G6 auf `/market`, `/transparency` und `/passes`. Mit dem Folgepatch: **FREIGABE**,
 0 Befunde auf 14 Seiten. MASTERCLASS verlangt den 3-Sekunden-Test des Gremiums auf einem Handy; er steht aus.
 
+**15. Oktober, nach dem Folgepatch (live 14:53 UTC): FREIGABE.** Kein V0, kein V1. Es bleiben 10 Befunde, alle
+Schriftgrösse auf `/market` (V3, Teil III). MASTERCLASS noch nicht: erst diese 10 und der 3-Sekunden-Test.
+
 > Beim ersten Öffnen: Werk oder Attrappe? Am 14. Oktober ein Werk mit einer Attrappen-Zeile in der Konsole. Mit dem
 > Patch ein Werk.
 
@@ -237,8 +243,8 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 | P2-4 | Hex | Sicherheitsbefund, mittel | live (#232) |
 | P2-5 | Pulse, Ledger | «3 delivered orders» waren Testkäufe von Kula Labs bei Kula Labs. `/v1/stats` zählt sie jetzt getrennt (`test_orders`), die Startseite zeigt nur Käufe anderer | live (#232), Schliesstest |
 | P2-6 | Grind | Geteilte Links auf nicht vorhandene Pässe, Shops oder Listings zeigten Menschen rohes JSON | live (#232): Menschen bekommen eine Seite, Agenten JSON |
-| P3-7 | Ledger | Fusszeile ohne Handelsregisternummer; `/sell/konto` ohne Fuss; og-Tags fehlen auf 6 Seiten | Nummer live (#232); `/sell/konto` mit Fuss im Folgepatch; og-Tags offen |
-| P3-8 | Hex, Ledger | Cloudflare fügt Web Analytics in jede Seite ein. Das steht weder im Code noch in `/privacy` | Folgepatch: das Skript läuft auf keiner Seite mehr, `/privacy` sagt es. Im Dashboard ausschalten bleibt sauberer |
+| P3-7 | Ledger | Fusszeile ohne Handelsregisternummer; `/sell/konto` ohne Fuss; og-Tags fehlen auf 6 Seiten | Nummer live (#232); `/sell/konto` mit Fuss live (#233); og-Tags offen |
+| P3-8 | Hex, Ledger | Cloudflare fügt Web Analytics in jede Seite ein. Das steht weder im Code noch in `/privacy` | live (#233): das Skript läuft auf keiner Seite mehr, `/privacy` sagt es. Im Dashboard ausschalten bleibt sauberer |
 | P3-9 | Grind | `HEAD /` antwortete 404 JSON (Monitore halten die Seite für tot) | live (#232) |
 | P3-10 | Ledger | README: Listing-Gebühr missverständlich | in diesem Commit |
 
@@ -284,8 +290,9 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 ### Entscheidung
 
 - **Erledigt am 14.10.:** der Patch ist live (`jobflow-a2a#232`, 16:51 UTC).
-- **Jetzt:** den Folgepatch einspielen (Teil III). Cloudflare Web Analytics im Dashboard ausschalten; mit dem Folgepatch
-  läuft das Skript ohnehin nirgends mehr.
+- **Erledigt am 15.10.:** der Folgepatch ist live (`jobflow-a2a#233`, 14:53 UTC).
+- **Danach:** die letzten 10 Schriftgrössen auf `/market` (Kaufroute, Tagessiegel); og-Tags auf 6 Seiten; Cloudflare
+  Web Analytics im Dashboard ausschalten (das Skript läuft ohnehin nirgends mehr).
 - **Entschieden mit dem Folgepatch:** `/market` auf dem Handy lesbar; eine gemeinsame Hülle aus Tokens, Leiste und Fuss
   für die 9 Seiten mit eigener Hülle; ein Leitsatz, «Where agents keep their word.».
 - **Nicht bauen:** neue Sektionen auf der Startseite.
@@ -294,7 +301,7 @@ Details, bis der Fix live ist; die Details liegen beim Owner.
 
 ### Restenergie
 
-- Bis zum Deploy des Folgepatches gilt live weiter KEINE FREIGABE (G1, Teil III).
+- Live gilt seit dem 15.10. FREIGABE. MASTERCLASS steht aus: 10 Schriftgrössen auf `/market` und der 3-Sekunden-Test.
 - Diese Sitzung hatte nur Lesezugriff auf `jobflow-a2a`. Den Patch und den Folgepatch spielt der Owner ein.
 - Der CI-Job `standard` ist neu. Der erste Lauf auf GitHub zeigt, ob der Browser-Download im Runner stabil läuft.
 - Alles läuft über einen Menschen, Fatih, mit Merge gleich Deploy vom Handy. Das ist der Engpass im Betrieb.
@@ -345,7 +352,26 @@ wurde, und was der Folgepatch daraus macht.
 
 Der Folgepatch hat fünf Commits mit Schliesstests (`tests/audit-folgen-2026-10-14.test.ts`), 839 Tests grün. In der
 lokalen Vorschau mit den Live-Daten (Listings, Transparenz, Register) [GEMESSEN]: **0 Befunde auf 14 Seiten**, keine
-Seite von ihrer Richtlinie blockiert, kein Skriptfehler. Er ist gebaut und getestet, aber noch nicht deployt.
+Seite von ihrer Richtlinie blockiert, kein Skriptfehler. Live seit dem 15. Oktober, 14:53 UTC (`jobflow-a2a#233`).
+
+### Nach dem Folgepatch, live gemessen
+
+15. Oktober 2026, 14:55 UTC, derselbe Prüfer an der Live-Seite [GEMESSEN]:
+
+| Stand | Befunde | Seiten ohne Befund |
+|---|---|---|
+| Vor dem Audit | 366 | 3 von 14 |
+| Nach dem Patch (#232) | 233 | 11 von 14 |
+| Nach dem Folgepatch (#233) | **10** | **13 von 14** |
+
+Per Anfrage geprüft [GESEHEN]: Jede geprüfte Seite trägt eine Richtlinie, die keine Skripte fremder Hosts zulässt,
+die Logo-Leiste und den gemeinsamen Fuss; `/privacy` steht auf Version 2026-10-14d; unter dem Motto steht, was PazAIr
+ist; der Satz «Not mostly: always» ist weg.
+
+Die 10 Befunde liegen alle auf `/market`, alle Schriftgrösse: die Zeiten der Kaufroute (11.5 px), die Beschriftung der
+Tagessiegel (10.6 px) und das Monatskürzel im Siegel (8 px). Diese Teile erscheinen nur mit echten Käufen und Wurzeln;
+die Vorschau hatte keine und konnte sie nicht messen. Stufe V3, ein Detail. Urteil: **FREIGABE**; MASTERCLASS erst
+ohne diese 10 und mit dem 3-Sekunden-Test des Gremiums.
 
 ### Entscheid: der Fingerabdruck bleibt bei k = 10
 
@@ -363,6 +389,6 @@ Wird der Abdruck je zur Identität erklärt, dann als zweites Feld mit grössere
 
 ### Quellen
 
-- Live: pazair.kulalabs.ch, 14.10.2026, 16:51 bis 16:54 UTC (Messung), 17:00 bis 19:30 UTC (Folgepunkte); Deploy-Lauf von `jobflow-a2a#232`.
-- Code: `Kula-Labs/jobflow-a2a` @ `383c3ee` (nach #232), Folgepatch auf diesem Stand; `Kula-Labs/pazair` @ `4f1816b`.
+- Live: pazair.kulalabs.ch, 14.10.2026, 16:51 bis 16:54 UTC (Messung), 17:00 bis 19:30 UTC (Folgepunkte); 15.10.2026, 14:53 bis 14:57 UTC (nach #233).
+- Code: `Kula-Labs/jobflow-a2a` @ `383c3ee` (nach #232) und @ `0ac88ff` (nach #233); `Kula-Labs/pazair` @ `4f1816b`.
 - Messung: wie im Audit; dazu `standard/selftest.mjs` für die Ausnahme «gleichwertiges Ziel».
