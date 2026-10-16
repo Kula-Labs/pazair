@@ -50,13 +50,15 @@ Sicherheitsbefunde stehen hier ohne Details, bis der Fix live ist.
 
 ## Stand
 
-16. Oktober 2026. Stufe 1, die Prüfung, ist abgeschlossen. Stufe 2 schützt, ohne am Verhalten etwas zu ändern. Dafür
-liegen drei Änderungen zur Freigabe bereit, noch nicht live:
+16. Oktober 2026. Stufe 1, die Prüfung, ist abgeschlossen. Stufe 2 schützt, ohne am Verhalten etwas zu ändern.
+
+In Kraft seit dem 16. Oktober ist ein Test, der die öffentliche Schnittstelle festhält (Werkzeuge, Bedingungen,
+Gebühren), damit sie sich nie unbemerkt ändert.
+
+Zwei Änderungen liegen zur Freigabe bereit, noch nicht live:
 
 - ein Not-Aus für den nächtlichen Geldlauf: Er hält Überweisungen an, solange es nötig ist, das Einziehen nur kurz,
   und keine Kartenreservierung verfällt seinetwegen;
-- ein Test, der die öffentliche Schnittstelle festhält (Werkzeuge, Bedingungen, Gebühren), damit sie sich nie
-  unbemerkt ändert;
 - nach jedem Deploy eine Prüfung, wie ein Agent PazAIr trifft, mit einem Testkauf ohne Geld, und ein Weg zurück zur
   vorherigen Version in einem Schritt.
 
