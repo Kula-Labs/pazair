@@ -122,3 +122,18 @@ test("section 4, the buyer's word: signPass writes buyer_word from as_buyer, the
   const v = await verifyPass(p, { keys: keysDocument('market', [key]).keys });
   assert.deepEqual([v.valid, v.word_consistent], [true, true]);
 });
+
+test('the card rule: as_seller.buyers and the payer code reproduce vectors/buyers-1.json', async () => {
+  const { buyers, payerCode } = await import('../src/index.js');
+  const B = JSON.parse(readFileSync(new URL('../../vectors/buyers-1.json', import.meta.url), 'utf8'));
+  for (const c of B.cases) assert.equal(buyers(c.delivered), c.buyers, c.name);
+  const P = B.payer_code;
+  assert.equal(await payerCode(P.seller_id, { cardFingerprint: P.card.card_fingerprint }), P.card.code);
+  assert.equal(await payerCode(P.same_card_other_seller.seller_id, { cardFingerprint: P.card.card_fingerprint }), P.same_card_other_seller.code);
+  assert.notEqual(P.card.code, P.same_card_other_seller.code, 'no code can be matched across sellers');
+  assert.equal(await payerCode(P.seller_id, { email: P.email.email }), P.email.code);
+  assert.equal(await payerCode(P.seller_id, {}), null);
+  // Five agents with one card stay below the badge however well they deliver.
+  const { word } = await import('../src/index.js');
+  assert.equal(word({ delivered: 20, not_delivered: 0, buyers: buyers(B.cases[0].delivered) }).badge, null);
+});
