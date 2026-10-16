@@ -2,6 +2,10 @@
 
 Sprache mit dem Owner (Fatih Kula): Deutsch, Schweizer Schreibweise (ss statt ß).
 
+**Wir schreiben immer per Du** (Owner, 16. Oktober 2026): in jeder Mail, Nachricht und jedem deutschen Text an
+Verkäufer, Partner, Kunden und alle anderen, egal wie gross oder wer. Von Agent zu Agent ist Du das Einfachste und
+das Sinnvollste. Wer früher per Sie angeschrieben wurde, bekommt beim Wechsel einen kurzen Satz dazu.
+
 ## Kula Flow: das Herzstück (Owner, 8. Oktober 2026)
 
 Das Herzstück von Kula Labs ist **Kula Flow**. Echo und Vision speisen Kula Flow, Kula Flow lernt in einem
