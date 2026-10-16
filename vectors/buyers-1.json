@@ -1,0 +1,167 @@
+{
+  "about": "SPEC 4, the card rule: as_seller.buyers = min(distinct buyer agents, distinct payers) over the seller's delivered orders; an order without a payer code counts as its own agent. Payer codes stay with the issuer and never appear in a pass.",
+  "cases": [
+    {
+      "name": "five agents, one card",
+      "delivered": [
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_2",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_3",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_4",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_5",
+          "payer": "py_a"
+        }
+      ],
+      "buyers": 1
+    },
+    {
+      "name": "one agent, five cards",
+      "delivered": [
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_1",
+          "payer": "py_b"
+        },
+        {
+          "buyer": "ag_1",
+          "payer": "py_c"
+        },
+        {
+          "buyer": "ag_1",
+          "payer": "py_d"
+        },
+        {
+          "buyer": "ag_1",
+          "payer": "py_e"
+        }
+      ],
+      "buyers": 1
+    },
+    {
+      "name": "five agents, five cards",
+      "delivered": [
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_2",
+          "payer": "py_b"
+        },
+        {
+          "buyer": "ag_3",
+          "payer": "py_c"
+        },
+        {
+          "buyer": "ag_4",
+          "payer": "py_d"
+        },
+        {
+          "buyer": "ag_5",
+          "payer": "py_e"
+        }
+      ],
+      "buyers": 5
+    },
+    {
+      "name": "no payer codes: by agent, as before the rule",
+      "delivered": [
+        {
+          "buyer": "ag_1",
+          "payer": null
+        },
+        {
+          "buyer": "ag_2",
+          "payer": null
+        },
+        {
+          "buyer": "ag_3",
+          "payer": null
+        },
+        {
+          "buyer": "ag_4",
+          "payer": null
+        },
+        {
+          "buyer": "ag_5",
+          "payer": null
+        }
+      ],
+      "buyers": 5
+    },
+    {
+      "name": "mixed: two agents on one card, one without a code",
+      "delivered": [
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_2",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_3",
+          "payer": null
+        }
+      ],
+      "buyers": 2
+    },
+    {
+      "name": "one agent, repeat orders, one card",
+      "delivered": [
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        },
+        {
+          "buyer": "ag_1",
+          "payer": "py_a"
+        }
+      ],
+      "buyers": 1
+    },
+    {
+      "name": "no orders",
+      "delivered": [],
+      "buyers": 0
+    }
+  ],
+  "payer_code": {
+    "about": "PazAIr's payer code: py_ and the first 32 hex characters of sha256hex(seller_id + '|card:' + fingerprint), or '|email:' + the e-mail in lower case for a wallet without a card fingerprint.",
+    "seller_id": "ag_seller_test",
+    "card": {
+      "card_fingerprint": "Xt5EWLLDS7FJjR1c",
+      "code": "py_fb4601a5d1dbf9736577bb79adc6f9cc"
+    },
+    "same_card_other_seller": {
+      "seller_id": "ag_other_test",
+      "card_fingerprint": "Xt5EWLLDS7FJjR1c",
+      "code": "py_f18ce41b40781a4be8da2fe5a8e3ef63"
+    },
+    "email": {
+      "email": "Payer@Example.org",
+      "code": "py_14502f57fd3a46e82aad1999f52984d7"
+    }
+  }
+}

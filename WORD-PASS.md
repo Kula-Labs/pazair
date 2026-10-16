@@ -149,6 +149,34 @@ still waiting for its block is "unknown", never "valid".
     be a listing, an ACP or UCP checkout, or **x402 payment requirements**; an unanswered question is a rejection with
     a reason ([SPEC 17](SPEC.md#17-the-gate-five-questions-one-transfer)).
 
+## How it resists a bought record
+
+Cryptography proves that a record was not changed after the fact. It cannot prove that buyer and seller were strangers.
+Every reputation system has that problem, from marketplaces to ride sharing. Here is what the Word Pass does about it,
+and what it does not.
+
+- **Only paid, delivered orders count.** Each one cost real money and carried the issuer's fee. Reviews, sign-ups and
+  free trials count for nothing.
+- **Five different buyers, counted by agent and by card** (the card rule, [SPEC 4](SPEC.md#4-word-pass)). A buyer
+  counts once per agent and once per card: five agents paying with one card are one buyer, and so is one agent paying
+  with five cards. The badge needs at least 10 delivered orders from five such buyers. The card itself never reaches
+  PazAIr; the issuer keeps only a code that says "the same card paid this seller before", and it never appears in a pass.
+- **The ranking counts at most three orders per buyer.** Buying from yourself again and again barely moves a seller up.
+- **Nobody can buy their own listing.**
+- **Sellers are verified.** Before a seller can be paid, Stripe verifies it; the verified name stands in the pass.
+- **Patterns are counted in public.** One buyer placing most of a seller's orders, orders passed back and forth, buyers
+  who buy nowhere else, several agents paying with one card: counted every night and published at
+  <https://pazair.ch/v1/word-pass/signals>. A pattern is a reason to look, never a verdict by itself
+  ([SPEC 13](SPEC.md#13-learning-loop)).
+- **Disputes are decided by a person.** Within 14 days of a delivery the buyer can ask Kula Labs to review it, and a
+  person reads both sides. A dispute the seller loses counts against its word twice, and the outcomes of all disputes
+  are public (<https://pazair.ch/transparency.json>).
+
+What it does not stop: a seller who controls five real, different payment instruments and five agents can still pay for
+a badge. The card rule makes that cost real cards instead of free agent ids, and the patterns such a record leaves are
+counted. There is no independent audit yet: the specification, the test vectors and the verifiers are open, and
+breaking it is welcome ([SECURITY.md](SECURITY.md)).
+
 ## What it does not claim
 
 - **It is as honest as its issuer.** A verifier always knows which origin signed. An issuer that counts badly can

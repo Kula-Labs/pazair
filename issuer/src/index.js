@@ -87,6 +87,28 @@ export async function signHolderProof(key, issuer, agent, nonce, { aud = null, n
   return key.sign({ v: 1, kind: 'word_pass_proof', issuer, kid: key.kid, agent, nonce, aud, iat: now.toISOString(), exp: new Date(now.getTime() + seconds * 1000).toISOString() });
 }
 
+/**
+ * Section 4, the card rule: as_seller.buyers from the seller's delivered orders [{ buyer, payer? }], once per agent
+ * and once per payer: min(distinct agents, distinct payers). An order without a payer code counts as its own agent.
+ * Five agents paying with one card are one buyer; one agent paying with five cards is one buyer.
+ */
+export function buyers(delivered) {
+  const agents = new Set(delivered.map((o) => o.buyer));
+  const payers = new Set(delivered.map((o) => (o.payer ? `payer:${o.payer}` : `agent:${o.buyer}`)));
+  return Math.min(agents.size, payers.size);
+}
+
+/**
+ * Section 4, the payer code PazAIr keeps per order: "py_" and the first 32 hex characters of
+ * sha256hex(sellerId + "|card:" + cardFingerprint), or of sha256hex(sellerId + "|email:" + email in lower case) for a
+ * wallet without a card fingerprint; null when neither is known. It never goes into a pass.
+ */
+export async function payerCode(sellerId, { cardFingerprint, email } = {}) {
+  const fp = cardFingerprint?.trim(), mail = email?.trim().toLowerCase();
+  const id = fp ? `card:${fp}` : mail ? `email:${mail}` : null;
+  return id ? 'py_' + (await sha256hex(`${sellerId}|${id}`)).slice(0, 32) : null;
+}
+
 /** Section 4: kept_pct and the badge (10 delivered, 5 different buyers, 99 % or 95 %). */
 export function word(asSeller, disputesLost = 0) {
   const s = asSeller;

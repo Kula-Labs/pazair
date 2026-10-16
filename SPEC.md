@@ -186,6 +186,15 @@ An agent's record, from paid and delivered orders only. Nothing personal, nothin
 - `kept_pct = floor((delivered − min(disputes_lost, delivered)) / (delivered + not_delivered + disputes_lost) × 1000) / 10`.
 - `badge`: `word_kept_99` from 10 delivered orders from at least 5 different buyers (`as_seller.buyers ≥ 5`) and
   `kept_pct ≥ 99`; `word_kept_95` with the same minimum and `≥ 95`; else `null`. Buying from yourself earns nothing.
+- `as_seller.buyers`, **the card rule**: the different buyers of delivered orders, counted once per agent and once
+  per payer. An issuer that knows who paid gives each order a payer code (for a card, from the payment provider's
+  fingerprint of the card number) and counts `min(distinct buyer agents, distinct payers)`, where an order without a
+  payer code counts as its own agent. Five agents paying with one card are one buyer; one agent paying with five cards
+  is one buyer. The code says only "the same payer as before"; it stays with the issuer and never appears in a pass.
+  PazAIr: `"py_"` and the first 32 hex characters of `sha256hex(seller_id + "|card:" + fingerprint)` with Stripe's card
+  fingerprint, or `"|email:"` and the payer's e-mail at Stripe (lower case) for a wallet without one, from 16 October
+  2026 (section 13). Reference: `buyers` in `word-pass-issuer`;
+  test vector [`vectors/buyers-1.json`](./vectors/buyers-1.json).
 - `issuer` is the issuer's short name; who the issuer is follows from the origin that serves its keys (section 2).
 
 **The buyer's word.** Many agents mostly buy: a personal assistant, a procurement agent. Their side of the promise is
@@ -314,6 +323,8 @@ with the ML-DSA-65 test key, its seed and the keys document that lists it. An im
 [`vectors/credential-1.json`](./vectors/credential-1.json) (section 18): base58btc, the Multikey of the test key,
 did:web URLs, a DID document, the first pass as a Verifiable Credential with its proof, the two hashes it signs, and a
 forged copy that must fail. The reference verifiers also reproduce the W3C Recommendation's own eddsa-jcs-2022 vector.
+[`vectors/buyers-1.json`](./vectors/buyers-1.json) (section 4, the card rule): delivered orders as buyer agent and payer
+code, and the `as_seller.buyers` an issuer must count from them.
 
 ## 11. Governance
 
@@ -348,8 +359,12 @@ What a Word Pass does not claim, and how to read it:
   only do so in the open: its roots are public and fixed. Trust in an issuer is the verifier's choice; a public list
   of issuers and their transparency reports (rule 7.5) helps it choose.
 - **Buying from yourself costs money.** Only paid, delivered orders count, each carrying the issuer's fee, and the
-  badge needs at least five different buyers. Issuers should weigh further signals against fake buyers (buyers'
-  own records, payment instruments) and may tighten the badge rule in a later version; fields are only added.
+  badge needs at least five different buyers, counted once per agent and once per payer (the card rule, section 4):
+  five agents paying with one card are one buyer. What the card rule does not stop: a seller who controls five real,
+  different payment instruments and five agents can still pay for a badge; cryptography cannot prove that buyer and
+  seller are strangers. It makes that cost real payment instruments, not free agent ids, and the learning loop
+  (section 13) counts the patterns such a record leaves. Issuers should weigh further signals against fake buyers
+  (buyers' own records) and may tighten the badge rule in a later version; fields are only added.
 - **A key can be stolen.** Then the issuer marks it `revoked_at` (section 2); everything not anchored before that
   day stops counting.
 
@@ -359,7 +374,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 
 1. **Notice.** An issuer SHOULD count, per day: every check of its passes, every failed check by the step that
    failed (section 9), every report it receives, and trading patterns that look like a bought record (one buyer
-   placing most orders, orders passed back and forth, buyers who buy nowhere else). PazAIr publishes these counts
+   placing most orders, orders passed back and forth, buyers who buy nowhere else, several agents paying with one card). PazAIr publishes these counts
    at `GET /v1/word-pass/signals` and takes reports with `report_word_pass` (`fake_pass`, `copied_pass`,
    `sham_orders`, `broken_promise`, `other`).
 2. **Show.** Counts are public. Anything that names an agent stays with the issuer: a pattern is a reason to look,
@@ -381,6 +396,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 17 | 2026-10-11 | The gate: `agent_identity`, mandate expiry, counterparties, purpose codes and step-up, `gateway_policy`, `evidence`, `dispute`; five questions before a transfer, one evidence object after, a dispute as an object |
 | 1.0 + 4, buyer | 2026-10-14 | The buyer's word: `as_buyer.chargebacks`, `buyer_word` (`pays_99`, `pays_95`, 10 paid orders from 5 sellers), only chargebacks break it; `buyer_trust` next to `trust` (section 9). Older passes unchanged and valid |
 | 1.0 + 18 | 2026-10-14 | did:web for issuers (section 2); the pass as a W3C Verifiable Credential 2.0 with an eddsa-jcs-2022 proof (section 18); section 1 names JCS; governance: free to implement, nothing in a pass for sale, 14 days' notice, co-editors (section 11). Passes, receipts and their signatures unchanged |
+| 1.0 + 4, card rule | 2026-10-16 | `as_seller.buyers` counts once per agent and once per payer: `min(distinct buyer agents, distinct payers)` (section 4), so five agents paying with one card are one buyer. Closes the gap a review named on 16 October 2026 and applies at once (section 11); passes already anchored stay as they were. Test vector `vectors/buyers-1.json` |
 
 ## 14. Remember: the chain of daily roots
 

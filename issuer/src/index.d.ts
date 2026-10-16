@@ -13,6 +13,10 @@ export function generatePqKey(): Promise<PqKey>;
 export function withSecondSignature(key: Key, pqKey: Pick<PqKey, 'pq_kid' | 'signPq'>): Key & { pq_kid: string };
 export function keysDocument(issuer: string, keys: Pick<Key, 'kid' | 'x'>[], opts?: { stellarAnchor?: string; revoked?: Record<string, string>; pqKeys?: Pick<PqKey, 'pq_kid' | 'public_key_b64url'>[] }): { issuer: string; alg: 'Ed25519'; canonical: string; keys: { kid: string; kty: 'OKP'; crv: 'Ed25519'; x: string; revoked_at?: string }[]; pq_keys?: { pq_kid: string; alg: 'ML-DSA-65'; public_key_b64url: string; revoked_at?: string }[]; anchors?: { stellar: { account: string; network: 'mainnet' } } };
 export function signHolderProof(key: Key, issuer: string, agent: string, nonce: string, opts?: { aud?: string | null; now?: Date; seconds?: number }): Promise<Record<string, unknown>>;
+/** Section 4, the card rule: as_seller.buyers = min(distinct buyer agents, distinct payers); no payer code counts as its agent. */
+export function buyers(delivered: { buyer: string; payer?: string | null }[]): number;
+/** Section 4: the payer code an issuer keeps per order (never in a pass); null when neither is known. */
+export function payerCode(sellerId: string, payer?: { cardFingerprint?: string | null; email?: string | null }): Promise<string | null>;
 export function word(asSeller: Side, disputesLost?: number): { kept_pct: number | null; badge: 'word_kept_99' | 'word_kept_95' | null };
 /** Section 4, the buyer's word: pays_99 / pays_95 from 10 paid orders and 5 sellers; only chargebacks break it. */
 export function buyerWord(asBuyer: { paid_orders: number; sellers: number; chargebacks?: number }): { kept_pct: number | null; badge: 'pays_99' | 'pays_95' | null };
