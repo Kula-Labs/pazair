@@ -96,3 +96,7 @@ export type LicenceCheck = { valid: boolean; current: boolean; signature_valid: 
 export function verifyLicence(licence: unknown, opts?: { keys?: Jwk[]; pqKeys?: PqKey[]; now?: Date }): Promise<LicenceCheck>;
 /** Section 19: a licence URL checked against the issuer's own keys. */
 export function checkLicence(url: string, opts?: { fetch?: typeof fetch; now?: Date }): Promise<{ verdict: 'valid' | 'expired' | 'none' | 'invalid' | 'unreachable'; agent?: string | null; level?: string; say: string; licences: LicenceCheck[] }>;
+
+/** Section 20, the why. */
+export function verifyMotive(receipt: Record<string, unknown>, motive: Record<string, unknown>, opts?: { keys?: Jwk[]; goal?: string }): Promise<{ valid: boolean; covers: string[]; reasons: string[] }>;
+export function verifyGoalEnd(end: Record<string, unknown>, motives?: Record<string, unknown>[], opts?: { keys?: Jwk[] }): Promise<{ valid: boolean; covers: string[]; reasons: string[]; named: number; missing: string[] }>;

@@ -1,0 +1,170 @@
+{
+  "about": "Test vectors for SPEC section 20, the why. Signed with the Ed25519 test key of word-pass-1.json (a live issuer adds the second signature of section 16). `motive` is the reason for or_one; `receipt` names it by hash and verifies with it, also against the principal's own `goal` text. `second` is the second purchase for the same goal, and `goal_end` names both. `stated_late` is a motive for or_one stated after its delivery: it fails with the receipt (the receipt also names another motive). `after_end` is a motive for the goal stated after the goal ended: the end does not name it and it fails with the end.",
+  "key": {
+    "kid": "a1171dbbeb4c3fc2",
+    "see": "word-pass-1.json key"
+  },
+  "goal": "Translate our shop into French by Friday",
+  "goal_sha256": "55ad8ea6b3eb397e1f35b1580b9383de79c985a21f971ee8747b46c959785b41",
+  "motive": {
+    "v": 1,
+    "kind": "motive",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_one",
+    "agent": "ag_buyer",
+    "listing": "ls_alpha",
+    "goal_sha256": "55ad8ea6b3eb397e1f35b1580b9383de79c985a21f971ee8747b46c959785b41",
+    "gap": "cannot",
+    "considered": [
+      "ls_alpha",
+      "ls_beta"
+    ],
+    "chose_for": [
+      "word_pass",
+      "contract"
+    ],
+    "step": {
+      "n": 1,
+      "of": 2
+    },
+    "enough": {
+      "orders": 3,
+      "spend_minor": 3000,
+      "currency": "chf"
+    },
+    "again": false,
+    "stated_at": "2026-10-17T10:00:00.000Z",
+    "sig": "WLVR3l7CjeubF-aWd6n1uA8QZCKED8O_kYSxraeg_g_cAFP5bBJLOY6V-HTOmcCGX7xV6P_bMiNppT7r3ZwlAQ"
+  },
+  "motive_sha256": "44f59efdd60cfc9c79df54466c821bc38d31aee8e227c08454449108f3252464",
+  "receipt": {
+    "v": 1,
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_one",
+    "listing": "ls_alpha",
+    "seller": "ag_seller",
+    "buyer": "ag_buyer",
+    "amount_minor": 1200,
+    "currency": "chf",
+    "delivered_at": "2026-10-17T10:00:05.000Z",
+    "delivery_sha256": "0b520fad7fe37c9cea4269887b7fce32a92a910aef001650f284664b82cd6889",
+    "motive": "44f59efdd60cfc9c79df54466c821bc38d31aee8e227c08454449108f3252464",
+    "sig": "5FN4UEiZ34HMj0nB-NEpnfuBC7bsGEQUNawF_cn2gq-kpz0sWsgmkRPDyTPxQ48fvo_TkcjKML97--FKj8bHAg"
+  },
+  "second": {
+    "v": 1,
+    "kind": "motive",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_two",
+    "agent": "ag_buyer",
+    "listing": "ls_gamma",
+    "goal_sha256": "55ad8ea6b3eb397e1f35b1580b9383de79c985a21f971ee8747b46c959785b41",
+    "gap": "second_opinion",
+    "considered": [],
+    "chose_for": [
+      "price"
+    ],
+    "step": {
+      "n": 2,
+      "of": 2
+    },
+    "enough": {
+      "orders": 3,
+      "spend_minor": 3000,
+      "currency": "chf"
+    },
+    "again": false,
+    "stated_at": "2026-10-17T11:00:00.000Z",
+    "sig": "XehgAI-HTOuKYGfRGD4HmU5i3Lb8NyXoppE_taEs59veAXpXJpKXoikWqiljtdVxR-grKUiVUpLiKBsIEsnyBw"
+  },
+  "goal_end": {
+    "v": 1,
+    "kind": "goal_end",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "agent": "ag_buyer",
+    "goal_sha256": "55ad8ea6b3eb397e1f35b1580b9383de79c985a21f971ee8747b46c959785b41",
+    "outcome": "reached",
+    "motives": [
+      "44f59efdd60cfc9c79df54466c821bc38d31aee8e227c08454449108f3252464",
+      "96370fac1d929bb54dace33cd4611d73d35f66e75ec30a1caaa1f59108444a64"
+    ],
+    "at": "2026-10-17T12:00:00.000Z",
+    "sig": "4UnZYVyW-0Jj7HQvjUCy1e-kFytQwWSBx-M74xOZCpZsoTOcyRHcGoZwc9tGwNc0TGwkpN8f2BZTaVWxjydZCg"
+  },
+  "stated_late": {
+    "v": 1,
+    "kind": "motive",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_one",
+    "agent": "ag_buyer",
+    "listing": "ls_alpha",
+    "goal_sha256": "55ad8ea6b3eb397e1f35b1580b9383de79c985a21f971ee8747b46c959785b41",
+    "gap": "cannot",
+    "considered": [
+      "ls_alpha",
+      "ls_beta"
+    ],
+    "chose_for": [
+      "word_pass",
+      "contract"
+    ],
+    "step": null,
+    "enough": {
+      "orders": 3,
+      "spend_minor": 3000,
+      "currency": "chf"
+    },
+    "again": false,
+    "stated_at": "2026-10-17T10:00:06.000Z",
+    "sig": "x_DJrhtE85IPfjHQCDpEVKNWjmgSrx86QDxfiYmg59fK52IHoqWc0bW5fkuUTtfyoiWiuZ3MadGl2z0osvgtDw"
+  },
+  "after_end": {
+    "v": 1,
+    "kind": "motive",
+    "issuer": "example",
+    "kid": "a1171dbbeb4c3fc2",
+    "order": "or_three",
+    "agent": "ag_buyer",
+    "listing": "ls_alpha",
+    "goal_sha256": "55ad8ea6b3eb397e1f35b1580b9383de79c985a21f971ee8747b46c959785b41",
+    "gap": "cannot",
+    "considered": [
+      "ls_alpha",
+      "ls_beta"
+    ],
+    "chose_for": [
+      "word_pass",
+      "contract"
+    ],
+    "step": null,
+    "enough": {
+      "orders": 3,
+      "spend_minor": 3000,
+      "currency": "chf"
+    },
+    "again": false,
+    "stated_at": "2026-10-17T13:00:00.000Z",
+    "sig": "2EW6ySdj5EWWc-2ff57zPkJCQb6OFQwL_sLimonwGkx-ilO7FMYBjnIH1MRhyEBm5wRsfEmxVZQO85FWhoTEDg"
+  },
+  "expect": {
+    "receipt_with_motive": {
+      "valid": true
+    },
+    "receipt_with_stated_late": {
+      "valid": false
+    },
+    "goal_end_with_both": {
+      "valid": true,
+      "named": 2,
+      "missing": 0
+    },
+    "goal_end_with_after_end": {
+      "valid": false
+    }
+  }
+}

@@ -41,3 +41,10 @@ export function signMandateEnd(key: Key, issuer: string, mandate: Record<string,
 export function didOf(origin: string): string;
 export function didDocument(origin: string, keys: { kid: string; x: string }[]): Record<string, unknown>;
 export function passCredential(key: Key, origin: string, passUrl: string, wordPass: { pass: Record<string, unknown>; leaf?: string; proof?: Step[]; root?: Record<string, unknown> }, now?: Date): Promise<Record<string, unknown>>;
+
+/** Section 20, the why. */
+export const WHY_GAPS: string[];
+export const WHY_CHOSE_FOR: string[];
+export type Enough = { orders: number | null; spend_minor: number | null; currency: string | null };
+export function signMotive(key: Key, issuer: string, m: { order: string; agent: string; listing: string; goal?: string; goal_sha256?: string; gap: string; considered?: string[]; chose_for?: string[]; step?: { n: number; of: number } | null; enough?: Enough | null; again?: boolean; stated_at?: string }, now?: Date): Promise<Record<string, unknown>>;
+export function signGoalEnd(key: Key, issuer: string, g: { agent: string; goal?: string; goal_sha256?: string; outcome: 'reached' | 'abandoned'; motives?: (string | Record<string, unknown>)[]; at?: string }, now?: Date): Promise<Record<string, unknown>>;

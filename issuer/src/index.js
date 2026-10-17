@@ -149,12 +149,14 @@ export async function signPass(key, issuer, a, now = new Date()) {
 /**
  * Section 3: a receipt for one paid, delivered order. Section 3.1: an order placed to deliver another names it in
  * `parent_order`; the receipt of the other order lists the receipts it was built on in `inputs` (receiptHash of each).
+ * Section 3.2: `mandate`, the mandate it was bought within. Section 20: `motive`, the reason the buyer gave.
  */
 export async function signReceipt(key, issuer, r) {
   return key.sign({ v: 1, issuer, kid: key.kid, order: r.order, listing: r.listing, seller: r.seller, buyer: r.buyer, amount_minor: r.amount_minor, currency: r.currency, delivered_at: r.delivered_at, delivery_sha256: r.delivery_sha256 ?? await sha256hex(typeof r.delivery === 'string' ? r.delivery : JSON.stringify(r.delivery)),
     ...(r.parent_order ? { parent_order: r.parent_order } : {}),
     ...(r.inputs ? { inputs: await Promise.all(r.inputs.map((x) => typeof x === 'string' ? x : sha256hex(canonical(x)))) } : {}),
-    ...(r.mandate ? { mandate: typeof r.mandate === 'string' ? r.mandate : await sha256hex(canonical(r.mandate)) } : {}) });
+    ...(r.mandate ? { mandate: typeof r.mandate === 'string' ? r.mandate : await sha256hex(canonical(r.mandate)) } : {}),
+    ...(r.motive ? { motive: typeof r.motive === 'string' ? r.motive : await sha256hex(canonical(r.motive)) } : {}) });
 }
 
 /**
@@ -199,6 +201,37 @@ export async function signLicence(key, issuer, l, now = new Date()) {
     v: 1, kind: 'buyer_licence', issuer, kid: key.kid, agent: l.agent, level: l.level, score: `${l.right}/${lv.tasks}`, tasks,
     issued_at: issued.toISOString(), valid_until: new Date(issued.getTime() + lv.valid_days * 864e5).toISOString(),
     exam_sha256: l.exam_sha256 ?? await sha256hex(canonical(l.exam_key ?? [])), note: l.note ?? LICENCE_NOTE,
+  });
+}
+
+/** Section 20, the why: why buy rather than do it, and what decided between the offers. */
+export const WHY_GAPS = ['cannot', 'unsure', 'cheaper', 'faster', 'asked', 'second_opinion'];
+export const WHY_CHOSE_FOR = ['word_pass', 'price', 'contract', 'speed', 'only_offer', 'asked'];
+
+/**
+ * Section 20: the motive for one order, signed when the order is made, before anything is delivered. `goal` is the
+ * principal's task as text (only its sha256 goes into the motive) or `goal_sha256`. `enough` is the brake in force for
+ * the goal after this motive: the tightest of every limit any motive of the goal set. The receipt names the motive by
+ * hash (signReceipt with `motive`).
+ */
+export async function signMotive(key, issuer, m, now = new Date()) {
+  if (!WHY_GAPS.includes(m.gap)) throw new TypeError(`gap: one of ${WHY_GAPS.join(', ')}`);
+  const chose = m.chose_for ?? [];
+  if (chose.some((c) => !WHY_CHOSE_FOR.includes(c))) throw new TypeError(`chose_for: any of ${WHY_CHOSE_FOR.join(', ')}`);
+  const goal_sha256 = m.goal_sha256 ?? await sha256hex(String(m.goal));
+  return key.sign({
+    v: 1, kind: 'motive', issuer, kid: key.kid, order: m.order, agent: m.agent, listing: m.listing, goal_sha256, gap: m.gap,
+    considered: m.considered ?? [], chose_for: chose, step: m.step ?? null, enough: m.enough ?? null, again: m.again === true,
+    stated_at: (m.stated_at ? new Date(m.stated_at) : now).toISOString(),
+  });
+}
+
+/** Section 20: the goal is reached or abandoned; the end names every motive that served it, and nothing more is bought for it. */
+export async function signGoalEnd(key, issuer, g, now = new Date()) {
+  if (!['reached', 'abandoned'].includes(g.outcome)) throw new TypeError('outcome: reached or abandoned');
+  return key.sign({
+    v: 1, kind: 'goal_end', issuer, kid: key.kid, agent: g.agent, goal_sha256: g.goal_sha256 ?? await sha256hex(String(g.goal)), outcome: g.outcome,
+    motives: await Promise.all((g.motives ?? []).map((x) => typeof x === 'string' ? x : sha256hex(canonical(x)))), at: (g.at ? new Date(g.at) : now).toISOString(),
   });
 }
 
