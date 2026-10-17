@@ -21,6 +21,11 @@ least 55 of 64 symbols) and `fingerprint_svg(codeword, record)`, byte for byte t
 `ml_dsa_65: None`, not checked in Python, never as valid; Ed25519 verifies as before. Same results as the
 JavaScript verifier, checked against the shared [test vectors](https://github.com/Kula-Labs/pazair/blob/main/vectors/word-pass-1.json).
 
+The why (SPEC section 20): `verify_motive(receipt, motive, keys, goal=None)` checks that the receipt names the motive the buyer
+gave, for this order, buyer and listing, stated before the delivery (and, given the principal's own text, for this goal);
+`verify_goal_end(end, motives, keys)` checks that the goal's end names every motive held for it, none stated after the end.
+Same results as the JavaScript verifier on the shared vector `vectors/motive-1.json`.
+
 The buyer's word (SPEC section 4): `buyer_word_of(pass)`, and `check_word_pass` returns `buyer_trust` (`pays_its_way`,
 `no_buyer_badge_yet`) next to the seller's `trust`.
 

@@ -21,11 +21,11 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 __all__ = ["canonical", "sha256hex", "verify_signature", "verify_receipt", "leaf_of", "verify_proof", "verify_pass",
            "word_of", "buyer_word_of", "stellar_has_root", "bitcoin_has_root", "read_ots", "check_word_pass", "say_pass", "fetch_keys", "fetch_keys_document", "verify_holder_proof",
-           "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award",
+           "receipt_hash", "verify_receipt_chain", "verify_mandate", "verify_award", "verify_motive", "verify_goal_end",
            "FINGERPRINT", "rs_encode", "fingerprint_of", "fingerprint_distance", "fingerprint_svg", "record_of", "ridges_of",
            "base58btc_encode", "base58btc_decode", "multikey_of", "multikey_to_x", "did_web_url", "resolve_did_web",
            "verify_data_integrity", "verify_credential"]
-__version__ = "1.10.0"
+__version__ = "1.11.0"
 
 Fetch = Callable[[str], Any]  # returns parsed JSON, raises on failure
 
@@ -170,6 +170,56 @@ def verify_mandate(receipt: dict, mandate: dict, keys: list[dict], end: Optional
         ok(end.get("kind") == "mandate_end" and end.get("mandate") == receipt.get("mandate") and verify_signature(end, keys), "end statement signed", "end statement")
         ok(str(receipt.get("delivered_at")) <= str(end.get("at")), "delivered before the mandate ended", "delivered after the mandate ended")
     return {"valid": not reasons, "covers": covers, "reasons": reasons}
+
+
+def verify_motive(receipt: dict, motive: dict, keys: list[dict], goal: Optional[str] = None) -> dict:
+    """Section 20: was this receipt bought for this motive? Both signatures, the receipt names the motive, the motive names
+    the order, the buyer and the listing, and was stated no later than the delivery. Given goal (the principal's own text),
+    checks it is the goal the motive names. Returns valid, covers (what held), reasons (what did not)."""
+    covers: list[str] = []
+    reasons: list[str] = []
+
+    def ok(cond: bool, yes: str, no: str) -> None:
+        (covers if cond else reasons).append(yes if cond else no)
+
+    m = motive if isinstance(motive, dict) else {}
+    r = receipt if isinstance(receipt, dict) else {}
+    ok(m.get("kind") == "motive" and verify_signature(m, keys), "motive signed", "motive signature")
+    ok(verify_signature(r, keys), "receipt signed", "receipt signature")
+    ok(r.get("motive") == receipt_hash(m), "receipt names this motive", "receipt names another motive")
+    ok(m.get("order") == r.get("order"), "motive for this order", f"motive for {m.get('order')}, receipt for {r.get('order')}")
+    ok(m.get("agent") == r.get("buyer"), "stated by the buyer", f"stated by {m.get('agent')}, bought by {r.get('buyer')}")
+    ok(m.get("listing") == r.get("listing"), "motive for this listing", f"motive for {m.get('listing')}, receipt for {r.get('listing')}")
+    ok(isinstance(m.get("stated_at"), str) and m["stated_at"] <= str(r.get("delivered_at")), "stated before the delivery", "stated after the delivery")
+    if goal is not None:
+        ok(m.get("goal_sha256") == sha256hex(str(goal)), "the goal is this text", "the goal is another text")
+    return {"valid": not reasons, "covers": covers, "reasons": reasons}
+
+
+def verify_goal_end(end: dict, motives: Optional[list[dict]], keys: list[dict]) -> dict:
+    """Section 20: the end of a goal, and the motives held for it. The signature; every motive signed, by the same agent,
+    for the same goal, stated no later than the end, and named by the end. Returns valid, covers, reasons, named and
+    missing (the end's hashes no given motive matches)."""
+    covers: list[str] = []
+    reasons: list[str] = []
+
+    def ok(cond: bool, yes: str, no: str) -> None:
+        (covers if cond else reasons).append(yes if cond else no)
+
+    e = end if isinstance(end, dict) else {}
+    ok(e.get("kind") == "goal_end" and e.get("outcome") in ("reached", "abandoned") and verify_signature(e, keys), "end signed", "end signature")
+    named = set(e.get("motives") if isinstance(e.get("motives"), list) else [])
+    seen: set[str] = set()
+    for m in motives or []:
+        m = m if isinstance(m, dict) else {}
+        h = receipt_hash(m)
+        seen.add(h)
+        o = m.get("order")
+        ok(m.get("kind") == "motive" and verify_signature(m, keys), f"motive {o} signed", f"motive {o} signature")
+        ok(m.get("agent") == e.get("agent") and m.get("goal_sha256") == e.get("goal_sha256"), f"motive {o} for this goal", f"motive {o} for another agent or goal")
+        ok(str(m.get("stated_at")) <= str(e.get("at")), f"motive {o} before the end", f"motive {o} stated after the end")
+        ok(h in named, f"motive {o} named by the end", f"motive {o} not named by the end")
+    return {"valid": not reasons, "covers": covers, "reasons": reasons, "named": len(named), "missing": [h for h in named if h not in seen]}
 
 
 def verify_award(receipt: dict, tender: dict, award: dict, keys: list[dict], qa: Optional[list[dict]] = None) -> dict:
