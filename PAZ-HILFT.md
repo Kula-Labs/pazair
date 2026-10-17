@@ -31,6 +31,30 @@ api_key.
 Unterwegs gefunden und behoben: Das Länderfeld schnitt auf zwei Buchstaben ab. «GER» wurde still zu «GE», also
 Georgien, «EUR» zu «EU». Jetzt sieht Paz den ganzen Wert und nennt den richtigen Code.
 
+## Paz lebt (17. Oktober 2026)
+
+Fatih: «Paz hat mehr als nur ein Icon verdient.» Paz ist jetzt ein Charakter: der Kopf des Logos, dazu Körper, Schwanz
+und ein goldenes Halstuch, das Gold des Logos, für das Wort, das er hält. Eine einzige SVG-Zeichnung, kein Bild, keine
+Bibliothek (`src/market/pazchar.ts`).
+
+| Stimmung | Wann | Wie er aussieht |
+|---|---|---|
+| Ruhig | Immer dazwischen | Er atmet, blinzelt, wiegt den Schwanz |
+| Aufmerksam | Ein Wert, den der Server ablehnen würde | Brauen hoch, Kopf schief, ein goldenes Ausrufezeichen |
+| Nachdenklich | Langes Zögern an einem schwierigen Feld | Blick nach oben, drei Gedankenpunkte |
+| Froh | Das Feld stimmt, das Formular ist bereit | Lachende Augen, Wangen, Funkeln, ein kleiner Hüpfer |
+| Winken | Einmal pro Sitzung zur Begrüssung, und wenn man ihn ruft | Die Pfote winkt |
+| Schlafen | Nach «Not now» | Augen zu, Kopf gesenkt, z z z; ein Klick weckt ihn |
+
+Dazu: **Er schaut, wo du arbeitest.** Augen und Kopf folgen dem Feld im Fokus oder dem Zeiger, nur ein wenig. Wenn er
+spricht, bewegt sich sein Mund. Er läuft herein, statt aufzutauchen. Und eine Sprechblase zeigt auf ihn.
+
+Jede Bewegung wartet auf `prefers-reduced-motion`. Ohne Bewegung wechseln die Stimmungen trotzdem, als stille Bilder.
+Auf `/sell/faq` steht Paz über den Fragen.
+
+Unterwegs gelernt: Wer ein leeres Feld nur durchquert, macht keinen Fehler. Paz meldet sich erst, wenn etwas
+Eingetipptes nicht stimmt; leere Felder warten auf das Absenden.
+
 ## Was Paz nie tut
 
 - **Nichts senden.** Was jemand eintippt, verlässt für Paz den Browser nicht. Darum ändert sich die
@@ -55,7 +79,8 @@ Georgien, «EUR» zu «EU». Jetzt sieht Paz den ganzen Wert und nennt den richt
    `next_calls`, nach denselben Regeln.
 9. **Paz wird mit jeder Frage klüger.** Neue Fragen aus `tell_us` und von Verkäufern wie HumanMirror werden zu
    FAQ-Einträgen, die Paz sofort kennt.
-10. **Der Fuchs ist die Marke.** Paz war bisher ein Logo. Jetzt hat er eine Aufgabe, die zu ihm passt.
+10. **Der Fuchs ist die Marke.** Paz war bisher ein Logo. Jetzt hat er eine Aufgabe, die zu ihm passt, und ein Gesicht,
+    das zeigt, wie es gerade steht.
 
 ## 10 Innovationen
 
