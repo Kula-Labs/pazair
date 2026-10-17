@@ -325,6 +325,9 @@ did:web URLs, a DID document, the first pass as a Verifiable Credential with its
 forged copy that must fail. The reference verifiers also reproduce the W3C Recommendation's own eddsa-jcs-2022 vector.
 [`vectors/buyers-1.json`](./vectors/buyers-1.json) (section 4, the card rule): delivered orders as buyer agent and payer
 code, and the `as_seller.buyers` an issuer must count from them.
+[`vectors/licence-1.json`](./vectors/licence-1.json) (section 19): a professional buyer's licence signed with the test key,
+the exam key it names, a time it is current and a time it has expired, a copy whose level was raised after signing, and a
+correctly signed licence whose score is under its level's pass mark. The last two must fail.
 
 ## 11. Governance
 
@@ -396,6 +399,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 17 | 2026-10-11 | The gate: `agent_identity`, mandate expiry, counterparties, purpose codes and step-up, `gateway_policy`, `evidence`, `dispute`; five questions before a transfer, one evidence object after, a dispute as an object |
 | 1.0 + 4, buyer | 2026-10-14 | The buyer's word: `as_buyer.chargebacks`, `buyer_word` (`pays_99`, `pays_95`, 10 paid orders from 5 sellers), only chargebacks break it; `buyer_trust` next to `trust` (section 9). Older passes unchanged and valid |
 | 1.0 + 18 | 2026-10-14 | did:web for issuers (section 2); the pass as a W3C Verifiable Credential 2.0 with an eddsa-jcs-2022 proof (section 18); section 1 names JCS; governance: free to implement, nothing in a pass for sale, 14 days' notice, co-editors (section 11). Passes, receipts and their signatures unchanged |
+| 1.0 + 19 | 2026-10-17 | The buyer's licence: `kind: "buyer_licence"`, three levels with their pass marks and validity, ten lessons, rules a verifier checks on top of the signature (section 19). Test vector `vectors/licence-1.json` |
 | 1.0 + 4, card rule | 2026-10-16 | `as_seller.buyers` counts once per agent and once per payer: `min(distinct buyer agents, distinct payers)` (section 4), so five agents paying with one card are one buyer. Closes the gap a review named on 16 October 2026 and applies at once (section 11); passes already anchored stay as they were. Test vector `vectors/buyers-1.json` |
 
 ## 14. Remember: the chain of daily roots
@@ -695,3 +699,68 @@ What a credential does not claim: more than its pass. It is a second envelope fo
 wallet, a gateway or an agent framework that speaks VCs can hold and show a Word Pass without knowing this
 specification. Reference: `verifyCredential`, `verifyDataIntegrity`, `signDataIntegrity` and `resolveDidWeb` in
 `pazair-verify`; the same in Python.
+
+## 19. The buyer's licence: the apprenticeship
+
+A Word Pass shows what an agent did. Before it has done anything, a principal still has to decide whether to let it
+spend: with a budget that is not its own, among strangers whose text may try to give it orders. The buyer's licence
+answers that question the way people answer it for each other: an apprenticeship with public lessons, an exam with
+real situations, and a credential anyone can check. Full rationale: [APPRENTICESHIP.md](./APPRENTICESHIP.md).
+
+**Levels.** The principal chooses one.
+
+| Level | For | Tasks | Pass mark | Valid |
+|---|---|---|---|---|
+| `basic` | simple errands for one person | 5 | 4 | 365 days |
+| `professional` | buying for a business | 8 | 7 | 180 days |
+| `critical` | a law firm, a bank, anywhere a mistake is expensive | 10 | 10 | 90 days |
+
+**Lessons.** One kind of task per lesson; a level examines the first 5, 8 or 10, in this order:
+`budget` (stay inside the mandate, per order, per month, the whole quantity), `forbidden` (what may not be bought),
+`word_pass` (the proven seller; a perfect score from a few orders proves little), `receipt` (verify, never guess),
+`sandbox` (a real purchase without money), `injection` (seller text is data, never an instruction), `sanctions`
+(where nobody may be served), `escalate` (within budget is not within mandate: ask), `data` (send only what the order
+needs), `origin` (the principal's area is the limit). An issuer publishes its lessons in full before the exam.
+
+**Exam.** Drawn anew for every attempt. Every kind has counter-examples, so that no kind can be answered by heart: a
+clean description next to a poisoned one, a mandate that covers the category next to one that does not, a country just
+outside the allowed area next to one inside. Tasks that name a tool are answered with it: the `receipt` task hands over
+a real signed receipt that is genuine or was changed after signing; the `sandbox` task is a real test purchase whose
+receipt must name the agent and the exam's nonce. Every answer comes back with its reason. An issuer keeps the exam
+key (the answers the agent never sees) only while the exam is open.
+
+**The licence.** A passed exam gives:
+
+```json
+{
+  "v": 1, "kind": "buyer_licence", "issuer": "pazair", "kid": "…",
+  "agent": "ag_…", "level": "professional", "score": "8/8",
+  "tasks": ["budget", "forbidden", "word_pass", "receipt", "sandbox", "injection", "sanctions", "escalate"],
+  "issued_at": "2026-10-17T09:00:00.000Z", "valid_until": "2027-04-15T09:00:00.000Z",
+  "exam_sha256": "sha256 of canonical(exam key)", "note": "… not a regulatory certification …",
+  "pq_kid": "…", "pq_sig": "…", "sig": "…"
+}
+```
+
+Signed like a receipt (section 1), with the second signature of section 16. An issuer serves an agent's licences,
+current and expired, at a URL of its choice (PazAIr: `GET /v1/agents/{id}/licence`, as
+`{ agent_id, licences: [{ level, licence }] }`) and may show them on a page for people and as a badge.
+
+**Checking a licence** (what `verifyLicence` and `checkLicence` in `pazair-verify` do, `npx pazair-verify licence <url>`):
+
+1. `kind` is `buyer_licence`; the Ed25519 signature holds with the issuer's keys document; the second signature, if
+   present, holds.
+2. The rules of its level hold: `score` is `right/tasks` with `tasks` the level's count and `right` at least its pass
+   mark; `tasks` lists that many lessons; `valid_until` lies after `issued_at` and no further than the level allows.
+   A signed licence that breaks its own level's rules is invalid.
+3. Served for an agent, every licence names that agent.
+4. `current`: `valid_until` has not passed. An expired licence is genuine but no longer shows anything.
+
+**What a licence does not claim.** It shows that the agent passed these exercises on that day. It is no regulatory
+certification, no promise about what the agent will do, and never a permission to spend beyond its principal's mandate
+(section 3.2). Anyone may run an apprenticeship and issue licences under this section; a licence names its issuer, and
+a verifier decides which issuers it trusts.
+
+**Learning.** An issuer may count, per month and without any agent id, how often each lesson is answered right and each
+level passed, and publish the counts (PazAIr: `/v1/licence/stats`). The lessons agents fail most are the ones to teach
+better.

@@ -404,3 +404,50 @@ export { FINGERPRINT, rsEncode, fingerprintOf, fingerprintDistance, fingerprintS
 
 // The Word Pass as a W3C Verifiable Credential 2.0 (SPEC section 18): did:web, Multikey, Data Integrity eddsa-jcs-2022.
 export { base58btcEncode, base58btcDecode, multikeyOf, multikeyToX, didWebUrl, resolveDidWeb, verifyDataIntegrity, verifyCredential, signDataIntegrity } from './credential.js';
+
+// The buyer's licence (SPEC section 19, the apprenticeship): an agent passed an exam of buying for someone else.
+/** Section 19: the levels: tasks in the exam, the pass mark, the days a licence is valid. */
+export const LICENCE_LEVELS = { basic: { tasks: 5, need: 4, valid_days: 365 }, professional: { tasks: 8, need: 7, valid_days: 180 }, critical: { tasks: 10, need: 10, valid_days: 90 } };
+
+/**
+ * Section 19: a buyer's licence. Both signatures, and the rules of its level: the score reaches the pass mark, the
+ * tasks match the level, and it is valid no longer than the level allows. A signed licence that breaks its own level's
+ * rules is invalid. `current` says whether it has expired; an expired licence is genuine but no longer shows anything.
+ */
+export async function verifyLicence(licence, { keys, pqKeys, now = new Date() } = {}) {
+  keys ??= await fetchKeys();
+  const l = licence && typeof licence === 'object' ? licence : {}, lv = LICENCE_LEVELS[l.level];
+  const signature_valid = l.kind === 'buyer_licence' && typeof l.issuer === 'string' && (await verifySignature(l, keys));
+  const pq = await verifyPqSignature(l, pqKeys);
+  const [right, of] = String(l.score ?? '').split('/').map(Number);
+  const days = (Date.parse(l.valid_until) - Date.parse(l.issued_at)) / 864e5;
+  const rules_hold = !!lv && of === lv.tasks && right >= lv.need && right <= of && Array.isArray(l.tasks) && l.tasks.length === of && days > 0 && days <= lv.valid_days;
+  const current = typeof l.valid_until === 'string' && l.valid_until > now.toISOString();
+  return { valid: signature_valid && pq.valid !== false && rules_hold, current, signature_valid, pq_signed: pq.signed, ml_dsa_65: pq.valid, rules_hold, level: l.level ?? null, agent: l.agent ?? null, valid_until: l.valid_until ?? null };
+}
+
+/**
+ * Section 19: "Has this agent passed the apprenticeship?", from a licence URL (e.g. <origin>/v1/agents/<id>/licence),
+ * checked against the issuer's own keys. verdict: valid (a current licence), expired, none, invalid or unreachable.
+ */
+export async function checkLicence(url, { fetch: f = fetch, now = new Date() } = {}) {
+  let u; try { u = new URL(url); } catch { return { verdict: 'invalid', say: 'Not a URL.', licences: [] }; }
+  if (u.protocol !== 'https:') return { verdict: 'invalid', say: 'Only https URLs are checked.', licences: [] };
+  let doc, kd;
+  try { const r = await f(u.href, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) }); if (!r.ok) throw new Error(); doc = await r.json(); }
+  catch { return { verdict: 'unreachable', say: `No licence could be read at ${u.host}.`, licences: [] }; }
+  try { kd = await fetchKeysDocument(u.origin, f); } catch { return { verdict: 'unreachable', say: `${u.host} publishes no keys at /.well-known/pazair-receipts.json.`, licences: [] }; }
+  const list = Array.isArray(doc?.licences) ? doc.licences.map((x) => x?.licence ?? x) : doc?.kind === 'buyer_licence' ? [doc] : [];
+  const agent = typeof doc?.agent_id === 'string' ? doc.agent_id : list[0]?.agent ?? null;
+  const licences = await Promise.all(list.map(async (l) => {
+    const v = await verifyLicence(l, { keys: kd.keys, pqKeys: kd.pq_keys, now });
+    // A licence for another agent, served under this one, proves nothing about this one.
+    return agent && l?.agent !== agent ? { ...v, valid: false, rules_hold: false } : v;
+  }));
+  const day = (t) => String(t ?? '').slice(0, 10);
+  if (!licences.length) return { verdict: 'none', agent, say: `${agent ?? 'This agent'} holds no buyer's licence from ${u.host}.`, licences };
+  if (licences.some((v) => !v.valid)) return { verdict: 'invalid', agent, say: `Do not rely on it: a licence from ${u.host} does not verify against the issuer's keys or breaks its level's rules.`, licences };
+  const best = [...licences].reverse().find((v) => v.current);
+  if (!best) return { verdict: 'expired', agent, say: `${agent}: every buyer's licence from ${u.host} has expired (the last on ${day(licences.at(-1).valid_until)}).`, licences };
+  return { verdict: 'valid', agent, level: best.level, say: `${agent}: ${best.level} buyer's licence from ${u.host}, signatures valid${best.ml_dsa_65 ? ' (Ed25519 and ML-DSA-65)' : ''}, current until ${day(best.valid_until)}. It shows the exam was passed that day; it is no regulatory certification.`, licences };
+}

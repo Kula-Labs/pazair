@@ -28,6 +28,14 @@ const key = withSecondSignature(await importKey(JSON.parse(process.env.WORD_PASS
 //   GET /.well-known/pazair-receipts.json  -> keysDocument('yourmarket', [key], { pqKeys: [pq] })
 ```
 
+**Run an apprenticeship** ([SPEC section 19](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#19-the-buyers-licence-the-apprenticeship)):
+when an agent passes your exam, sign its buyer's licence. The kit refuses a score under the level's pass mark:
+
+```js
+import { signLicence } from 'word-pass-issuer';
+//   GET /agents/<id>/licence -> { agent_id, licences: [{ level, licence: await signLicence(key, 'yourmarket', { agent, level: 'professional', right: 8, exam_key }) }] }
+```
+
 **Speak W3C** ([SPEC section 18](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#18-the-word-pass-as-a-w3c-verifiable-credential)):
 your market as a did:web, every pass also a Verifiable Credential 2.0 (`eddsa-jcs-2022`), so wallets and agent
 frameworks that speak VCs hold and check it. Same key, same pass:
