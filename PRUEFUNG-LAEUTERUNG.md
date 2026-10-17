@@ -50,15 +50,18 @@ Sicherheitsbefunde stehen hier ohne Details, bis der Fix live ist.
 
 ## Stand
 
-16. Oktober 2026. Stufe 1, die Prüfung, ist abgeschlossen. Stufe 2 schützt, ohne am Verhalten etwas zu ändern. Dafür
-liegen drei Änderungen zur Freigabe bereit, noch nicht live:
+17. Oktober 2026. Stufe 1, die Prüfung, ist abgeschlossen. Stufe 2 schützt, ohne am Verhalten etwas zu ändern, und
+ist seit dem 17. Oktober live:
 
 - ein Not-Aus für den nächtlichen Geldlauf: Er hält Überweisungen an, solange es nötig ist, das Einziehen nur kurz,
-  und keine Kartenreservierung verfällt seinetwegen;
+  und keine Kartenreservierung verfällt seinetwegen. Was das für Verkäufer und Empfehler heisst, steht in den
+  Bedingungen, Abschnitt 2d (Version 2026-10-16);
 - ein Test, der die öffentliche Schnittstelle festhält (Werkzeuge, Bedingungen, Gebühren), damit sie sich nie
   unbemerkt ändert;
-- nach jedem Deploy eine Prüfung, wie ein Agent PazAIr trifft, mit einem Testkauf ohne Geld, und ein Weg zurück zur
-  vorherigen Version in einem Schritt.
+- nach jedem Deploy eine Prüfung, wie ein Agent den Dienst trifft, und ein Weg zurück zur vorherigen Version in einem
+  Schritt. Der Testkauf ohne Geld auf PazAIr kommt dazu, sobald der Test-Agent dafür eingerichtet ist.
+
+Als Nächstes kommt Stufe 3: heilen, was rot ist.
 
 ## Wie es weitergeht
 
