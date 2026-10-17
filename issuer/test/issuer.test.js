@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildDay, signMandate, signMandateEnd, generateKey, importKey, keysDocument, passDocument, signHolderProof, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
-import { checkWordPass, verifyHolderProof, verifyPass, verifyReceipt, verifyReceiptChain, verifyMandate } from '../../verify/src/index.js';
+import { buildDay, signLicence, signMandate, signMandateEnd, generateKey, importKey, keysDocument, passDocument, signHolderProof, signPass, signReceipt, stellarMemo, word } from '../src/index.js';
+import { checkLicence, checkWordPass, verifyHolderProof, verifyLicence, verifyPass, verifyReceipt, verifyReceiptChain, verifyMandate } from '../../verify/src/index.js';
 
 const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
 
@@ -136,4 +136,32 @@ test('the card rule: as_seller.buyers and the payer code reproduce vectors/buyer
   // Five agents with one card stay below the badge however well they deliver.
   const { word } = await import('../src/index.js');
   assert.equal(word({ delivered: 20, not_delivered: 0, buyers: buyers(B.cases[0].delivered) }).badge, null);
+});
+
+test('the buyer\'s licence: the kit signs vectors/licence-1.json byte for byte, refuses a failing score, and the reference verifier checks rules and time', async () => {
+  const L = JSON.parse(readFileSync(new URL('../../vectors/licence-1.json', import.meta.url), 'utf8'));
+  const key = await importKey({ kty: 'OKP', crv: 'Ed25519', x: V.key.x, d: V.key.d_test_only });
+  const again = await signLicence(key, 'example', { agent: 'ag_alpha', level: 'professional', right: 8, exam_key: L.exam_key, issued_at: '2026-10-17T09:00:00.000Z' });
+  assert.deepEqual(again, L.licence);
+  assert.equal(L.licence.exam_sha256, L.exam_sha256);
+  await assert.rejects(signLicence(key, 'example', { agent: 'ag_alpha', level: 'basic', right: 3 }), /needs 4 of 5/);
+  const keys = [V.key], now = new Date(L.now), later = new Date(L.later);
+  const ok = await verifyLicence(L.licence, { keys, now });
+  assert.deepEqual([ok.valid, ok.current, ok.rules_hold], [true, true, true]);
+  assert.equal((await verifyLicence(L.licence, { keys, now: later })).current, false);
+  const t = await verifyLicence(L.tampered, { keys, now });
+  assert.deepEqual([t.valid, t.signature_valid], [L.expect.tampered.valid, L.expect.tampered.signature_valid]);
+  const b = await verifyLicence(L.breaks_its_rules, { keys, now });
+  assert.deepEqual([b.valid, b.signature_valid, b.rules_hold], [false, true, false]);
+
+  // Over the issuer's own URL: valid, then expired, and a licence of another agent served under this one is refused.
+  const doc = (licences, agent_id = 'ag_alpha') => ({ agent_id, licences: licences.map((licence) => ({ level: licence.level, licence })) });
+  const web = (body) => async (url) => new URL(url).pathname === '/.well-known/pazair-receipts.json' ? Response.json(keysDocument('example', [key])) : Response.json(body);
+  const url = 'https://example.test/v1/agents/ag_alpha/licence';
+  const c = await checkLicence(url, { fetch: web(doc([L.licence])), now });
+  assert.equal(c.verdict, 'valid'); assert.match(c.say, /professional buyer's licence from example\.test/);
+  assert.equal((await checkLicence(url, { fetch: web(doc([L.licence])), now: later })).verdict, 'expired');
+  assert.equal((await checkLicence(url, { fetch: web(doc([L.licence], 'ag_beta')), now })).verdict, 'invalid');
+  assert.equal((await checkLicence(url, { fetch: web(doc([])), now })).verdict, 'none');
+  assert.equal((await checkLicence(url, { fetch: web(doc([L.breaks_its_rules])), now })).verdict, 'invalid');
 });

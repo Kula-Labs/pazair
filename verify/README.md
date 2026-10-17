@@ -131,6 +131,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `verifyCredential(vc, { fetch?, didDocument?, keysDocument?, now? })` | Section 18: the pass as a W3C Verifiable Credential: VC 2.0, the did:web resolved, the `eddsa-jcs-2022` proof, the subject on the issuer's origin, `validFrom`/`validUntil`, the pass inside; a verdict and a sentence |
 | `verifyDataIntegrity(doc, didDocument)` / `signDataIntegrity(doc, privateKey, verificationMethod, created?)` | any W3C Data Integrity proof with `eddsa-jcs-2022`, checked or made (the W3C Recommendation's vector holds) |
 | `resolveDidWeb(did, fetch?)`, `didWebUrl(did)`, `multikeyOf(x)`, `multikeyToX(multibase)`, `base58btcEncode`/`base58btcDecode` | did:web, Multikey (Ed25519) and base58btc, the pieces of section 18 |
+| `verifyLicence(licence, { keys?, pqKeys?, now? })` / `checkLicence(url, { fetch?, now? })` | Section 19, the buyer's licence from an apprenticeship: both signatures, the rules of its level (a signed licence under its pass mark is invalid), whether it is current; `checkLicence` reads a licence URL against the issuer's own keys (`npx pazair-verify licence <url>`) |
 | `leafOf(pass)`, `canonical(obj)`, `sha256hex(s)` | the building blocks of the spec |
 | `fetchKeys(origin?)` | the issuer's keys from `/.well-known/pazair-receipts.json` |
 

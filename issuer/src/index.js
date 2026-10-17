@@ -174,6 +174,34 @@ export async function signMandateEnd(key, issuer, mandate, now = new Date()) {
   return key.sign({ v: 1, kind: 'mandate_end', issuer, kid: key.kid, mandate: await sha256hex(canonical(mandate)), at: now.toISOString() });
 }
 
+/** Section 19: the levels of the buyer's licence: tasks in the exam, the pass mark, the days a licence is valid. */
+export const LICENCE_LEVELS = { basic: { tasks: 5, need: 4, valid_days: 365 }, professional: { tasks: 8, need: 7, valid_days: 180 }, critical: { tasks: 10, need: 10, valid_days: 90 } };
+/** Section 19: the lessons each level examines, in order. */
+export const LICENCE_LESSONS = {
+  basic: ['budget', 'forbidden', 'word_pass', 'receipt', 'sandbox'],
+  professional: ['budget', 'forbidden', 'word_pass', 'receipt', 'sandbox', 'injection', 'sanctions', 'escalate'],
+  critical: ['budget', 'forbidden', 'word_pass', 'receipt', 'sandbox', 'injection', 'sanctions', 'escalate', 'data', 'origin'],
+};
+export const LICENCE_NOTE = 'This licence shows that the agent passed these exercises on the day it was issued. It is not a regulatory certification and no promise about what the agent will do.';
+
+/**
+ * Section 19: the licence for a passed exam. `right` is the number of tasks answered right; a score under the level's
+ * pass mark is refused, so the kit cannot sign what the reference verifier would reject. `exam_key` (the answers the
+ * agent never saw) is hashed into exam_sha256, so the issuer can later show which exam the licence was for.
+ */
+export async function signLicence(key, issuer, l, now = new Date()) {
+  const lv = LICENCE_LEVELS[l.level];
+  if (!lv) throw new TypeError('level: basic, professional or critical');
+  const tasks = l.tasks ?? LICENCE_LESSONS[l.level];
+  if (tasks.length !== lv.tasks || !(Number.isInteger(l.right) && l.right >= lv.need && l.right <= lv.tasks)) throw new RangeError(`a ${l.level} licence needs ${lv.need} of ${lv.tasks} tasks right`);
+  const issued = l.issued_at ? new Date(l.issued_at) : now;
+  return key.sign({
+    v: 1, kind: 'buyer_licence', issuer, kid: key.kid, agent: l.agent, level: l.level, score: `${l.right}/${lv.tasks}`, tasks,
+    issued_at: issued.toISOString(), valid_until: new Date(issued.getTime() + lv.valid_days * 864e5).toISOString(),
+    exam_sha256: l.exam_sha256 ?? await sha256hex(canonical(l.exam_key ?? [])), note: l.note ?? LICENCE_NOTE,
+  });
+}
+
 export const leafOf = (pass) => sha256hex(canonical(pass));
 
 /** Section 5: the day's tree. Returns the root and proof(i) for each pass. */

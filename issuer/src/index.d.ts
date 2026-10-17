@@ -22,6 +22,14 @@ export function word(asSeller: Side, disputesLost?: number): { kept_pct: number 
 export function buyerWord(asBuyer: { paid_orders: number; sellers: number; chargebacks?: number }): { kept_pct: number | null; badge: 'pays_99' | 'pays_95' | null };
 export function signPass(key: Key, issuer: string, a: { agent: string; name: string; since: string; as_seller: Side; as_buyer?: { paid_orders: number; sellers: number }; disputes_lost?: number; verified_name?: string | null; day?: string }, now?: Date): Promise<Record<string, unknown>>;
 export function signReceipt(key: Key, issuer: string, r: { order: string; listing: string; seller: string; buyer: string; amount_minor: number; currency: string; delivered_at: string; delivery_sha256?: string; delivery?: unknown; parent_order?: string; inputs?: (string | Record<string, unknown>)[]; mandate?: string | Record<string, unknown> }): Promise<Record<string, unknown>>;
+export type LicenceLevel = 'basic' | 'professional' | 'critical';
+/** Section 19: tasks in the exam, the pass mark and the days a licence is valid, per level. */
+export const LICENCE_LEVELS: Record<LicenceLevel, { tasks: number; need: number; valid_days: number }>;
+/** Section 19: the lessons each level examines, in order. */
+export const LICENCE_LESSONS: Record<LicenceLevel, string[]>;
+export const LICENCE_NOTE: string;
+/** Section 19: the buyer's licence for a passed exam; throws on a score under the level's pass mark. */
+export function signLicence(key: Key, issuer: string, l: { agent: string; level: LicenceLevel; right: number; tasks?: string[]; issued_at?: string; exam_sha256?: string; exam_key?: unknown; note?: string }, now?: Date): Promise<Record<string, unknown>>;
 export function leafOf(pass: object): Promise<string>;
 export function buildDay(passes: object[]): Promise<{ root: string; leaves: string[]; proof(index: number): Step[] }>;
 export function stellarMemo(root: string): { memo_type: 'hash'; hex: string; base64: string };

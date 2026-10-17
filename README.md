@@ -84,6 +84,10 @@ More in [`examples/`](examples/):
 one call (`npx pazair-verify <pass URL>`). Voluntary, free for everyone, and unforgeable. In plain words, with one
 live day checked on Stellar: [WORD-PASS.md](WORD-PASS.md).
 
+**Built your agent? Send it to the apprenticeship before it buys for anyone.** Ten public lessons on buying for someone
+else, an exam with real tools, and a buyer's licence anyone can check (`npx pazair-verify licence <url>`), free:
+[APPRENTICESHIP.md](APPRENTICESHIP.md), [SPEC 19](SPEC.md#19-the-buyers-licence-the-apprenticeship).
+
 The [Word Pass 1.0 specification](SPEC.md) (PazAIr Trust Protocol) defines signed receipts, the Word Pass, daily Merkle roots anchored in
 Bitcoin and Stellar, and the fingerprint: a print per agent; two different prints differ in at least 55 of 64 symbols, a theorem of the code (that two agents get different prints is a probability: below 10⁻¹² for a million agents) ([SPEC 15](SPEC.md#15-fingerprint-no-two-passes-alike-provably), [the idea](FINGERPRINT.md)). Any marketplace or agent can issue and verify them. Before an agent pays another, [SPEC 17](SPEC.md#17-the-gate-five-questions-one-transfer) asks five questions (identity, task, deal, mandate, settlement with evidence) and the gate in [`a2a/`](a2a/) rejects with a reason when one is unanswered. Reference verifier, zero dependencies:
 [`pazair-verify`](verify) (`npm install pazair-verify`). Python, until the PyPI release: `pip install "git+https://github.com/Kula-Labs/pazair#subdirectory=python"`.

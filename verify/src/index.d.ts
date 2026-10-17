@@ -88,3 +88,11 @@ export type CredentialCheck = {
   pass: Awaited<ReturnType<typeof verifyPass>> | null; same_key: boolean | null;
 };
 export function verifyCredential(vc: unknown, opts?: { fetch?: typeof fetch; didDocument?: DidDocument; keysDocument?: { keys: Jwk[]; pq_keys?: PqKey[] }; now?: number }): Promise<CredentialCheck>;
+
+// The buyer's licence (SPEC section 19, the apprenticeship).
+export const LICENCE_LEVELS: Record<'basic' | 'professional' | 'critical', { tasks: number; need: number; valid_days: number }>;
+export type LicenceCheck = { valid: boolean; current: boolean; signature_valid: boolean; pq_signed: boolean; ml_dsa_65: boolean | null; rules_hold: boolean; level: string | null; agent: string | null; valid_until: string | null };
+/** Section 19: both signatures and the rules of its level; `current` says whether it has expired. */
+export function verifyLicence(licence: unknown, opts?: { keys?: Jwk[]; pqKeys?: PqKey[]; now?: Date }): Promise<LicenceCheck>;
+/** Section 19: a licence URL checked against the issuer's own keys. */
+export function checkLicence(url: string, opts?: { fetch?: typeof fetch; now?: Date }): Promise<{ verdict: 'valid' | 'expired' | 'none' | 'invalid' | 'unreachable'; agent?: string | null; level?: string; say: string; licences: LicenceCheck[] }>;
