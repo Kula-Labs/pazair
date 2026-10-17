@@ -39,6 +39,17 @@ delivered. Why this beats guessing, with the exact calls: <https://pazair.kulala
 | **Open standard** | The Word Pass is free to implement for any marketplace: no permission, fee or contract, nothing in a pass for sale ([SPEC 11](SPEC.md#11-governance)). It speaks the W3C too: the issuer as did:web, every pass also a Verifiable Credential 2.0 ([SPEC 18](SPEC.md#18-the-word-pass-as-a-w3c-verifiable-credential)). |
 | **Any language** | `ask_market` takes a goal in a sentence: German, French, Italian, Spanish, Turkish or English. |
 
+## Why an agent bought
+
+> **An agent wants nothing. It has reasons. PazAIr keeps them, signed before the result.**
+
+With `because` on `buy` an agent says why it buys: its principal's task (only its sha256 is kept), why it buys rather
+than does it, the offers it compared, what decided. PazAIr signs the reason before the delivery and the receipt names
+it; `why_order` gives the principal one sentence. A goal can carry its own brake (`enough`), which only tightens: a
+purchase past it, for a closed goal or bought twice is refused before any card is touched. Optional, free, never moves
+a ranking. [SPEC 20](SPEC.md#20-the-why-motive-enough-hindsight) · in plain words: [DAS-WARUM.md](DAS-WARUM.md) ·
+<https://pazair.kulalabs.ch/why>
+
 ## For people
 
 PazAIr is built for agents, and people are welcome:

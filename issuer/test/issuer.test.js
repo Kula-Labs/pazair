@@ -165,3 +165,29 @@ test('the buyer\'s licence: the kit signs vectors/licence-1.json byte for byte, 
   assert.equal((await checkLicence(url, { fetch: web(doc([])), now })).verdict, 'none');
   assert.equal((await checkLicence(url, { fetch: web(doc([L.breaks_its_rules])), now })).verdict, 'invalid');
 });
+
+test('the why: the kit signs vectors/motive-1.json byte for byte, and the reference verifier checks motive, receipt and goal end', async () => {
+  const { signMotive, signGoalEnd, WHY_GAPS } = await import('../src/index.js');
+  const { verifyMotive, verifyGoalEnd } = await import('../../verify/src/index.js');
+  const W = JSON.parse(readFileSync(new URL('../../vectors/motive-1.json', import.meta.url), 'utf8'));
+  const V = JSON.parse(readFileSync(new URL('../../vectors/word-pass-1.json', import.meta.url), 'utf8'));
+  const key = await importKey({ kty: 'OKP', crv: 'Ed25519', x: V.key.x, d: V.key.d_test_only });
+  const keys = [V.key];
+  const again = await signMotive(key, 'example', { agent: 'ag_buyer', goal: W.goal, gap: 'cannot', considered: ['ls_alpha', 'ls_beta'], chose_for: ['word_pass', 'contract'], enough: { orders: 3, spend_minor: 3000, currency: 'chf' }, order: 'or_one', listing: 'ls_alpha', step: { n: 1, of: 2 }, stated_at: '2026-10-17T10:00:00.000Z' });
+  assert.deepEqual(again, W.motive);
+  assert.equal(W.motive.goal_sha256, W.goal_sha256);
+  assert.ok(!JSON.stringify(W.motive).includes('French'), 'only the hash of the goal is signed');
+  await assert.rejects(signMotive(key, 'example', { ...W.motive, gap: 'bored' }), /gap/);
+  await assert.rejects(signGoalEnd(key, 'example', { agent: 'a', goal: 'g', outcome: 'maybe' }), /outcome/);
+  assert.equal(WHY_GAPS.length, 6);
+  assert.deepEqual(await verifyMotive(W.receipt, W.motive, { keys, goal: W.goal }), { valid: true, covers: ['motive signed', 'receipt signed', 'receipt names this motive', 'motive for this order', 'stated by the buyer', 'motive for this listing', 'stated before the delivery', 'the goal is this text'], reasons: [] });
+  assert.deepEqual((await verifyMotive(W.receipt, W.motive, { keys, goal: 'another task' })).reasons, ['the goal is another text']);
+  const late = await verifyMotive(W.receipt, W.stated_late, { keys });
+  assert.equal(late.valid, false); assert.ok(late.reasons.includes('stated after the delivery')); assert.ok(late.reasons.includes('receipt names another motive'));
+  const both = await verifyGoalEnd(W.goal_end, [W.motive, W.second], { keys });
+  assert.equal(both.valid, true); assert.equal(both.named, 2); assert.deepEqual(both.missing, []);
+  const after = await verifyGoalEnd(W.goal_end, [W.motive, W.after_end], { keys });
+  assert.equal(after.valid, false); assert.ok(after.reasons.includes('motive or_three stated after the end')); assert.ok(after.reasons.includes('motive or_three not named by the end'));
+  assert.equal(after.missing.length, 1, 'the second purchase is named but not held');
+  assert.equal((await verifyGoalEnd({ ...W.goal_end, outcome: 'abandoned' }, [], { keys })).valid, false, 'an end cannot be rewritten');
+});

@@ -401,6 +401,7 @@ The rules of a Word Pass get stricter where they are abused; they never get loos
 | 1.0 + 18 | 2026-10-14 | did:web for issuers (section 2); the pass as a W3C Verifiable Credential 2.0 with an eddsa-jcs-2022 proof (section 18); section 1 names JCS; governance: free to implement, nothing in a pass for sale, 14 days' notice, co-editors (section 11). Passes, receipts and their signatures unchanged |
 | 1.0 + 19 | 2026-10-17 | The buyer's licence: `kind: "buyer_licence"`, three levels with their pass marks and validity, ten lessons, rules a verifier checks on top of the signature (section 19). Test vector `vectors/licence-1.json` |
 | 1.0 + 4, card rule | 2026-10-16 | `as_seller.buyers` counts once per agent and once per payer: `min(distinct buyer agents, distinct payers)` (section 4), so five agents paying with one card are one buyer. Closes the gap a review named on 16 October 2026 and applies at once (section 11); passes already anchored stay as they were. Test vector `vectors/buyers-1.json` |
+| 1.0 + 20 | 2026-10-17 | The why: `kind: "motive"` signed with the order before the delivery and named by the receipt (`motive`), `goal_sha256` instead of the goal's text; enough, a goal's own brake that only tightens; `kind: "goal_end"` naming every motive of a goal; the refusals `enough`, `enough_looser`, `goal_closed`, `already_bought`; a motive never moves a ranking or a pass (section 20). Test vector `vectors/motive-1.json`. Receipts without `motive` unchanged and valid |
 
 ## 14. Remember: the chain of daily roots
 
@@ -764,3 +765,71 @@ a verifier decides which issuers it trusts.
 **Learning.** An issuer may count, per month and without any agent id, how often each lesson is answered right and each
 level passed, and publish the counts (PazAIr: `/v1/licence/stats`). The lessons agents fail most are the ones to teach
 better.
+
+## 20. The why: motive, enough, hindsight
+
+A receipt says what was delivered (section 3), a mandate who allowed it (3.2), the evidence that every question had its
+answer (17.4). Each of them says what it does not claim: that the purchase was wise. Wisdom cannot be proven, but the
+reason can be fixed before the result is known. An agent wants nothing; it has reasons: the task it was given, what it
+cannot do itself, the offers it compared, when it will stop. This section makes them objects. Full rationale, with the
+twenty drivers of an agent it answers: [DAS-WARUM.md](./DAS-WARUM.md).
+
+**Motive.** A buyer MAY state, with an order, why it buys. The issuer signs the motive when the order is made, before
+anything is delivered, and the receipt names it: `"motive": "<sha256hex(canonical(motive))>"`, `sig` included.
+
+```json
+{ "v": 1, "kind": "motive", "issuer": "pazair", "kid": "…", "order": "or_…", "agent": "ag_…", "listing": "ls_…",
+  "goal_sha256": "<sha256hex of the principal's task, as text>", "gap": "cannot",
+  "considered": ["ls_…", "ls_…"], "chose_for": ["word_pass", "contract"], "step": { "n": 1, "of": 3 },
+  "enough": { "orders": 3, "spend_minor": 3000, "currency": "chf" }, "again": false,
+  "stated_at": "2026-10-17T10:00:00.000Z", "pq_kid": "…", "pq_sig": "…", "sig": "…" }
+```
+
+- `goal_sha256` is the hash of the principal's task exactly as the agent was given it (UTF-8, not trimmed). The text
+  itself MUST NOT be stored by the issuer: the principal can check that the goal is theirs, nobody else can read it.
+- `gap`: why buy rather than do it. `cannot` (the agent cannot do it), `unsure` (it could, not reliably enough),
+  `cheaper`, `faster`, `asked` (the principal asked for exactly this), `second_opinion` (its own work, checked by
+  someone else).
+- `considered`: up to 10 listing ids compared; `chose_for`: what decided, any of `word_pass`, `price`, `contract`,
+  `speed`, `only_offer`, `asked`. `step`: this step of the agent's plan, or `null`.
+- `enough`: the goal's own brake in force after this motive (below), or `null`. `again`: the agent buys the same listing
+  with the same input a second time for this goal, on purpose.
+
+**Enough.** An agent's loop ends one of three ways: the goal is reached, the means are spent, or someone says stop. The
+mandate (3.2) and its end hold the principal's means and stop; this section adds the agent's own.
+
+- A goal's brake is the tightest of every `orders` and `spend_minor` any motive of the goal set; it only tightens, and a
+  brake is set by a motive, so by a purchase that was made. Spend is counted in the currency of the brake.
+- An issuer that keeps motives MUST refuse, before any payment is authorised: a purchase past the goal's brake
+  (`enough`); a brake looser than the one in force (`enough_looser`); a purchase for a goal that has ended
+  (`goal_closed`); and the same listing with the same input bought again for the same goal without `again`
+  (`already_bought`). A cancelled or refunded order does not count. Purchases made at the same moment are counted
+  again after they are recorded, and those past the brake yield.
+- A brake is the agent's, never a replacement for its principal's mandate or budget, which still apply.
+
+**Goal end.** When the goal is reached or given up, the issuer signs one statement naming every motive that served it:
+
+```json
+{ "v": 1, "kind": "goal_end", "issuer": "pazair", "kid": "…", "agent": "ag_…", "goal_sha256": "…",
+  "outcome": "reached", "motives": ["<sha256hex(canonical(motive))>", …], "at": "…", "sig": "…" }
+```
+
+`outcome` is `reached` or `abandoned`. An end is never rewritten; nothing is bought for the goal afterwards.
+
+**Checking** (what `verifyMotive` and `verifyGoalEnd` in `pazair-verify` do):
+
+1. `verifyMotive(receipt, motive, { goal })`: both signatures hold; the receipt's `motive` is the motive's hash; the
+   motive names the receipt's `order`, its `buyer` as `agent` and its `listing`; `stated_at` is no later than
+   `delivered_at`. Given the principal's own text, `goal_sha256` is its hash.
+2. `verifyGoalEnd(end, motives)`: the end is signed with a known outcome; every motive given is signed, by the end's
+   agent, for its goal, stated no later than `at`, and named in `motives`. Hashes the end names but no given motive
+   matches are returned as `missing`.
+
+**Privacy and fairness.** Nothing of one motive reaches the seller. An issuer MAY show a seller, per listing, how many
+buyers gave each `gap`, and only from five motives on. A motive MUST NOT change a ranking, a Word Pass, a badge or a
+licence: a reason is never a currency. An issuer MAY count, per month and without any agent id, goal or order, the
+gaps, what decided, how many offers were compared, the goals reached and abandoned, and what the brakes spared per
+currency (PazAIr: `/v1/why/stats`).
+
+**What a motive does not claim.** That the reason was true or the purchase wise; only which reason was given, before
+the result, and that the goal's brake was kept. Test vector: [`vectors/motive-1.json`](./vectors/motive-1.json).

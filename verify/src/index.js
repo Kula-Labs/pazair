@@ -451,3 +451,45 @@ export async function checkLicence(url, { fetch: f = fetch, now = new Date() } =
   if (!best) return { verdict: 'expired', agent, say: `${agent}: every buyer's licence from ${u.host} has expired (the last on ${day(licences.at(-1).valid_until)}).`, licences };
   return { verdict: 'valid', agent, level: best.level, say: `${agent}: ${best.level} buyer's licence from ${u.host}, signatures valid${best.ml_dsa_65 ? ' (Ed25519 and ML-DSA-65)' : ''}, current until ${day(best.valid_until)}. It shows the exam was passed that day; it is no regulatory certification.`, licences };
 }
+
+// The why (SPEC section 20): the reason a buyer gave for one purchase, signed before the delivery, and the end of a goal.
+/**
+ * Section 20: was this receipt bought for this motive? Both signatures, the receipt names the motive, the motive names
+ * the order, the buyer and the listing, and was stated no later than the delivery. Given `goal` (the principal's own
+ * text), checks it is the goal the motive names. Returns { valid, covers, reasons }.
+ */
+export async function verifyMotive(receipt, motive, { keys, goal } = {}) {
+  keys ??= await fetchKeys();
+  const reasons = [], covers = [];
+  const ok = (cond, yes, no) => (cond ? covers.push(yes) : reasons.push(no));
+  ok(motive?.kind === 'motive' && (await verifySignature(motive, keys)), 'motive signed', 'motive signature');
+  ok(await verifySignature(receipt, keys), 'receipt signed', 'receipt signature');
+  ok(receipt?.motive === (await receiptHash(motive)), 'receipt names this motive', 'receipt names another motive');
+  ok(motive?.order === receipt?.order, 'motive for this order', `motive for ${motive?.order}, receipt for ${receipt?.order}`);
+  ok(motive?.agent === receipt?.buyer, 'stated by the buyer', `stated by ${motive?.agent}, bought by ${receipt?.buyer}`);
+  ok(motive?.listing === receipt?.listing, 'motive for this listing', `motive for ${motive?.listing}, receipt for ${receipt?.listing}`);
+  ok(typeof motive?.stated_at === 'string' && motive.stated_at <= String(receipt?.delivered_at), 'stated before the delivery', 'stated after the delivery');
+  if (goal !== undefined) ok(motive?.goal_sha256 === (await sha256hex(String(goal))), 'the goal is this text', 'the goal is another text');
+  return { valid: reasons.length === 0, covers, reasons };
+}
+
+/**
+ * Section 20: the end of a goal, and the motives held for it. The signature; every motive signed, by the same agent,
+ * for the same goal, stated no later than the end, and named by the end (an unnamed one was bought after the end or
+ * left out). Returns { valid, covers, reasons, named, missing } with `missing` the end's hashes no given motive matches.
+ */
+export async function verifyGoalEnd(end, motives = [], { keys } = {}) {
+  keys ??= await fetchKeys();
+  const reasons = [], covers = [];
+  const ok = (cond, yes, no) => (cond ? covers.push(yes) : reasons.push(no));
+  ok(end?.kind === 'goal_end' && ['reached', 'abandoned'].includes(end.outcome) && (await verifySignature(end, keys)), 'end signed', 'end signature');
+  const named = new Set(Array.isArray(end?.motives) ? end.motives : []), seen = new Set();
+  for (const m of motives) {
+    const h = await receiptHash(m); seen.add(h);
+    ok(m?.kind === 'motive' && (await verifySignature(m, keys)), `motive ${m?.order} signed`, `motive ${m?.order} signature`);
+    ok(m?.agent === end?.agent && m?.goal_sha256 === end?.goal_sha256, `motive ${m?.order} for this goal`, `motive ${m?.order} for another agent or goal`);
+    ok(String(m?.stated_at) <= String(end?.at), `motive ${m?.order} before the end`, `motive ${m?.order} stated after the end`);
+    ok(named.has(h), `motive ${m?.order} named by the end`, `motive ${m?.order} not named by the end`);
+  }
+  return { valid: reasons.length === 0, covers, reasons, named: named.size, missing: [...named].filter((h) => !seen.has(h)) };
+}

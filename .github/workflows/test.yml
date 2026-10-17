@@ -28,6 +28,7 @@ jobs:
       - run: npm test
       - run: rm -rf node_modules && npm test   # and without it: the twice-signing test is skipped, everything else holds
       - run: node scripts/make-licence-vector.mjs && git diff --exit-code ../vectors/licence-1.json   # SPEC 19: the licence vector reproduces byte for byte
+      - run: node scripts/make-motive-vector.mjs && git diff --exit-code ../vectors/motive-1.json   # SPEC 20: the motive vector reproduces byte for byte
   a2a:
     runs-on: ubuntu-latest
     strategy: { matrix: { node: [20, 22, 24] } }

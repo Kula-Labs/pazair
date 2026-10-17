@@ -132,6 +132,7 @@ console.log(await verifyReceipt(receipt, { delivery }));
 | `verifyDataIntegrity(doc, didDocument)` / `signDataIntegrity(doc, privateKey, verificationMethod, created?)` | any W3C Data Integrity proof with `eddsa-jcs-2022`, checked or made (the W3C Recommendation's vector holds) |
 | `resolveDidWeb(did, fetch?)`, `didWebUrl(did)`, `multikeyOf(x)`, `multikeyToX(multibase)`, `base58btcEncode`/`base58btcDecode` | did:web, Multikey (Ed25519) and base58btc, the pieces of section 18 |
 | `verifyLicence(licence, { keys?, pqKeys?, now? })` / `checkLicence(url, { fetch?, now? })` | Section 19, the buyer's licence from an apprenticeship: both signatures, the rules of its level (a signed licence under its pass mark is invalid), whether it is current; `checkLicence` reads a licence URL against the issuer's own keys (`npx pazair-verify licence <url>`) |
+| `verifyMotive(receipt, motive, { keys?, goal? })` / `verifyGoalEnd(end, motives?, { keys? })` | Section 20, the why: the receipt names the motive the buyer gave, for this order, buyer and listing, stated before the delivery (and, given the principal's own text, for this goal); the goal's end names every motive held for it, none stated after the end; both return `{ valid, covers, reasons }` |
 | `leafOf(pass)`, `canonical(obj)`, `sha256hex(s)` | the building blocks of the spec |
 | `fetchKeys(origin?)` | the issuer's keys from `/.well-known/pazair-receipts.json` |
 

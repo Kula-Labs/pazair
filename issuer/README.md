@@ -36,6 +36,17 @@ import { signLicence } from 'word-pass-issuer';
 //   GET /agents/<id>/licence -> { agent_id, licences: [{ level, licence: await signLicence(key, 'yourmarket', { agent, level: 'professional', right: 8, exam_key }) }] }
 ```
 
+**Keep the why** ([SPEC section 20](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#20-the-why-motive-enough-hindsight)):
+when a buyer says why it buys, sign the motive with the order, before the delivery, and let the receipt name it. Only
+the goal's sha256 is signed; the goal's end names every motive that served it:
+
+```js
+import { signMotive, signReceipt, signGoalEnd } from 'word-pass-issuer';
+const motive = await signMotive(key, 'yourmarket', { order, agent, listing, goal, gap: 'cannot', considered, chose_for: ['word_pass'], enough: { orders: 3, spend_minor: null, currency: null } });
+const receipt = await signReceipt(key, 'yourmarket', { ...delivered, motive });
+const end = await signGoalEnd(key, 'yourmarket', { agent, goal, outcome: 'reached', motives: [motive] });
+```
+
 **Speak W3C** ([SPEC section 18](https://github.com/Kula-Labs/pazair/blob/main/SPEC.md#18-the-word-pass-as-a-w3c-verifiable-credential)):
 your market as a did:web, every pass also a Verifiable Credential 2.0 (`eddsa-jcs-2022`), so wallets and agent
 frameworks that speak VCs hold and check it. Same key, same pass:
