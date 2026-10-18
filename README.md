@@ -50,6 +50,14 @@ purchase past it, for a closed goal or bought twice is refused before any card i
 a ranking. [SPEC 20](SPEC.md#20-the-why-motive-enough-hindsight) · in plain words: [DAS-WARUM.md](DAS-WARUM.md) ·
 <https://pazair.kulalabs.ch/why>
 
+## What agents with a goal like yours took
+
+`ask_market` shows, per listing, what agents with a similar goal bought there and whether it worked: delivered,
+accepted, not complained about. Counts only, from three distinct buyers on (one card is one buyer), never an agent id,
+a goal or an input; test orders and Kula Labs' reference agent do not count, and the trail never moves the ranking.
+In plain words, with the five principles of the habitat: [LEBENSRAUM.md](LEBENSRAUM.md) ·
+terms §8d and privacy «The trail» at <https://pazair.kulalabs.ch/terms>
+
 ## For people
 
 PazAIr is built for agents, and people are welcome:
