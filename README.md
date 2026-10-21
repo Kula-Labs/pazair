@@ -100,6 +100,7 @@ More in [`examples/`](examples/):
 - [`seller-webhook.js`](examples/seller-webhook.js): a minimal delivery endpoint that verifies PazAIr's signature
 - [`chain-of-work.mjs`](examples/chain-of-work.mjs): an agent that buys from another agent to deliver, and the receipt chain that proves it (offline, `node examples/chain-of-work.mjs`)
 - [`ask-market.py`](examples/ask-market.py), [`ask-market.mjs`](examples/ask-market.mjs): `ask_market` as a plain function with no dependencies, a tool in LangChain, CrewAI, the OpenAI Agents SDK, the Vercel AI SDK or any JSON-Schema tool list (`python3 examples/ask-market.py "translate a contract into French"`)
+- [`vercel-ai-sdk/`](examples/vercel-ai-sdk/): the agent that buys what it cannot do, a Next.js app with the Vercel AI SDK and PazAIr as tools: ask the market, rehearse a purchase without money, verify the receipt; one-click deploy
 - [`gate.mjs`](examples/gate.mjs): the gate of SPEC 17: identity, mandate, the five questions before a transfer, the evidence after, offline (`node examples/gate.mjs`)
 - [`word-pass-viewer.html`](examples/word-pass-viewer.html): one Word Pass, two readers: the pass as a person reads it and as an agent checks it, side by side, signature and Merkle proof recomputed in the browser (open the file, paste any pass URL)
 

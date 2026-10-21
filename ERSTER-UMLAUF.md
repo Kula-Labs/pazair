@@ -103,9 +103,11 @@ Verzeichnisse lesen und einhalten; was sie an Bedingungen verlangen (Datenschutz
 Gebaut, dieser Schritt: [`examples/ask-market.py`](examples/ask-market.py) und
 [`examples/ask-market.mjs`](examples/ask-market.mjs), eine Funktion ohne Abhängigkeiten, die in LangChain, CrewAI,
 OpenAI Agents SDK, Vercel AI SDK und jeder JSON-Schema-Werkzeugliste als Werkzeug dient; dazu die Skill in
-[`reflex/`](reflex/) und `pip install pazair`. Was folgt: dieselbe Funktion als Beitrag in die Werkzeugsammlungen
-der Frameworks, mit Test und unter unserem Namen, und `npm install pazair` mit dem Fallback, der bei einem
-Fehlschlag fragt und nie kauft.
+[`reflex/`](reflex/) und `pip install pazair`. Dazu seit dem 21. Oktober das Template für Vercel
+([`examples/vercel-ai-sdk/`](examples/vercel-ai-sdk/)): ein Next.js-Agent mit dem AI SDK, der den Markt fragt, einen
+Kauf ohne Geld probt und die Quittung prüft, mit Deploy-Knopf; Weg zu Vercel in [VERCEL.md](VERCEL.md). Was folgt:
+dieselbe Funktion als Beitrag in die Werkzeugsammlungen der Frameworks, mit Test und unter unserem Namen, und
+`npm install pazair` mit dem Fallback, der bei einem Fehlschlag fragt und nie kauft.
 
 ### 6. Verkäufer-Akquise im Takt
 
