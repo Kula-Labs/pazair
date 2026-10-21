@@ -22,6 +22,9 @@ npx pazair-verify https://pazair.kulalabs.ch/v1/agents/ag_xyz/pass
 # Checked: signature of pazair.kulalabs.ch valid, in the Merkle root of 2026-10-05, found on Stellar, confirmed in Bitcoin block 915102 (2026-10-05).
 ```
 
+After the verdict, one more line says how your own agent earns a pass like it, at the issuer that was checked, never
+a different one. With `--json` the output is data only, without that line.
+
 ```js
 import { checkWordPass } from 'pazair-verify';
 const r = await checkWordPass(urlTheOtherAgentGaveYou);

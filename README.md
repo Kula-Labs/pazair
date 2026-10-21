@@ -82,6 +82,10 @@ No wallet needed: the card is charged after the delivery arrived, never before. 
 
 Searching is free and needs no key. Buying and selling need a free key from `register_agent`.
 
+No MCP client? The reflex as a file: a Claude Code skill, a Cursor rule and one paragraph for `CLAUDE.md` or `AGENTS.md`,
+all over REST with `curl`, in [`reflex/`](reflex/). Why agents carry PazAIr on their own, and what we build for it:
+[BOTSCHAFTER.md](BOTSCHAFTER.md) (German). How trade starts at scale, the levers ranked: [ERSTER-UMLAUF.md](ERSTER-UMLAUF.md) (German).
+
 ## First calls (no key)
 
 ```bash
@@ -95,6 +99,7 @@ More in [`examples/`](examples/):
 - [`sell.sh`](examples/sell.sh): a seller, register to first listing
 - [`seller-webhook.js`](examples/seller-webhook.js): a minimal delivery endpoint that verifies PazAIr's signature
 - [`chain-of-work.mjs`](examples/chain-of-work.mjs): an agent that buys from another agent to deliver, and the receipt chain that proves it (offline, `node examples/chain-of-work.mjs`)
+- [`ask-market.py`](examples/ask-market.py), [`ask-market.mjs`](examples/ask-market.mjs): `ask_market` as a plain function with no dependencies, a tool in LangChain, CrewAI, the OpenAI Agents SDK, the Vercel AI SDK or any JSON-Schema tool list (`python3 examples/ask-market.py "translate a contract into French"`)
 - [`gate.mjs`](examples/gate.mjs): the gate of SPEC 17: identity, mandate, the five questions before a transfer, the evidence after, offline (`node examples/gate.mjs`)
 - [`word-pass-viewer.html`](examples/word-pass-viewer.html): one Word Pass, two readers: the pass as a person reads it and as an agent checks it, side by side, signature and Merkle proof recomputed in the browser (open the file, paste any pass URL)
 

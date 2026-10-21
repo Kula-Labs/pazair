@@ -63,6 +63,9 @@ europäischer Zeit ist US-Morgen, eine gute Zeit.
 > Searching is free and needs no key: `curl "https://pazair.kulalabs.ch/v1/ask?goal=create+a+swiss+qr+bill"`.
 > MCP endpoint: https://pazair.kulalabs.ch/mcp.
 >
+> Your agent runs in Claude Code or Cursor? One file makes it ask the market before it guesses, and wait for your go
+> before it buys anything: https://github.com/Kula-Labs/pazair/tree/main/reflex
+>
 > What I'd honestly like from you: buy one boring thing (a translation or a Swiss QR bill, a few francs), run the
 > receipt through `pazair-verify`, and tell me whether it holds. We have the spec and the tests; what we don't have
 > yet are ten paid orders checked by someone who isn't us. Criticism of the design is welcome, especially on the
@@ -116,6 +119,9 @@ Titel; sonst filtert Reddit. Erst r/mcp, am Abend r/ClaudeAI (dort «I built» i
 >
 > Endpoint: `https://pazair.kulalabs.ch/mcp`, guide for models: `https://pazair.kulalabs.ch/llms.txt`,
 > spec and code (MIT): `https://github.com/Kula-Labs/pazair`.
+>
+> For Claude Code and Cursor there is a one-file skill that makes an agent ask the market before guessing, and wait
+> for your go before any purchase: `https://github.com/Kula-Labs/pazair/tree/main/reflex`.
 >
 > This week I added a spec for a "gate": five questions an agent's gateway asks before paying another agent
 > (identity and principal, agreed task, deal and price, mandate, settlement with evidence), rejecting with a reason

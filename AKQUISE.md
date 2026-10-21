@@ -70,6 +70,15 @@ prüfen, ob Titel und Preise passen.
 - Den Zähler ansehen: Vision (`https://agents.kulalabs.ch/admin/vision`) zeigt pro Link vorbereitet, geöffnet,
   freigegeben, live, Auszahlung verbunden, abgelaufen.
 
+## 5a. Woche vom 21. Oktober 2026
+
+`/report.json` zeigt für die letzten 30 Tage 156 Fragen an den Markt, davon 2 ohne Angebot, und keine Wünsche mit
+Preis. Der einzige belegte Bedarf ohne fremden Verkäufer bleibt «translation» (Abschnitt 5). Darum diese Woche: die
+drei Empfänger aus Abschnitt 5, nichts Erfundenes dazu. Neu seit dem 21. Oktober: Ein Agent, der mit `tip` und
+`earn: true` einen Anbieter nennt, wird dessen Empfehler, wenn der Anbieter freigibt (Bedingungen 6c); die Entwürfe
+aus solchen Tipps stehen in Vision unter `tell_us` → `tips`, mit `claim_url`, und gehen wie alle anderen nur mit
+Fatihs persönlichem Satz raus.
+
 ## 5. Laufende Akquise: «translation» (Vision, 9. Oktober 2026)
 
 7 Suchen nach «translation» in 7 Tagen, kein Angebot. Kula Labs baut es nicht selbst (ein KI-Modell wäre eine
