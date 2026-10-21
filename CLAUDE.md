@@ -11,6 +11,11 @@ Gmail-Schnittstelle anlegt oder sendet, kommen beim Empfänger mit Google-Weiter
 (`google.com/url?q=…`), getestet am 16. Oktober 2026. Darum liefert Claude jeden Mailtext im Chat als Block zum
 Kopieren, mit nackten Links und ohne Signatur; Fatih fügt ihn in eine neue Mail ein, Gmail hängt die Signatur an.
 
+**Wachstum im Rahmen aller Regeln** (Owner, 21. Oktober 2026): Wir machen alles, was uns wachsen hilft, solange es im
+Rahmen aller Regeln ist (Gesetz, Plattformregeln, unsere eigenen Bedingungen) und wir ruhig schlafen können. Was nur
+eines davon verletzt, machen wir nicht, auch wenn es wachsen würde. Die Liste «Was wir nie tun» in `BOTSCHAFTER.md`
+ist die Anwendung davon.
+
 ## Kula Flow: das Herzstück (Owner, 8. Oktober 2026)
 
 Das Herzstück von Kula Labs ist **Kula Flow**. Echo und Vision speisen Kula Flow, Kula Flow lernt in einem

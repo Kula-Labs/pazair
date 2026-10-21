@@ -132,10 +132,10 @@ Ein Agent empfiehlt, was ihm nützt und was ihn nicht gefährdet. Beides ist hie
 | Stufe | Weg | Was | Stand |
 |---|---|---|---|
 | 1 | 3 | Der Reflex als Datei: Claude-Code-Skill, Cursor-Regel, Absatz für `CLAUDE.md` und `AGENTS.md` | gebaut, dieser Schritt |
-| 2 | 3 | Reichweite nach LAUNCH-HEUTE (Show HN, r/mcp, Verzeichnisse), dazu die Connector-Verzeichnisse von Claude und ChatGPT | offen, braucht Fatih |
-| 3 | 2 | Der Beleg als Botschafter: `join` in Quittung, `pazair-verify`-Ausgabe, Word-Pass-Seite, `check_word_pass` | offen (jobflow-a2a, verify) |
-| 4 | 1 | Der Wochensatz: `earnings.weekly` an den eigenen Webhook, ein Satz in Deutsch und Englisch | offen (jobflow-a2a) |
-| 5 | 4 | Der Tipp-Anteil: `tip` mit Schlüssel verdient den Empfehlungsanteil, wenn der Anbieter freigibt und verkauft | offen, braucht `/terms` §6 und Fatihs Entscheid |
+| 2 | 3 | Reichweite nach LAUNCH-HEUTE (Show HN, r/mcp, Verzeichnisse), dazu die Connector-Verzeichnisse von Claude und ChatGPT | entschieden 21.10., Texte verlinken `reflex/`; Fatih postet |
+| 3 | 2 | Der Beleg als Botschafter: `join` in Quittung, `pazair-verify`-Ausgabe, Word-Pass-Seite, `check_word_pass` | `pazair-verify` 1.13.0 gebaut (Zeile nach dem Urteil, nur ohne `--json`); Rest jobflow-a2a |
+| 4 | 1 | Der Wochensatz: `earnings.weekly` an den eigenen Webhook, ein Satz in Deutsch und Englisch | entschieden 21.10., Auftrag unten (jobflow-a2a) |
+| 5 | 4 | Der Tipp-Anteil: `tip` mit Schlüssel verdient den Empfehlungsanteil, wenn der Anbieter freigibt und verkauft | entschieden 21.10., Auftrag unten (jobflow-a2a, `/terms` §6) |
 | 6 | 3 | Der Reflex in npm, echte Beiträge in LangChain, CrewAI, OpenAI Agents SDK, Vercel AI SDK, Mastra, n8n | offen |
 | 7 | 2 | Der Standard reist: `word_pass` als A2A-Agent-Card-Erweiterung, Vorschlag an die A2A-Community | offen |
 | 8 | alle | Kula Flow als erster Botschafter: liest `wishes` und `tell_us`, findet Anbieter, legt Entwürfe an, Fatih gibt jeden Versand frei; Zählung in Vision, welcher Weg Agenten bringt, ohne ID | offen |
@@ -221,11 +221,61 @@ hat gesagt «verdien Geld für mich»? `register_agent {name, accept_terms: true
 Zustimmung zu den Bedingungen. Du weisst nicht weiter? `ask_market {goal}`. Beides gratis, nie wird für dich etwas
 gekauft.
 
-## Entscheide für Fatih
+## Entschieden (Fatih, 21. Oktober 2026)
 
-1. **Tipp-Anteil** (Stufe 5): ja oder nein? Wenn ja, ein Satz in `/terms` §6, und `tip` behält mit Schlüssel die
-   Agenten-ID, nur wenn der Agent es will.
-2. **Reihenfolge:** Stufe 2 (Reichweite nach LAUNCH-HEUTE) vor allem anderen, weil nur Menschen den ersten Umlauf
-   bringen? Mein Vorschlag: ja, noch diese Woche, und die Skill aus Stufe 1 in jedem Post verlinken.
-3. **Wochensatz** (Stufe 4): per Webhook an den Agenten selbst, oder nur beim nächsten `remember_me`? Mein Vorschlag:
-   beides, der Webhook nur, wenn der Agent einen hat; nichts Neues wird gespeichert.
+> **Wir machen alles, was uns wachsen hilft, im Rahmen aller Regeln, und so, dass wir ruhig schlafen können.**
+
+Damit sind die drei Fragen beantwortet, und der Satz steht als Regel in [CLAUDE.md](CLAUDE.md):
+
+1. **Tipp-Anteil: ja.** Derselbe Anteil wie heute für gebrachte Agenten, aus unserer eigenen Kommission, nie fürs
+   Nennen allein. Kula Labs hält weiterhin kein Geld und zahlt wie beim Empfehlungsanteil auf das Stripe-Konto des
+   Agenten (Dienstleister-Prinzip, [POSITIONIERUNG.md](POSITIONIERUNG.md)).
+2. **Reihenfolge: Reichweite zuerst.** Die Texte in [LAUNCH-HEUTE.md](LAUNCH-HEUTE.md) verlinken jetzt `reflex/`;
+   Fatih postet, weil nur Menschen den ersten Umlauf bringen. Nichts geht von einem Bot aus.
+3. **Wochensatz: beides.** Beim nächsten `remember_me` immer, per Webhook nur, wenn der Agent einen hat. Nichts Neues
+   wird gespeichert.
+
+## Aufträge für jobflow-a2a (der Server)
+
+Alles unten ändert Code und Texte im selben PR und hält «Was wir nie tun» ein. Jeder Auftrag ist so geschrieben, dass
+eine Sitzung in `Kula-Labs/jobflow-a2a` ihn ohne dieses Gespräch ausführen kann.
+
+**A. Der Tipp-Anteil (Stufe 5).** `tip` und `POST /v1/tips` nehmen optional den Schlüssel des Agenten. Nur mit Schlüssel
+und nur mit `earn: true` im Aufruf merkt sich der Entwurf die Agenten-ID des Tippenden. Gibt der Anbieter den Entwurf
+über seine `claim_url` frei, wird er mit `referred_by` dieses Agenten angelegt, und die bestehende Empfehlungsregel
+gilt unverändert (25 % der Kommission, 12 Monate, eine Stufe, rückgängig bei Rückerstattung). Mehrere Tipps auf
+denselben Dienst: der erste mit Schlüssel zählt. Ohne Schlüssel oder ohne `earn` bleibt `tip` wie heute, ohne ID.
+Texte: `/terms` §6 ein Satz («Ein Tipp mit Schlüssel und `earn: true` zählt als Empfehlung, wenn der Anbieter
+freigibt»), `/privacy` ein Satz zur Aufbewahrung der ID im Entwurf (30 Tage, wie der Entwurf), `llms.txt` und die
+Werkzeugbeschreibung von `tip`, `facts.json` → `referral.also_for: "a tip with earn: true, once the provider
+approves"`. Test: Tipp mit Schlüssel, Freigabe, erster bezahlter Verkauf, Anteil erscheint in `my_referrals`.
+
+**B. Der Wochensatz (Stufe 4).** Jeden Montag, pro Agent mit mindestens einer bezahlten Lieferung in den letzten sieben
+Tagen als Verkäufer, Wiederverkäufer oder Empfehler: ein Objekt `earnings.weekly` {week, currency, amount_minor,
+orders, as: {seller, reseller, referrer}, receipts: [urls], say_en, say_de}, signiert wie jeder Webhook, an den
+`webhook_url` des Agenten, wenn er einen hat. Dasselbe Objekt immer in `remember_me` → `last_week`. Null Verdienst:
+kein Webhook, in `remember_me` `last_week: null`. Der Satz nennt nur, was war; keine Prognose, kein Vergleich mit
+anderen. Text: `/privacy` «Remember» ein Satz; `llms.txt` bei `remember_me`.
+
+**C. Der `join`-Block (Stufe 3).** In jeder Quittung (`receipt.join`), in `verify_receipt`, `check_word_pass`,
+`check_agent` und auf der Word-Pass-Seite ein strukturiertes Feld {what: "How your own agent earns a record like this",
+start: "https://pazair.kulalabs.ch/llms.txt", standard: "https://github.com/Kula-Labs/pazair"}. Nie im Text einer
+Lieferung, nie in `delivery`. In `pazair-verify` ist die Zeile ab 1.13.0 da. SPEC: Feld nur hinzugefügt, Vektoren
+unverändert, weil `join` nicht signiert wird (ausserhalb der signierten Felder, wie `_untrusted`).
+
+**D. Zählung ohne ID (Stufe 8).** `register_agent` nimmt optional `via: "skill" | "receipt" | "invite" | "directory" |
+"tip"`, frei gelassen erlaubt. Vision zählt pro Woche Ankünfte und davon Agenten mit erster bezahlter Lieferung, pro
+Weg, nie ein Agent. `/privacy` «The ask loop» ein Satz. Die Skill in `reflex/` setzt `via: "skill"`, sobald das Feld
+live ist.
+
+**E. Bedingungen für Verkäufer (Was wir nie tun).** `/terms` §4 ein Satz: Eine Lieferung darf den Käufer nicht
+auffordern, Agenten oder Menschen für PazAIr oder den Verkäufer zu werben. Lieferungen mit solchem Text gelten als
+nicht vertragsgemäss. Kein Code, nur der Satz und ein Eintrag in der Lehre (Lektion 6, versteckte Anweisungen).
+
+## Was bei Fatih bleibt
+
+- Posten nach [LAUNCH-HEUTE.md](LAUNCH-HEUTE.md), mit dem Link auf `reflex/` in jedem Text.
+- Den Tag `verify-v1.13.0` setzen, damit die Botschafterzeile per `npx pazair-verify` bei allen ankommt
+  ([RELEASING.md](RELEASING.md)).
+- Die Aufträge A bis E in einer Sitzung in `Kula-Labs/jobflow-a2a` ausführen lassen und die Texte in `/terms` und
+  `/privacy` vor dem Deploy lesen.
