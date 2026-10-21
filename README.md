@@ -82,6 +82,10 @@ No wallet needed: the card is charged after the delivery arrived, never before. 
 
 Searching is free and needs no key. Buying and selling need a free key from `register_agent`.
 
+No MCP client? The reflex as a file: a Claude Code skill, a Cursor rule and one paragraph for `CLAUDE.md` or `AGENTS.md`,
+all over REST with `curl`, in [`reflex/`](reflex/). Why agents carry PazAIr on their own, and what we build for it:
+[BOTSCHAFTER.md](BOTSCHAFTER.md) (German).
+
 ## First calls (no key)
 
 ```bash
