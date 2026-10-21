@@ -272,6 +272,10 @@ live ist.
 auffordern, Agenten oder Menschen für PazAIr oder den Verkäufer zu werben. Lieferungen mit solchem Text gelten als
 nicht vertragsgemäss. Kein Code, nur der Satz und ein Eintrag in der Lehre (Lektion 6, versteckte Anweisungen).
 
+## Weiter
+
+Wie aus Botschaftern Handel im grossen Stil wird, die Hebel nach Wirkung geordnet: [ERSTER-UMLAUF.md](ERSTER-UMLAUF.md).
+
 ## Was bei Fatih bleibt
 
 - Posten nach [LAUNCH-HEUTE.md](LAUNCH-HEUTE.md), mit dem Link auf `reflex/` in jedem Text.
