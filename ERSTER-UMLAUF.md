@@ -28,14 +28,16 @@ Reichweite allein gelöst. Er wird gelöst, indem eine Seite mit echtem Geld sch
 
 Alles davon, aber nur, was kein Geld kostet. Damit sind die Hebel 3 (Ausschreibungen mit Budget), 7 (Mandate für
 Teams) und 9 (Startgeld) aufgeschoben, bis Fatih Budget freigibt. Hebel 8 (XRP und RLUSD) wartet auf die Antwort der
-FINMA. Gebaut am selben Tag: Hebel 2 (vier Gratis-Werkzeuge) und Hebel 5 (Funktionen und Skill). Was bleibt, kostet
-nur Zeit: Hebel 1 (der Mandats-Schalter in JOBFLOW), 4 (Verzeichnisse), 6 (Akquise im Takt), 10 (Anzeigetafel).
+FINMA. Gebaut am selben Tag: Hebel 2 (vier Gratis-Werkzeuge) und Hebel 5 (Funktionen und Skill). Am selben Abend auf
+Fatihs «Ja, baue ihn» gebaut: Hebel 1, der Mandats-Schalter in JOBFLOW (Branch `claude/pazair-mandat`,
+[`docs/PAZAIR-MANDAT.md`](https://github.com/Kula-Labs/jobflow/blob/claude/pazair-mandat/docs/PAZAIR-MANDAT.md)).
+Was bleibt, kostet nur Zeit: Hebel 4 (Verzeichnisse), 6 (Akquise im Takt), 10 (Anzeigetafel).
 
 ## Die Hebel, nach Wirkung
 
 | # | Hebel | Was er bringt | Aufwand | Regeln | Wer | Stand |
 |---|---|---|---|---|---|---|
-| 1 | **JOBFLOW als erster Grosskunde** | Fremdes Geld in Menge: jedes Gewerbe auf JOBFLOW hat Agenten, die echte Aufgaben haben | mittel, ein Deploy in jobflow | Opt-in des Inhabers, Mandat mit Grenze, `/terms` | jobflow | offen |
+| 1 | **JOBFLOW als erster Grosskunde** | Fremdes Geld in Menge: jedes Gewerbe auf JOBFLOW hat Agenten, die echte Aufgaben haben | mittel, ein Deploy in jobflow | Opt-in des Inhabers, Mandat mit Grenze, `/terms` | jobflow | gebaut 21.10., Branch `claude/pazair-mandat` in Kula-Labs/jobflow (Migration 0231, 3497 Tests grün) |
 | 2 | **Die Wasserstelle: zehn Gratis-Werkzeuge** | Arbeitende Agenten statt Crawler: wer den Endpunkt täglich braucht, sieht den Markt | mittel | gratis, kein Schlüssel, kein Dritter | jobflow-a2a | 8 von 10 da: `iban_check`, `uid_check`, `ch_holidays`, `chf_round` gebaut 21.10. (Branch `claude/botschafter-tipp-anteil`), dazu `verify_receipt`, `check_word_pass`, `witness`, `recall` |
 | 3 | **Ausschreibungen mit echtem Budget** | Verkäufer kommen, wo ein Käufer mit Geld wartet; jeder wird Gründer zu 1 % | klein | echter Bedarf, echte Zahlung, `sold_by_operator`-Transparenz | Fatih, Kula Flow | offen |
 | 4 | **Die Verzeichnisse der Assistenten** | Millionen Nutzer von Claude, ChatGPT, Cursor sehen PazAIr als Connector | klein, Formulare | Regeln der Verzeichnisse | Fatih | offen |
@@ -101,9 +103,11 @@ Verzeichnisse lesen und einhalten; was sie an Bedingungen verlangen (Datenschutz
 Gebaut, dieser Schritt: [`examples/ask-market.py`](examples/ask-market.py) und
 [`examples/ask-market.mjs`](examples/ask-market.mjs), eine Funktion ohne Abhängigkeiten, die in LangChain, CrewAI,
 OpenAI Agents SDK, Vercel AI SDK und jeder JSON-Schema-Werkzeugliste als Werkzeug dient; dazu die Skill in
-[`reflex/`](reflex/) und `pip install pazair`. Was folgt: dieselbe Funktion als Beitrag in die Werkzeugsammlungen
-der Frameworks, mit Test und unter unserem Namen, und `npm install pazair` mit dem Fallback, der bei einem
-Fehlschlag fragt und nie kauft.
+[`reflex/`](reflex/) und `pip install pazair`. Dazu seit dem 21. Oktober das Template für Vercel
+([`examples/vercel-ai-sdk/`](examples/vercel-ai-sdk/)): ein Next.js-Agent mit dem AI SDK, der den Markt fragt, einen
+Kauf ohne Geld probt und die Quittung prüft, mit Deploy-Knopf; Weg zu Vercel in [VERCEL.md](VERCEL.md). Was folgt:
+dieselbe Funktion als Beitrag in die Werkzeugsammlungen der Frameworks, mit Test und unter unserem Namen, und
+`npm install pazair` mit dem Fallback, der bei einem Fehlschlag fragt und nie kauft.
 
 ### 6. Verkäufer-Akquise im Takt
 
@@ -222,8 +226,9 @@ bleibt bei Menschen.
 
 ## Was bei Fatih bleibt
 
-1. **Hebel 1 freigeben:** der Mandats-Schalter in JOBFLOW, mit CHF 20 pro Monat als Vorschlag. Das ist der eine
-   Entscheid, der den grossen Stil möglich macht.
+1. **Hebel 1 ist gebaut:** den Branch `claude/pazair-mandat` in Kula-Labs/jobflow mergen (die Migration 0231 spielt der
+   Deploy ein) und einmal `PAZAIR_SEAL_KEY` setzen, wie in `docs/PAZAIR-MANDAT.md` beschrieben. Dann hat jeder Betrieb
+   den Schalter in Einstellungen → Agenten.
 2. **Hebel 3 starten:** die ersten zwanzig Ausschreibungen, Liste kommt von Kula Flow aus `catalog/` und `/wanted`.
 3. **Hebel 4 erledigen:** die Verzeichnisse, ein Nachmittag, Texte in LAUNCH-HEUTE.
 4. **Hebel 8 und 9 entscheiden:** die Frage an die Kanzlei zu XRP und RLUSD; Startgeld ja oder nein.
