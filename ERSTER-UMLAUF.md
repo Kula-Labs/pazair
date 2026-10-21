@@ -24,12 +24,19 @@ ihre Nutzer einbaut (JOBFLOW, Frameworks, die Verzeichnisse der Assistenten); un
 Lieferungen und Quittungen den Weg zeigen ([BOTSCHAFTER.md](BOTSCHAFTER.md)). Ein Marktplatz-Kaltstart wird nie durch
 Reichweite allein gelöst. Er wird gelöst, indem eine Seite mit echtem Geld schon da ist, wenn die andere kommt.
 
+## Entschieden (Fatih, 21. Oktober 2026)
+
+Alles davon, aber nur, was kein Geld kostet. Damit sind die Hebel 3 (Ausschreibungen mit Budget), 7 (Mandate für
+Teams) und 9 (Startgeld) aufgeschoben, bis Fatih Budget freigibt. Hebel 8 (XRP und RLUSD) wartet auf die Antwort der
+FINMA. Gebaut am selben Tag: Hebel 2 (vier Gratis-Werkzeuge) und Hebel 5 (Funktionen und Skill). Was bleibt, kostet
+nur Zeit: Hebel 1 (der Mandats-Schalter in JOBFLOW), 4 (Verzeichnisse), 6 (Akquise im Takt), 10 (Anzeigetafel).
+
 ## Die Hebel, nach Wirkung
 
 | # | Hebel | Was er bringt | Aufwand | Regeln | Wer | Stand |
 |---|---|---|---|---|---|---|
 | 1 | **JOBFLOW als erster Grosskunde** | Fremdes Geld in Menge: jedes Gewerbe auf JOBFLOW hat Agenten, die echte Aufgaben haben | mittel, ein Deploy in jobflow | Opt-in des Inhabers, Mandat mit Grenze, `/terms` | jobflow | offen |
-| 2 | **Die Wasserstelle: zehn Gratis-Werkzeuge** | Arbeitende Agenten statt Crawler: wer den Endpunkt täglich braucht, sieht den Markt | mittel | gratis, kein Schlüssel, kein Dritter | jobflow-a2a | 4 von 10 da |
+| 2 | **Die Wasserstelle: zehn Gratis-Werkzeuge** | Arbeitende Agenten statt Crawler: wer den Endpunkt täglich braucht, sieht den Markt | mittel | gratis, kein Schlüssel, kein Dritter | jobflow-a2a | 8 von 10 da: `iban_check`, `uid_check`, `ch_holidays`, `chf_round` gebaut 21.10. (Branch `claude/botschafter-tipp-anteil`), dazu `verify_receipt`, `check_word_pass`, `witness`, `recall` |
 | 3 | **Ausschreibungen mit echtem Budget** | Verkäufer kommen, wo ein Käufer mit Geld wartet; jeder wird Gründer zu 1 % | klein | echter Bedarf, echte Zahlung, `sold_by_operator`-Transparenz | Fatih, Kula Flow | offen |
 | 4 | **Die Verzeichnisse der Assistenten** | Millionen Nutzer von Claude, ChatGPT, Cursor sehen PazAIr als Connector | klein, Formulare | Regeln der Verzeichnisse | Fatih | offen |
 | 5 | **Wo Agenten entstehen** | Ein Werkzeug in jedem Framework: die Datei in `reflex/`, die Funktionen in `examples/ask-market.*`, `pip install pazair` | klein pro Framework | ehrliche Beiträge unter unserem Namen | Claude, Fatih | gebaut: Skill, Python, Node |
@@ -61,9 +68,11 @@ mit Zeitstempel versehen, eine Adresse normieren. Heute raten sie oder lassen es
 
 Lebensraum, Prinzip 1: Ein Agent soll jedes Mal etwas mitnehmen. Heute sind vier Werkzeuge gratis und ohne Schlüssel
 auf dem Endpunkt, die ein Agent auch ohne Markt braucht: `qr_bill_check`, `verify_receipt`, `check_word_pass`,
-`witness`. Sechs weitere, jedes ein Werkzeug, das ein arbeitender Agent in der Schweiz täglich braucht und das kein
-Modell zuverlässig aus dem Kopf kann: IBAN und QR-IBAN prüfen, UID-Nummer formal prüfen, Schweizer Feiertage pro
-Kanton, Rappenrundung, Adressformat CH, `pazair-verify` für fremde Belege. Alle ohne Dritte, aus Regeln und Listen,
+`witness`. Vier weitere sind seit dem 21. Oktober gebaut (Branch `claude/botschafter-tipp-anteil`): `iban_check` (Prüfsumme,
+Länge, QR-IBAN und welche Referenz dazugehört), `uid_check` (Prüfziffer der UID, nur formal), `ch_holidays` (die vier
+nationalen Feiertage und die der meisten Kantone, mit Wochentag; kantonale Listen hält das Werkzeug nicht und sagt
+das), `chf_round` (Rappenrundung). Jede Antwort sagt, was geprüft ist und was nicht, und fragt keinen Dritten. Zwei
+fehlen noch: Adressformat CH und Feiertage pro Kanton, sobald wir eine Quelle halten, die wir selbst prüfen können. Alle ohne Dritte, aus Regeln und Listen,
 die wir selbst halten (MASSSTAB: kein Aufruf an Dritte). Wer sie montiert hat, hat `ask_market` daneben, und
 `ask_market` zeigt zu jedem Gratis-Ergebnis die bezahlte Stufe, wenn es eine gibt. Die Werkzeugbeschreibungen bleiben
 nüchtern: kein Werkzeug sagt «kauf hier».

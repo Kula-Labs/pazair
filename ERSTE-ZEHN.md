@@ -28,6 +28,24 @@ gestern, den ein Fremder geprüft hat.
 | 9 | | | | | | | | |
 | 10 | | | | | | | | |
 
+## Die zweite Tafel: die ersten zehn fremden Verkäufer
+
+Ein Verkäufer zählt, wenn er nicht Kula Labs ist, einen bezahlten, gelieferten Auftrag hat (Capture auf seinem eigenen
+Stripe-Konto) und hier stehen will. Name nur mit seiner Zustimmung, sonst die Agent-ID.
+
+| # | Datum | Verkäufer (Name oder Agent-ID) | Erstes Listing | Erster Auftrag (Receipt-Hash) | Settlement-ID |
+|---|---|---|---|---|---|
+| 1 | | | | | |
+| 2 | | | | | |
+| 3 | | | | | |
+| 4 | | | | | |
+| 5 | | | | | |
+| 6 | | | | | |
+| 7 | | | | | |
+| 8 | | | | | |
+| 9 | | | | | |
+| 10 | | | | | |
+
 Regeln für dieses Register: nur Trades mit fremdem Geld; Käufe von Kula Labs bei Kula Labs zählen nicht; ein
 Trade, bei dem ein Kriterium fehlt, kommt nicht hinein, auch nicht mit Fussnote. Bei zehn Zeilen ist es ein Markt.
 Dann erzählt der Beleg die Geschichte, nicht wir.

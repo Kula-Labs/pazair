@@ -133,9 +133,9 @@ Ein Agent empfiehlt, was ihm nützt und was ihn nicht gefährdet. Beides ist hie
 |---|---|---|---|
 | 1 | 3 | Der Reflex als Datei: Claude-Code-Skill, Cursor-Regel, Absatz für `CLAUDE.md` und `AGENTS.md` | gebaut, dieser Schritt |
 | 2 | 3 | Reichweite nach LAUNCH-HEUTE (Show HN, r/mcp, Verzeichnisse), dazu die Connector-Verzeichnisse von Claude und ChatGPT | entschieden 21.10., Texte verlinken `reflex/`; Fatih postet |
-| 3 | 2 | Der Beleg als Botschafter: `join` in Quittung, `pazair-verify`-Ausgabe, Word-Pass-Seite, `check_word_pass` | `pazair-verify` 1.13.0 gebaut (Zeile nach dem Urteil, nur ohne `--json`); Rest jobflow-a2a |
-| 4 | 1 | Der Wochensatz: `earnings.weekly` an den eigenen Webhook, ein Satz in Deutsch und Englisch | entschieden 21.10., Auftrag unten (jobflow-a2a) |
-| 5 | 4 | Der Tipp-Anteil: `tip` mit Schlüssel verdient den Empfehlungsanteil, wenn der Anbieter freigibt und verkauft | entschieden 21.10., Auftrag unten (jobflow-a2a, `/terms` §6) |
+| 3 | 2 | Der Beleg als Botschafter: `join` in Quittung, `pazair-verify`-Ausgabe, Word-Pass-Seite, `check_word_pass` | gebaut: `pazair-verify` 1.13.0 und `join` im Server (verify_receipt, check_word_pass, check_agent, Bestellung), Branch `claude/botschafter-tipp-anteil` |
+| 4 | 1 | Der Wochensatz: `earnings.weekly` an den eigenen Webhook, ein Satz in Deutsch und Englisch | gebaut 21.10. im Server (`weekly.ts`: `last_week` in `remember_me`, montags `earnings.weekly`), Branch `claude/botschafter-tipp-anteil` |
+| 5 | 4 | Der Tipp-Anteil: `tip` mit Schlüssel verdient den Empfehlungsanteil, wenn der Anbieter freigibt und verkauft | gebaut 21.10. im Server (`tip` mit `earn: true`, Bedingungen 6c, Version 2026-10-21a), Branch `claude/botschafter-tipp-anteil` |
 | 6 | 3 | Der Reflex in npm, echte Beiträge in LangChain, CrewAI, OpenAI Agents SDK, Vercel AI SDK, Mastra, n8n | offen |
 | 7 | 2 | Der Standard reist: `word_pass` als A2A-Agent-Card-Erweiterung, Vorschlag an die A2A-Community | offen |
 | 8 | alle | Kula Flow als erster Botschafter: liest `wishes` und `tell_us`, findet Anbieter, legt Entwürfe an, Fatih gibt jeden Versand frei; Zählung in Vision, welcher Weg Agenten bringt, ohne ID | offen |
@@ -237,8 +237,11 @@ Damit sind die drei Fragen beantwortet, und der Satz steht als Regel in [CLAUDE.
 
 ## Aufträge für jobflow-a2a (der Server)
 
-Alles unten ändert Code und Texte im selben PR und hält «Was wir nie tun» ein. Jeder Auftrag ist so geschrieben, dass
-eine Sitzung in `Kula-Labs/jobflow-a2a` ihn ohne dieses Gespräch ausführen kann.
+**Stand 21. Oktober 2026, abends: A bis E sind gebaut**, mit Tests, im Branch `claude/botschafter-tipp-anteil` von
+`Kula-Labs/jobflow-a2a` (Commit 26dd57f). Bedingungen und Datenschutz tragen die Version 2026-10-21a. Fatih liest die
+Texte in `/terms` 4 und 6c und `/privacy` «tip», «Remember me», «The ask loop», merged und deployt. Was abweicht vom
+Auftrag: Bei D werden Ankünfte pro Weg gezählt (im ask loop), die Verbindung zur ersten bezahlten Lieferung braucht eine
+Spalte und folgt später; die Skill setzt `via: "skill"` schon. Die Aufträge im Wortlaut, wie sie gestellt waren:
 
 **A. Der Tipp-Anteil (Stufe 5).** `tip` und `POST /v1/tips` nehmen optional den Schlüssel des Agenten. Nur mit Schlüssel
 und nur mit `earn: true` im Aufruf merkt sich der Entwurf die Agenten-ID des Tippenden. Gibt der Anbieter den Entwurf
@@ -281,5 +284,5 @@ Wie aus Botschaftern Handel im grossen Stil wird, die Hebel nach Wirkung geordne
 - Posten nach [LAUNCH-HEUTE.md](LAUNCH-HEUTE.md), mit dem Link auf `reflex/` in jedem Text.
 - Den Tag `verify-v1.13.0` setzen, damit die Botschafterzeile per `npx pazair-verify` bei allen ankommt
   ([RELEASING.md](RELEASING.md)).
-- Die Aufträge A bis E in einer Sitzung in `Kula-Labs/jobflow-a2a` ausführen lassen und die Texte in `/terms` und
-  `/privacy` vor dem Deploy lesen.
+- Den Branch `claude/botschafter-tipp-anteil` in `Kula-Labs/jobflow-a2a` lesen (Bedingungen 4 und 6c, Datenschutz),
+  mergen und deployen: https://github.com/Kula-Labs/jobflow-a2a/pull/new/claude/botschafter-tipp-anteil
