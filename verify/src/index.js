@@ -118,6 +118,19 @@ export async function verifyReceiptChain(top, { receipts = [], keys, maxDepth = 
 }
 
 /**
+ * Section 3.2: a purchase in `from`, counted in the mandate's currency `to` with the mandate's own signed rates
+ * (scope.fx: per_chf, margin_bps, as_of, valid_days). Returns the figure to hold against max_order_minor, or null when it
+ * may not be counted: no rates, a currency missing, or the delivery later than valid_days (plus one day) after as_of.
+ */
+export function countUnderMandate(fx, amount, from, to, atMs) {
+  if (from === to) return Number.isInteger(amount) ? amount : null;
+  const r = fx?.per_chf;
+  if (!Number.isInteger(amount) || !(r?.[from] > 0) || !(r?.[to] > 0) || !Number.isInteger(fx.margin_bps) || fx.margin_bps < 0) return null;
+  if (!(atMs - Date.parse(fx.as_of) <= (Number(fx.valid_days) + 1) * 86_400_000)) return null;
+  return Math.ceil(amount * (r[to] / r[from]) * (1 + fx.margin_bps / 10_000));
+}
+
+/**
  * Section 3.2: was this receipt bought within this mandate? `end` is an optional signed mandate_end.
  * Returns { valid, covers, reasons }: covers lists what held, reasons what did not.
  */
@@ -130,8 +143,11 @@ export async function verifyMandate(receipt, mandate, { keys, end } = {}) {
   ok(receipt?.mandate === (await receiptHash(mandate)), 'receipt names this mandate', 'receipt names another mandate');
   ok(receipt?.buyer === mandate?.agent, 'bought by the mandated agent', `bought by ${receipt?.buyer}, not by ${mandate?.agent}`);
   const sc = mandate?.scope ?? {};
-  ok(receipt?.currency === sc.currency, 'currency within the mandate', `currency ${receipt?.currency}, mandate ${sc.currency}`);
-  ok(Number.isInteger(receipt?.amount_minor) && receipt.amount_minor <= sc.max_order_minor, 'amount within the cap per order', `amount ${receipt?.amount_minor} over the cap ${sc.max_order_minor}`);
+  // Another currency than the mandate's counts only with the rates the mandate itself was signed with (scope.fx), while they are valid.
+  const same = receipt?.currency === sc.currency;
+  const counted = same ? receipt?.amount_minor : countUnderMandate(sc.fx, receipt?.amount_minor, receipt?.currency, sc.currency, Date.parse(receipt?.delivered_at));
+  ok(same || counted !== null, same ? 'currency within the mandate' : "currency counted with the mandate's rates", `currency ${receipt?.currency}, mandate ${sc.currency}${sc.fx ? ' (rates missing or older than their validity)' : ' (the mandate carries no rates)'}`);
+  ok(Number.isInteger(receipt?.amount_minor) && counted !== null && counted <= sc.max_order_minor, 'amount within the cap per order', `amount ${receipt?.amount_minor} ${receipt?.currency} counts as ${counted} ${sc.currency}, over the cap ${sc.max_order_minor}`);
   ok(String(mandate?.issued_at) <= String(receipt?.delivered_at), 'mandate older than the delivery', 'delivered before the mandate existed');
   if (end !== undefined) {
     ok(end?.kind === 'mandate_end' && end.mandate === receipt?.mandate && (await verifySignature(end, keys)), 'end statement signed', 'end statement');

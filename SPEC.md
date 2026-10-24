@@ -106,7 +106,9 @@ section 3.1 then starts at a human decision: principal → mandate → agent →
 ```json
 { "v": 1, "kind": "mandate", "issuer": "pazair", "kid": "3f1c…", "id": "md_…", "agent": "ag_…",
   "principal": "<sha256hex of the issuer's own reference to the principal>", "how": "card_saved",
-  "scope": { "currency": "chf", "max_order_minor": 5000, "monthly_minor": 20000 },
+  "scope": { "currency": "usd", "max_order_minor": 5000, "monthly_minor": 20000,
+             "fx": { "margin_bps": 500, "as_of": "2026-10-23", "valid_days": 60, "source": "ECB reference rates",
+                     "per_chf": { "chf": 1, "usd": 1.2131, "eur": 1.0838, "cad": 1.6977, "gbp": 0.90742 } } },
   "purpose": null, "issued_at": "2026-10-08T10:00:00.000Z", "sig": "…" }
 ```
 
@@ -116,14 +118,21 @@ section 3.1 then starts at a human decision: principal → mandate → agent →
 - `purpose` is an optional sentence from the principal ("translations for our shop"). It MUST NOT contain personal
   data; `null` when not given.
 - A receipt bought within a mandate carries `"mandate": "<sha256hex(canonical(mandate))>"`, `sig` included.
+- `scope.fx` (optional, new mandates) lets the mandate cover purchases in other currencies: a card is charged in the
+  listing's currency and the cardholder's bank converts, so the currency of a listing is not a hurdle. For the cap, such a
+  purchase is counted into the mandate's currency as `ceil(amount_minor × per_chf[to] ÷ per_chf[from] × (1 + margin_bps ÷ 10000))`,
+  with the rates and margin signed into the mandate itself, so a verifier recounts it from the mandate alone. The rates are
+  valid for `valid_days` from `as_of` (plus one day of grace for the delivery); after that only the mandate's own currency
+  counts, and the principal saves the card again. A mandate without `fx` covers its own currency only.
 - Changing the limits makes a new mandate. Ending one is a signed statement:
   `{ "v": 1, "kind": "mandate_end", "issuer": "…", "kid": "…", "mandate": "<hash>", "at": "…", "sig": "…" }`.
 
 A verifier, given a receipt and the mandate it names (what `verifyMandate` in `pazair-verify` does):
 
 1. Verifies both signatures and that the receipt's `mandate` is the hash of the mandate.
-2. Checks that the receipt's `buyer` is the mandate's `agent`, that the currency is the mandate's, that
-   `amount_minor ≤ max_order_minor`, and that the mandate was issued no later than the delivery.
+2. Checks that the receipt's `buyer` is the mandate's `agent`, that the currency is the mandate's (or, with `scope.fx`,
+   that the amount counted as above is available and valid at the delivery), that the amount, counted in the mandate's
+   currency, is `≤ max_order_minor`, and that the mandate was issued no later than the delivery.
 3. Given a `mandate_end` for it, checks that the delivery was not after the end.
 
 The monthly limit is enforced by the issuer when the order is placed; a verifier holding every receipt that names
