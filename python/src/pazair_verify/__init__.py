@@ -149,6 +149,32 @@ def verify_receipt_chain(top: dict, receipts: list[dict], keys: list[dict], max_
     return {"valid": broken is None, **st, "broken": broken}
 
 
+def count_under_mandate(fx: Any, amount: Any, frm: Any, to: Any, at: Any) -> Optional[int]:
+    """Section 3.2: a purchase in `frm`, counted in the mandate's currency `to` with the mandate's own signed rates
+    (scope.fx: per_chf, margin_bps, as_of, valid_days). The figure to hold against max_order_minor, or None when it may not be
+    counted: no rates, a currency missing, or the delivery later than valid_days (plus one day) after as_of."""
+    from datetime import datetime, timezone
+    if not isinstance(amount, int) or isinstance(amount, bool):
+        return None
+    if frm == to:
+        return amount
+    r = (fx or {}).get("per_chf") if isinstance(fx, dict) else None
+    if not isinstance(r, dict) or not (isinstance(r.get(frm), (int, float)) and r[frm] > 0 and isinstance(r.get(to), (int, float)) and r[to] > 0):
+        return None
+    m, days = fx.get("margin_bps"), fx.get("valid_days")
+    if not isinstance(m, int) or m < 0 or not isinstance(days, (int, float)):
+        return None
+    try:
+        t = datetime.fromisoformat(str(at).replace("Z", "+00:00")); a = datetime.fromisoformat(str(fx.get("as_of")).replace("Z", "+00:00"))
+        if t.tzinfo is None: t = t.replace(tzinfo=timezone.utc)
+        if a.tzinfo is None: a = a.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    if (t - a).total_seconds() > (days + 1) * 86400:
+        return None
+    return math.ceil(amount * (r[to] / r[frm]) * (1 + m / 10000))
+
+
 def verify_mandate(receipt: dict, mandate: dict, keys: list[dict], end: Optional[dict] = None) -> dict:
     """Section 3.2: was this receipt bought within this mandate? Returns valid, covers (what held), reasons (what did not)."""
     covers: list[str] = []
@@ -162,9 +188,12 @@ def verify_mandate(receipt: dict, mandate: dict, keys: list[dict], end: Optional
     ok(verify_signature(receipt, keys), "receipt signed", "receipt signature")
     ok(receipt.get("mandate") == receipt_hash(mandate), "receipt names this mandate", "receipt names another mandate")
     ok(receipt.get("buyer") == mandate.get("agent"), "bought by the mandated agent", f"bought by {receipt.get('buyer')}, not by {mandate.get('agent')}")
-    ok(receipt.get("currency") == sc.get("currency"), "currency within the mandate", f"currency {receipt.get('currency')}, mandate {sc.get('currency')}")
+    # Another currency than the mandate's counts only with the rates the mandate itself was signed with (scope.fx), while they are valid.
     amt, cap = receipt.get("amount_minor"), sc.get("max_order_minor")
-    ok(isinstance(amt, int) and isinstance(cap, int) and amt <= cap, "amount within the cap per order", f"amount {amt} over the cap {cap}")
+    same = receipt.get("currency") == sc.get("currency")
+    counted = amt if same and isinstance(amt, int) else count_under_mandate(sc.get("fx"), amt, receipt.get("currency"), sc.get("currency"), receipt.get("delivered_at"))
+    ok(same or counted is not None, "currency within the mandate" if same else "currency counted with the mandate's rates", f"currency {receipt.get('currency')}, mandate {sc.get('currency')}" + (" (rates missing or older than their validity)" if sc.get("fx") else " (the mandate carries no rates)"))
+    ok(isinstance(amt, int) and counted is not None and isinstance(cap, int) and counted <= cap, "amount within the cap per order", f"amount {amt} {receipt.get('currency')} counts as {counted} {sc.get('currency')}, over the cap {cap}")
     ok(str(mandate.get("issued_at")) <= str(receipt.get("delivered_at")), "mandate older than the delivery", "delivered before the mandate existed")
     if end is not None:
         ok(end.get("kind") == "mandate_end" and end.get("mandate") == receipt.get("mandate") and verify_signature(end, keys), "end statement signed", "end statement")
