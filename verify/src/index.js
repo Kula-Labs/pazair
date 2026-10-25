@@ -411,6 +411,9 @@ export function sayPass(p, by = p.issuer) {
 // Remember: the chain of daily roots, checked without the issuer (SPEC section 14).
 export { GENESIS, headOf, recomputeChain, verifyLink, verifyRememberDocument, checkRemember, checkHead } from './remember.js';
 
+// The guest book, the visitor's side: check what you can recompute, then sign it if you choose (docs/BESUCHERBUCH.md in Kula-Labs/jobflow-a2a).
+export { PROFILES as GUESTBOOK_PROFILES, versionOf, checkVisit, signGuestbook } from './guestbook.js';
+
 // The second signature (SPEC section 16): ML-DSA-65 on passes, receipts and holder proofs; checked when @noble/post-quantum is installed.
 export { loadMlDsa, verifyMlDsa, pqKid, verifyPqSignature } from './pq.js';
 import { verifyPqSignature } from './pq.js';

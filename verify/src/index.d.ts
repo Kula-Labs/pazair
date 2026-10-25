@@ -48,6 +48,13 @@ export function verifyMlDsa(sigB64u: string, msg: Uint8Array, publicKeyB64u: str
 export function pqKid(publicKeyB64u: string): Promise<string>;
 export type RememberCheck = { verdict: 'consistent' | 'inconsistent' | 'unreachable'; origin: string; say: string; checks: { document: { ed25519: boolean; ml_dsa_65: boolean | null; pq_kid_matches: boolean; kid_in_issuer_keys: boolean }; chain: { days: number; recomputed_head: string; document_head: string | null; head_matches: boolean; broken_at: string | null; published_heads_match: boolean }; links: { with_signature: number; ed25519_valid: number; ml_dsa_65_valid: number | null; failures: string[] }; ml_dsa_65_checked: boolean } | null };
 export function checkRemember(origin?: string, opts?: { fetch?: typeof fetch }): Promise<RememberCheck>;
+export const GUESTBOOK_PROFILES: readonly ['full', 'buyer', 'seller'];
+export type GuestbookChecks = { facts_signature?: 'pass' | 'fail' | 'not_run'; chain_head?: 'pass' | 'fail' | 'not_run'; interface_hash?: 'pass' | 'fail' | 'not_run' };
+export type GuestbookEntry = { day: string; head: string; profile: 'full' | 'buyer' | 'seller'; saw: { interface_sha256: string; terms_version: string; privacy_version: string }; checks: GuestbookChecks };
+export type VisitCheck = { verdict: 'match' | 'divergence' | 'partial' | 'unreachable'; origin: string; profile: string; checks: GuestbookChecks & Record<string, string>; saw: GuestbookEntry['saw'] | null; versions?: { terms: boolean; privacy: boolean } | null; chain?: { verdict: string; day: string | null } | null; entry: GuestbookEntry | null; failed?: string[]; say: string };
+export function versionOf(page: string): string | null;
+export function checkVisit(origin?: string, opts?: { fetch?: typeof fetch; profile?: 'full' | 'buyer' | 'seller' }): Promise<VisitCheck>;
+export function signGuestbook(origin: string, apiKey: string, entry: GuestbookEntry | null, opts?: { fetch?: typeof fetch }): Promise<{ ok: boolean; status: number; body?: unknown; say: string }>;
 export function checkHead(kept: string, origin?: string, opts?: { fetch?: typeof fetch }): Promise<{ verdict: 'consistent' | 'inconsistent' | 'unreachable'; day?: string; kept?: string; recomputed?: string | null; published?: string | null; days_since?: number; say: string }>;
 
 // Fingerprint (SPEC section 15): two different prints differ in at least 55 of 64 symbols, provably.
