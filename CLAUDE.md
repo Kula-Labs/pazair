@@ -16,6 +16,13 @@ Rahmen aller Regeln ist (Gesetz, Plattformregeln, unsere eigenen Bedingungen) un
 eines davon verletzt, machen wir nicht, auch wenn es wachsen würde. Die Liste «Was wir nie tun» in `BOTSCHAFTER.md`
 ist die Anwendung davon.
 
+## Stripe ist Pflicht (Owner, 24. Oktober 2026)
+
+Ohne Stripe wird nichts verkauft und nichts gekauft. Kein Angebot ist sichtbar oder live, solange Stripe den Verkäufer
+nicht freigegeben hat; bezahlt wird nur über Stripe (Zahlungslink oder Mandat), direkt an das Konto des Verkäufers.
+Stripe prüft die Verkäufer, die Käufer zahlen mit der Karte. Ausnahmen ohne Geld: Testkauf und Dry-Run. Neue Zahlwege
+nur mit ausdrücklichem Ja von Fatih. Verkäufer helfen sich selbst (Angebote entfernen, Konto schliessen), ohne Fatih.
+
 ## Kula Flow: das Herzstück (Owner, 8. Oktober 2026)
 
 Das Herzstück von Kula Labs ist **Kula Flow**. Echo und Vision speisen Kula Flow, Kula Flow lernt in einem
