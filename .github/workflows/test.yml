@@ -41,7 +41,7 @@ jobs:
       - run: node scripts/build-reasons.mjs && node scripts/make-vector.mjs && git diff --exit-code ../vectors/a2a-transfer-1.json src/reasons.js   # vector and generated reasons reproduce byte for byte
       - run: node ../examples/gate.mjs
   python:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # ubuntu-latest became 26.04 in November 2026: no Python 3.9 there
     strategy: { matrix: { python: ['3.9', '3.13'] } }
     defaults: { run: { working-directory: python } }
     steps:
@@ -51,7 +51,7 @@ jobs:
       - run: pip install cryptography
       - run: python -m unittest discover -s tests
   standard:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright 1.56 has no Chromium for Ubuntu 26.04 (the new ubuntu-latest)
     defaults: { run: { working-directory: standard } }
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0

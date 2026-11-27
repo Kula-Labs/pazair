@@ -16,6 +16,14 @@ Rahmen aller Regeln ist (Gesetz, Plattformregeln, unsere eigenen Bedingungen) un
 eines davon verletzt, machen wir nicht, auch wenn es wachsen würde. Die Liste «Was wir nie tun» in `BOTSCHAFTER.md`
 ist die Anwendung davon.
 
+## Immer das Maximum (Owner, 27. November 2026)
+
+Jeder Auftrag wird voll ausgeschöpft, nicht nur erfüllt. Bevor ein Ergebnis an Fatih geht, prüft Claude es selbst so
+kritisch wie ein Gegner: Ist das das Beste, was möglich war? Inhalt, Wirkung auf den Umsatz, Design, Handy und Desktop,
+hell und dunkel, Barrierefreiheit, Messbarkeit, Tests, Bedingungen. Gefundene Lücken werden geschlossen, nicht nur
+benannt. Was eine Entscheidung von Fatih braucht (Geld, Recht, neue Zahlwege), wird fertig vorbereitet und als eine klare
+Frage gestellt. Jede Nachricht an Fatih ist auf Deutsch.
+
 ## Stripe ist Pflicht (Owner, 24. Oktober 2026)
 
 Ohne Stripe wird nichts verkauft und nichts gekauft. Kein Angebot ist sichtbar oder live, solange Stripe den Verkäufer
