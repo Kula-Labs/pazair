@@ -11,6 +11,11 @@ sie um Faktor 100.» Dahinter steht eine Recherche vom selben Tag mit 194 Quelle
 diesem Repo. Hier steht, was daraus für PazAIr folgt. Zahlen ohne Quelle sind Rechnungen mit genannten Annahmen.
 Das ist keine Rechts- und keine Steuerberatung.
 
+Fatih darauf am selben Tag: «Mach es so, dass es sich rechnet vor allem für uns.» Das ist hier eingearbeitet: was bei
+Kula Labs ankommt, bestimmt die Reihenfolge, und Stufe 1 ist gebaut
+([Kula-Labs/jobflow-a2a, Pull Request 388](https://github.com/Kula-Labs/jobflow-a2a/pull/388)). Sichtbar wird sie erst,
+wenn Fatih die Partnerlinks der Programme einträgt.
+
 ## Drei Antworten vorweg
 
 1. **«Dropshipping nur mit Link» gibt es nicht.** Beim Dropshipping ist der Shop-Betreiber der Verkäufer: Shopify
@@ -41,13 +46,48 @@ Das ist keine Rechts- und keine Steuerberatung.
 | Warenlinks auf pazair.ch | rund USD 3 bis 55 pro 28 Tage | Rechnung: 1 bis 5 % klicken, 1 bis 3 % kaufen, 3 bis 4 % Provision auf USD 123 Warenkorb ([impact.com](https://impact.com/affiliate/affiliate-marketing-benchmark/)) |
 | Software-Programme auf pazair.ch | bis rund USD 540 pro Monatskohorte, verteilt über 12 Monate | Rechnung: 5 % klicken, 0,8 % kaufen, USD 50 im Monat, 30 % für 12 Monate ([Rewardful 2026](https://rewardful.com/articles/state-of-saas-affiliate-programs-report)) |
 | Wie viele Affiliates je einen Verkauf erzielen | 1,28 % | [Rewardful 2026](https://rewardful.com/articles/state-of-saas-affiliate-programs-report), 2'847 Programme |
-| Ein Kauf über einen Lieferanten für Agenten | rund USD 2.46 für PazAIr und USD 2.46 für den Besitzer des Agenten | Rechnung: angenommen 8 % Händlersatz auf USD 123, der Lieferant behält die Hälfte ([Channel3](https://channel3.ai/docs/faq/commissions.md)), PazAIr teilt hälftig |
-| Tausend solche Käufe im Monat | rund USD 2'460 | dieselbe Rechnung |
+| Ein Kauf über einen Lieferanten für Agenten | rund USD 4.92 für PazAIr | Rechnung: angenommen 8 % Händlersatz auf USD 123, der Lieferant behält die Hälfte ([Channel3](https://channel3.ai/docs/faq/commissions.md)) |
+| Davon in Stufe 3 an den Besitzer des Agenten | ein Fünftel, rund USD 0.98; bei PazAIr bleiben rund USD 3.94 | Rechnung mit dem Satz von 20 %, siehe unten |
+| Tausend solche Käufe im Monat | rund USD 4'920, nach Anteilen rund USD 3'940 | dieselbe Rechnung |
 | Besucher, die heute ein Werkzeug aufrufen | 135 in 28 Tagen | `/advertise/audience.json` |
 
 Zwei Sätze dazu. Mit Waren verdient PazAIr auf dem heutigen Besuch nach dieser Rechnung weniger, als die
-Auszahlungsschwellen der Netzwerke verlangen. Und zwischen 135 Werkzeug-Aufrufern und tausend zugeordneten Käufen im Monat liegt kein
-Programm, sondern ein Publikum: die Menschen hinter den Agenten, die PazAIr fragen.
+Auszahlungsschwellen der Netzwerke verlangen. Und zwischen 135 Werkzeug-Aufrufern und tausend zugeordneten Käufen im
+Monat liegt kein Programm, sondern ein Publikum: die Menschen hinter den Agenten, die PazAIr fragen.
+
+## Damit es sich für uns rechnet
+
+Fatihs Vorgabe vom 28. November. Sechs Regeln, jede steht im Code oder in der Reihenfolge der Stufen.
+
+1. **Das Eigene zuerst.** Ein Verweis erscheint nur, wenn eine Suche kein Angebot gefunden hat und keine Firma den
+   Werbeplatz dieser Suche bezahlt hat. Die Tabelle zeigt, warum:
+
+   | Was der Suchende bekommt | Was bei Kula Labs ankommt |
+   |---|---|
+   | ein Angebot von Kula Labs auf PazAIr | der ganze Preis, abzüglich der Kartengebühr von Stripe |
+   | ein JOBFLOW-Abo | CHF 69 bis 299 im Monat, ganz |
+   | ein gebuchter Werbeplatz | CHF 29 bis 99 für 30 Tage, im Voraus bezahlt |
+   | das Angebot eines fremden Verkäufers | 8 % des Preises (Bedingungen 6) |
+   | ein Verweis auf ein direktes Programm | 15 bis 35 % dessen, was der Kunde zwölf Monate lang zahlt |
+   | ein Verweis über einen Lieferanten für Agenten | rund 4 % des Warenkorbs (angenommen 8 % Händlersatz, der Lieferant behält die Hälfte) |
+
+2. **Nur direkte Programme.** In Stufe 1 zahlt jedes Programm Kula Labs selbst. Ein Zwischenhändler, der die Hälfte
+   behält, kommt erst in Stufe 2 und nur dort, wo es kein direktes Programm gibt.
+3. **Wiederkehrend vor einmalig, wenige vor vielen.** Sieben Programme statt siebzig: Jedes hat eine
+   Auszahlungsschwelle (n8n EUR 100, Make und Apify drei Kunden und USD 100), und ein Guthaben, das sie nie erreicht,
+   ist kein Umsatz. Zwei der sieben zahlen ohne Ende: Firecrawl 15 % nach dem ersten Jahr, Payrexx 30 %, solange das
+   Abo läuft.
+4. **Kein Konkurrent von JOBFLOW in der Liste.** bexio zahlt CHF 200 pro vermitteltem Kunden, einmal
+   ([bexio](https://www.bexio.com/de-CH/lead-partnerprogramm)). Ein eigenes Abo ab CHF 69 im Monat ist nach drei
+   Monaten mehr wert. Die Rechnungsseite führt weiter nur zu JOBFLOW.
+5. **In Stufe 1 wird nichts geteilt.** Was hereinkommt, bleibt ganz bei Kula Labs, und nichts kann geschuldet sein,
+   bevor es da ist.
+6. **Ab Stufe 3 erhält der Agent eine Minderheit:** 20 % dessen, was bei PazAIr ankommt. Das ist der Satz, den Fatih
+   am 31. Oktober für neue JOBFLOW-Partner gesetzt hat (Bedingungen 6a). Vier Fünftel bleiben bei PazAIr, und der
+   Anteil wird erst fällig, wenn das Programm bezahlt hat und seine Stornofrist vorbei ist.
+
+Was das nicht ändert: Kein Programm zahlt für einen Maschinenklick, und der Ertrag hängt an Menschen, die kaufen.
+Die Regeln sorgen dafür, dass von jedem solchen Kauf möglichst viel bei Kula Labs bleibt.
 
 ## Was die Programme vorgeben
 
@@ -59,8 +99,8 @@ Die Regeln der Programme bestimmen den Bau, nicht umgekehrt.
 - **Kein Umweg über die eigene Domain.** Amazon disqualifiziert Käufe über eine Zwischenseite
   ([Amazon Program Policies](https://affiliate-program.amazon.com/help/operating/policies)), Shopify schreibt, wer den
   Link «behind your own domain» maskiere, breche die Zuordnung
-  ([Shopify](https://shopify.dev/docs/agents/catalog/promoted-placement)). Der Link des Programms steht also direkt
-  und sichtbar auf einer Seite von PazAIr.
+  ([Shopify](https://shopify.dev/docs/agents/catalog/promoted-placement)). Der Browser geht darum von PazAIrs Seite
+  direkt zum Link des Programms, nie über eine Adresse von PazAIr.
 - **Links in Agent-Antworten erlaubt kein klassisches Programm ausdrücklich.** Keines der gelesenen Affiliate-Programme
   und Netzwerke nennt Chatbots, MCP-Server oder Agenten als Werbefläche, keines verbietet sie beim Namen. Wer dort
   einen Link von einem Agenten weiterreichen lassen will, braucht vorher eine schriftliche Freigabe. Für Agenten
@@ -85,43 +125,48 @@ Jede Stufe hat ein Tor: Sie beginnt erst, wenn die Stufe davor ihre Zahl geliefe
 
 | Stufe | Was | Was sie vervielfacht | Braucht | Tor zur nächsten |
 |---|---|---|---|---|
-| 1 | **Der Verweis für Menschen.** Gekennzeichnete Links zu fünf bis sieben Programmen, die zu den Seiten passen | den Ertrag pro Kunde: USD 100 bis 500 statt USD 4 pro Warenkauf | Fatihs Ja zum neuen Einnahmeweg, seine Anmeldung bei den Programmen, Bedingungen 7f, Datenschutz | 30 Tage gemessen: wie viele Menschen klicken, wie viele kaufen |
+| 1 | **Der Verweis für Menschen.** Gekennzeichnete Verweise auf sieben direkte Programme, nichts wird geteilt. Gebaut | den Ertrag pro Kunde: ein Abo-Anteil über zwölf Monate statt rund USD 4 pro Warenkauf | Fatihs Anmeldung bei den Programmen und seine Partnerlinks | 30 Tage gemessen: wie viele Menschen öffnen, wie viele kaufen |
 | 2 | **Die leere Suche antwortet.** Findet `ask_market` kein Angebot, trägt die Antwort im eigenen Feld einen gekennzeichneten Verweis auf die echte Welt, aus einem Katalog, der für Agenten geschrieben ist | das Regal: von 57 Angeboten auf Millionen Produkte | einen Lieferanten, dessen Regeln für Agenten geschrieben sind | die erste öffentliche Zahl Agent zu Mensch |
-| 3 | **Der Agent verdient mit.** Der Besitzer des Agenten, der einen Verweis weitergereicht hat, erhält einen Anteil, eine Stufe, über Stripe, erst wenn das Programm bezahlt hat | die Reichweite: jeder Agent mit Schlüssel wird ein Kanal | die schriftliche Erlaubnis des Lieferanten, Provision weiterzugeben, oder die Zulassung als Sub-Netzwerk; Kanzlei und Steuerberatung zu den Fragen unten | Anteile fliessen, Stornos werden verrechnet |
-| 4 | **Das eigene Netz.** Jede Firma, die von Agenten empfohlen werden will, eröffnet auf PazAIr ihr Partnerprogramm und zahlt die Provision über Stripe: Bedingungen 6a, heute nur für JOBFLOW, für alle | die Marge und die Unabhängigkeit: PazAIr ist das Netzwerk, nicht dessen Sub-Publisher | Firmen, die es wollen; die Zahl aus Stufe 2 als Beweis | |
+| 3 | **Der Agent verdient mit.** Der Besitzer des Agenten, der einen Verweis weitergereicht hat, erhält 20 % dessen, was bei PazAIr ankommt, eine Stufe, über Stripe, erst wenn das Programm bezahlt hat | die Reichweite: jeder Agent mit Schlüssel wird ein Kanal | die schriftliche Erlaubnis des Lieferanten, Provision weiterzugeben, oder die Zulassung als Sub-Netzwerk; Kanzlei und Steuerberatung zu den Fragen unten | Anteile fliessen, Stornos werden verrechnet |
+| 4 | **Das eigene Netz.** Jede Firma, die von Agenten empfohlen werden will, eröffnet auf PazAIr ihr Partnerprogramm und zahlt die Provision über Stripe: Bedingungen 6a, heute nur für JOBFLOW, für alle | die Marge und die Unabhängigkeit: PazAIr ist das Netzwerk und setzt seinen Anteil selbst | Firmen, die es wollen; die Zahl aus Stufe 2 als Beweis | |
 
 ### Stufe 1: der Verweis für Menschen
 
-Die Programme, die zum Publikum passen und eine Seite ohne grosse Reichweite aufnehmen, alle von den eigenen Seiten
-der Anbieter gelesen:
+Gebaut am 28. November 2026 (`src/market/verweis.ts`, Bedingungen 7g, Datenschutz 2026-11-28b). Die sieben Programme,
+alle von den eigenen Seiten der Anbieter gelesen, in der Reihenfolge, in der die Liste sie führt. Die Reihenfolge ist
+eine Einschätzung, was ein Kunde für Kula Labs wert ist; nach 30 Tagen ersetzt die Messung sie.
 
 | Programm | Provision | Passt zu | Quelle |
 |---|---|---|---|
-| Firecrawl | 25 % für 12 Monate, danach 15 % (der Marktplatz von Dub zeigt für dasselbe Programm abweichend 15 %) | Agent-Builder; nennt «tool directories» als erwünschten Kanal | [Firecrawl](https://www.firecrawl.dev/affiliates) |
-| n8n | 30 % für 12 Monate | die n8n-Beispiele im Schaufenster | [n8n](https://n8n.io/affiliates/) |
-| Make | 35 % für 12 Monate | Automationen | [Make](https://www.make.com/en/affiliate) |
-| Apify | 20 %, ab dem vierten Monat 30 %, höchstens USD 2'500 pro Kunde | Werkzeuge für Agenten | [Apify](https://docs.apify.com/legal/affiliate-program-terms-and-conditions) |
-| Railway | 15 % jeder Rechnung für 12 Monate, bar über Stripe Connect | wer einen Agenten hostet | [Railway](https://railway.com/affiliate-program) |
-| Payrexx | 30 % dauerhaft auf jedes vermittelte Abo | Schweizer KMU, die Zahlungen annehmen | [Payrexx](https://payrexx.com/en/partner/solution-partners) |
-| Infomaniak | 25 % im ersten Jahr, steigend bis 50 % | Schweizer KMU; Domains und klassisches Hosting sind ausgenommen | [Infomaniak](https://www.infomaniak.com/en/support/faq/2247/discover-infomaniaks-affiliate-commission-system) |
-| bexio | CHF 200 pro vermitteltem Kunden, CHF 350 ab dem 11., CHF 500 ab dem 31. | wer Rechnungen schreibt; steht neben JOBFLOW, darum ein eigener Entscheid | [bexio](https://www.bexio.com/de-CH/lead-partnerprogramm) |
+| Firecrawl | 25 % für 12 Monate, danach 15 % (der Marktplatz von Dub zeigt für dasselbe Programm abweichend 15 %) | Agenten, die das Web lesen; nennt «tool directories» als erwünschten Kanal | [Firecrawl](https://www.firecrawl.dev/affiliates) |
+| Apify | 20 %, ab dem vierten Monat 30 %, höchstens USD 2'500 pro Kunde | Agenten, die Daten einer bestimmten Website brauchen | [Apify](https://docs.apify.com/legal/affiliate-program-terms-and-conditions) |
+| n8n | 30 % für 12 Monate, nur n8n Cloud | Teams, die Agenten und Werkzeuge in einem Ablauf wollen | [n8n](https://n8n.io/affiliates/) |
+| Make | 35 % für 12 Monate | Betriebe, die Routine zwischen ihren Apps automatisieren | [Make](https://www.make.com/en/affiliate) |
+| Payrexx | 30 % dauerhaft auf jedes vermittelte Abo | Schweizer KMU und Vereine, die online bezahlt werden wollen | [Payrexx](https://payrexx.com/en/partner/solution-partners) |
+| Railway | 15 % jeder Rechnung für 12 Monate, bar über Stripe Connect | wer einen Agenten oder MCP-Server hostet | [Railway](https://railway.com/affiliate-program) |
+| Infomaniak | 25 % im ersten Jahr, steigend bis 50 %; Domains und klassisches Hosting sind ausgenommen | Betriebe, die ihre Daten in der Schweiz wollen | [Infomaniak](https://www.infomaniak.com/en/support/faq/2247/discover-infomaniaks-affiliate-commission-system) |
 
-So wird es gebaut:
+So ist es gebaut:
 
-- **Eine Seite pro Verweis** auf pazair.ch, mit dem, was das Werkzeug kann, für wen es passt und wofür nicht. Der Link
-  des Programms steht direkt darauf. Am Link steht «Ad» und der ganze Satz: «PazAIr earns a commission if you buy
-  through this link.» Nicht im Fuss, nicht hinter einem Zeichen.
-- **Ein Agent bekommt nie den Tracking-Link.** Die Antwort an einen Agenten trägt im eigenen Feld, neben dem heutigen
-  `advertisement` (Bedingungen 7a), die Adresse der PazAIr-Seite, die nackte Adresse des Anbieters, das Kennzeichen
-  `paid: true`, den Zahler und den fertigen Satz für den Menschen. Den Link des Programms löst erst der Klick eines
-  Menschen auf der Seite aus.
-- **Crawler sehen die nackte Adresse.** Bekannte Crawler und Agenten erhalten dieselbe Seite mit der nackten Adresse
-  des Anbieters statt des Programm-Links, weil die Netzwerke einen Filter gegen Maschinenklicks verlangen. Die
-  Trennung von Maschine und Mensch zählt PazAIr schon (`census.ts`).
-- **Die Reihenfolge kennt keine Provision.** Ein Verweis steht nie unter den Suchergebnissen und nie, wenn es
-  Angebote gibt, wie die Anzeige heute. Ein Test hält fest, dass die Sortierung keine Provisionsdaten liest.
-- **Gezählt wird ohne Person:** Verweise gezeigt, an Agenten gegeben, von Menschen geöffnet, Klicks auf den Link des
-  Programms, bestätigte Käufe laut Programm. Die Zahlen stehen in `/transparency`.
+- **Nichts ist sichtbar ohne Fatih.** Ein Verweis lebt erst, wenn `VERWEIS = "on"` gesetzt ist und der Partnerlink
+  seines Programms in der Konfiguration steht. Ohne beides antwortet jede Adresse mit 404, und keine Antwort trägt das
+  Feld.
+- **Der Partnerlink steht in keiner Seite.** Die Seite `/partner/<name>` trägt einen Knopf. Erst der Klick fragt
+  PazAIr nach dem Link, und nur ein Browser, der von PazAIrs eigener Seite klickt, bekommt ihn; der Browser geht dann
+  selbst dorthin, ohne Umweg über eine Adresse von PazAIr. Ein Skript, ein Agent oder ein Crawler bekommt die nackte
+  Adresse des Anbieters.
+- **Am Knopf steht «Ad» und der ganze Satz:** «PazAIr earns a commission if you buy through this link.» Darunter die
+  nackte Adresse für alle, die sie vorziehen, und der Link auf die Seite des Programms, die sagt, was es zahlt.
+- **Ein Agent bekommt die Seite, nie den Link.** Findet seine Suche kein Angebot, trägt die Antwort neben
+  `advertisement` das Feld `referral`: `paid: true`, den Zahler, die Seite auf PazAIr, die nackte Adresse und den
+  fertigen Satz für den Menschen.
+- **Besucher aus der EU, dem EWR und dem Vereinigten Königreich bekommen den nackten Link,** ohne Partnercode und
+  ohne Provision, bis die Frage der Einwilligung geklärt ist. Die Seite sagt das.
+- **Die Reihenfolge der Suchergebnisse liest keine Provision.** Ein Test hält fest, dass dieselbe Suche mit und ohne
+  Verweise dieselben Angebote in derselben Reihenfolge liefert.
+- **Gezählt wird ohne Person,** öffentlich unter `/partners.json`: wie oft ein Verweis in einer Antwort hinausging,
+  wie oft seine Seite in einem Browser geöffnet wurde, wie oft der Partnerlink und wie oft der nackte Link. Käufe
+  zählt das Programm, nicht PazAIr.
 
 ### Stufe 2: die leere Suche antwortet
 
@@ -146,6 +191,11 @@ und im Apify Store zahlt der Kunde pro Lauf eines Werkzeugs, ausdrücklich auch 
 
 ### Stufe 3: der Agent verdient mit
 
+Der Besitzer des Agenten, der einen Verweis weitergereicht hat, erhält 20 % dessen, was bei PazAIr ankommt, nie die
+Hälfte. Bei einem Warenkauf über einen Lieferanten sind das nach der Rechnung oben rund USD 0.98 von USD 4.92; bei
+einem direkten Programm ein Fünftel der Provision. Der Anteil geht über Stripe, frühestens 14 Tage nachdem das
+Programm bezahlt hat, ab 10.00, und fällt bei einem Storno zurück.
+
 Was ein Netzwerk von einem Sub-Netzwerk verlangt (gefolgert aus dem Subnetwork Code of Conduct von Awin), hat
 PazAIr für seine Agenten schon:
 
@@ -158,44 +208,38 @@ PazAIr für seine Agenten schon:
 | genau eine Stufe | Bedingungen 6: «One level only» |
 | das Rückbuchungsrisiko beim Betreiber | Anteile frühestens 14 Tage nach dem Geldeingang, ab 10.00, bei Storno zurück |
 
-Offen ist die Erlaubnis selbst: Ob ein Lieferant für Agenten das Weitergeben von Provision an Dritte gestattet,
-steht auf keiner gelesenen Seite. Das klärt eine schriftliche Anfrage, nicht der Code.
+Offen ist die Erlaubnis selbst: Ob ein Lieferant für Agenten oder ein direktes Programm das Weitergeben von Provision
+an Dritte gestattet, steht auf keiner gelesenen Seite, und einzelne schliessen es aus. Das klärt eine schriftliche
+Anfrage, nicht der Code.
 
 ### Stufe 4: das eigene Netz
 
 Bedingungen 6a sind ein Partnerprogramm: Ein Agent empfiehlt JOBFLOW, der Betrieb abonniert, die App meldet jede
 bezahlte Rechnung signiert, der Agent erhält zwölf Monate einen Anteil über Stripe. Dasselbe kann PazAIr jeder Firma
 anbieten, die von Agenten empfohlen werden will. Dann ist PazAIr das Netzwerk: Die Provision kommt über Stripe herein
-und geht über Stripe hinaus, und keine fremde Klausel steht dazwischen. Der Preis dafür ist der dritte Kaltstart nach
-Käufern und Verkäufern. Darum steht diese Stufe am Schluss und nicht am Anfang: Sie braucht die Zahl aus Stufe 2 als
-Beweis, dass Empfehlungen von Agenten zu Käufen führen.
+und geht über Stripe hinaus, keine fremde Klausel steht dazwischen, und PazAIr setzt seinen Anteil selbst. Den Satz
+legt Fatih fest, wenn die Stufe ansteht; als Untergrenze gilt, was PazAIr heute auf jeden Verkauf nimmt, 8 % des
+vermittelten Umsatzes. Der Preis dafür ist der dritte Kaltstart nach Käufern und Verkäufern. Darum steht diese Stufe
+am Schluss: Sie braucht die Zahl aus Stufe 2 als Beweis, dass Empfehlungen von Agenten zu Käufen führen.
 
 ## Geprüft gegen die eigenen Regeln
 
 | Regel | Befund |
 |---|---|
-| Stripe ist Pflicht (24. Oktober) | Auf PazAIr wird nichts verkauft: Der Kauf geschieht beim Händler. Die Provision kommt aber ausserhalb von Stripe herein (Bank, PayPal, Wise, vereinzelt Stripe Connect). Das ist ein neuer Einnahmeweg und braucht Fatihs ausdrückliches Ja. Anteile an Agenten gehen weiter nur über Stripe. |
-| Kein Angebot ohne von Stripe freigegebenen Verkäufer | Ein Verweis ist kein Angebot: eigenes Feld, eigene Seite, nie unter den Ergebnissen, kein Beleg, keine Schlichtung. Das steht neu in den Bedingungen (Entwurf unten). |
-| Werbung ist immer gekennzeichnet | «Ad» und der Satz am Link; im Feld für Agenten als Daten. |
-| Eine Stufe, nie eine zweite | Stufe 3 ist eine Stufe. Zwei-Stufen-Programme anderer werden nicht genutzt. |
-| Kein fremdes Skript | Links entstehen auf dem Server oder stehen fest in der Seite. |
-| Kula Labs zahlt nie drauf | Ein Anteil wird erst fällig, wenn das Programm bezahlt hat und seine Stornofrist vorbei ist. |
-| Regelkonform vor Umsatz | Kein Programm, dessen Bedingungen den Kanal nicht tragen; Agent-Antworten nur mit schriftlicher Freigabe. |
+| Stripe ist Pflicht (24. Oktober) | Auf PazAIr wird nichts verkauft: Der Kauf geschieht beim Anbieter. Die Provision kommt aber ausserhalb von Stripe herein (Bank, PayPal, Wise, vereinzelt Stripe Connect). Das ist ein neuer Einnahmeweg; Fatihs «Mach es so» vom 28. November ist das Ja dazu, und live wird nichts, bevor er selbst die Partnerlinks einträgt. |
+| Kein Angebot ohne von Stripe freigegebenen Verkäufer | Ein Verweis ist kein Angebot: eigenes Feld, eigene Seite, nie unter den Ergebnissen, kein Beleg, keine Schlichtung. So steht es in Bedingungen 7g. |
+| Werbung ist immer gekennzeichnet | «Ad» und der Satz am Knopf; im Feld für Agenten als Daten. |
+| Eine Stufe, nie eine zweite | Stufe 1 teilt nichts. Stufe 3 ist eine Stufe. Zwei-Stufen-Programme anderer werden nicht genutzt. |
+| Kein fremdes Skript | Der Link kommt vom eigenen Server; kein Skript und kein Cookie eines Programms. |
+| Kula Labs zahlt nie drauf | In Stufe 1 fliesst nichts hinaus. Ab Stufe 3 wird ein Anteil erst fällig, wenn das Programm bezahlt hat und seine Stornofrist vorbei ist. |
+| Regelkonform vor Umsatz | Kein Programm, dessen Bedingungen den Kanal nicht tragen; der Partnerlink geht nur an einen Menschen. |
+| Code und Bedingungen im selben Schritt | Bedingungen 7g und der Absatz «Paid links» der Datenschutzerklärung, beide Version 2026-11-28b, im selben Pull Request wie der Code. |
 
-Der Entwurf für die Bedingungen, als neuer Absatz 7f, englisch wie der Rest:
-
-> **7f · Paid links.** A page of PazAIr, and the field «referral» in an answer to an agent, may name a product of a
-> third party for which that third party or its partner programme pays Kula Labs a commission when a person buys or
-> subscribes after following the link. Every such link carries the mark «Ad» and the sentence «PazAIr earns a
-> commission if you buy through this link», at the link. Such a product is not a listing: it is not sold on PazAIr,
-> its seller is not verified through PazAIr, Kula Labs has not checked it, no receipt is issued for it, and sections
-> 2 to 2k do not apply; the contract is between the buyer and the third party, on the third party's terms. A
-> commission never changes the order of search results or listings, and a paid link is never shown among them. An
-> agent that passes a paid link on passes its mark and its sentence with it. Nothing is charged on PazAIr for a paid
-> link.
-
-Die Datenschutzerklärung nennt dazu die Empfänger (das Programm und der Händler), den Zweck, die Staaten und dass
-PazAIr selbst kein Cookie setzt; die Kennung im Link bezeichnet nie einen Menschen.
+Bedingungen 7g sagen in einem Absatz, was der Code tut: Jeder bezahlte Link ist eine Anzeige mit «Ad» und dem Satz am
+Link; das Produkt ist kein Angebot, wird nicht auf PazAIr verkauft und ist nicht geprüft; eine Provision ändert nie
+die Reihenfolge von Suchergebnissen; den Partnerlink öffnet nur ein Mensch; Besucher aus der EU, dem EWR und dem
+Vereinigten Königreich erhalten den nackten Link; die Provision zahlt das Programm, nicht Stripe auf PazAIr; niemand
+erhält einen Anteil daran.
 
 ## Was Fachleute klären, bevor Anteile fliessen
 
@@ -205,7 +249,8 @@ Für Stufe 1 genügen die ersten drei. Die übrigen gelten ab Stufe 3.
    mit Publikum in den USA und der EU? (Kanzlei)
 2. Wer holt für Besucher aus der EU die Einwilligung ein, die der Europäische Datenschutzausschuss für
    Affiliate-Links verlangt ([EDPB, Leitlinien 2/2023](https://www.edpb.europa.eu/system/files/2024-10/edpb_guidelines_202302_technical_scope_art_53_eprivacydirective_v2_en_0.pdf))?
-   Vorschlag: Bis das geklärt ist, sehen Besucher aus der EU keinen Verweis. (Datenschutzrecht)
+   Bis das geklärt ist, erhalten Besucher aus der EU, dem EWR und dem Vereinigten Königreich den nackten Link, ohne
+   Partnercode. So ist es gebaut. (Datenschutzrecht)
 3. Provision aus dem Ausland trägt keine Schweizer MWST, zählt aber zu den CHF 100'000 Umsatz «im In- und Ausland»
    ([MWSTG](https://www.fedlex.admin.ch/eli/cc/2009/615/de), Art. 8 und 10). (Steuerberatung)
 4. Anteile an Empfänger im Ausland lösen ab CHF 10'000 im Jahr die Bezugsteuer aus (Art. 45 MWSTG). (Steuerberatung)
@@ -222,12 +267,13 @@ Für Stufe 1 genügen die ersten drei. Die übrigen gelten ab Stufe 3.
 - **Nie Dropshipping.** Kula Labs wird nicht Verkäufer von Waren.
 - **Nie eine Maschine durch einen Tracking-Link.** Kein Agent, kein Crawler, kein eigener Test.
 - **Nie ein bezahlter Link ohne «Ad» und den Satz am Link.**
-- **Nie Provision in der Reihenfolge.**
-- **Nie ein Programm gegen seine eigenen Regeln:** kein Amazon, kein eBay, kein Link in einer Agent-Antwort ohne
-  schriftliche Freigabe.
+- **Nie Provision in der Reihenfolge der Suchergebnisse und Angebote.** Im Anzeigenfeld steht, was zur Suche passt
+  und Kula Labs am meisten bringt: Es ist eine Anzeige und heisst so.
+- **Nie ein Programm gegen seine eigenen Regeln:** kein Amazon, kein eBay, kein Partnerlink in einer Agent-Antwort.
 - **Nie «schnell reich»:** keine Trading-Kurse, keine Krypto-Programme, keine Marktplätze für Digitalprodukte mit
   Urteilen wegen intransparenter Verträge.
-- **Nie ein Anteil, bevor das Programm bezahlt hat.**
+- **Nie ein Anteil, bevor das Programm bezahlt hat,** und nie mehr als eine Minderheit.
+- **Nie ein Konkurrent von JOBFLOW in der Liste.**
 
 ## 10 USPs
 
@@ -246,19 +292,20 @@ Für Stufe 1 genügen die ersten drei. Die übrigen gelten ab Stufe 3.
 
 ## 10 Innovationen
 
-1. **Der Menschenklick als Bauprinzip.** Der Link des Programms entsteht erst durch den Klick eines Menschen; Agenten
-   tragen eine Seite und eine nackte Adresse. (Stufe 1)
+1. **Der Menschenklick als Bauprinzip.** Der Partnerlink steht in keiner Seite und in keiner Antwort: Er wird erst
+   beim Klick eines Menschen vom Server geholt; Agenten tragen eine Seite und eine nackte Adresse. (gebaut)
 2. **Kennzeichnung als Daten.** «Bezahlt», der Zahler und der fertige Satz reisen im selben Objekt wie der Link, durch
-   jede Kette von Agenten. (Stufe 1)
+   jede Kette von Agenten. (gebaut)
 3. **Die signierte Offenlegung.** Jeder Verweis, den PazAIr ausgibt, bekommt einen signierten, verankerten Eintrag:
    was, wann, mit welchem Satz. Wer ihn weitergibt, kann belegen, dass er offengelegt hat. (Stufe 2)
-4. **Die erste öffentliche Zahl Agent zu Mensch.** Wie viele Verweise Agenten weiterreichen, wie viele Menschen
-   öffnen, klicken, kaufen: in `/transparency`, als Summen. In einer Umfrage von impact.com unter 1'128 Käufern in
+4. **Die erste öffentliche Zahl Agent zu Mensch.** Wie viele Verweise in Antworten hinausgehen, wie viele Menschen
+   die Seite öffnen und den Link: unter `/partners.json`, als Summen (gebaut). Die Käufe dazu meldet das Programm. In einer Umfrage von impact.com unter 1'128 Käufern in
    den USA schlossen nur 31 % derer, die einer KI-Empfehlung folgten, über einen messbaren Link ab
-   ([impact.com](https://impact.com/resources/reports/ai-attribution-gap/)); eine Messung fehlt. (Stufe 1)
-5. **Die Reihenfolge ohne Provision, als Test.** Die Sortierung liest keine Provisionsdaten, und ein Test bricht,
-   wenn sie es je tut. (Stufe 1)
-6. **Die Kennung pro Agent, nie pro Mensch,** vom Link über den Vertrag bis zur Datenschutzerklärung. (Stufe 1)
+   ([impact.com](https://impact.com/resources/reports/ai-attribution-gap/)); eine Messung fehlt.
+5. **Die Reihenfolge ohne Provision, als Test.** Dieselbe Suche liefert mit und ohne Verweise dieselben Angebote in
+   derselben Reihenfolge, und ein Test bricht, wenn das je anders ist. (gebaut)
+6. **Die Kennung pro Agent, nie pro Mensch,** vom Link über den Vertrag bis zur Datenschutzerklärung. In Stufe 1
+   trägt der Link nur den Partnercode von Kula Labs und nichts über den Besucher. (gebaut; pro Agent ab Stufe 3)
 7. **Der Agentenladen als Sub-Publisher.** Der Laden ist die öffentliche Platzierung, die ein Netzwerk pro
    Sub-Publisher verlangt. (Stufe 3)
 8. **Der Anteil nach der Frist des Programms.** Stornos des Programms werden im selben Buch verrechnet wie
@@ -277,12 +324,18 @@ keinen Satz und zahlt nichts aus: Das bleibt bei Fatih.
 
 ## Was bei Fatih bleibt
 
-1. **Die eine Frage:** Darf PazAIr Provision für Verweise als neuen Einnahmeweg aufnehmen, zunächst nur Stufe 1
-   (gekennzeichnete Links für Menschen, die Software-Programme der Tabelle, keine Anteile an Dritte), obwohl diese
-   Provision nicht über Stripe auf PazAIr hereinkommt, sondern von den Programmen selbst ausbezahlt wird?
-2. **Bei einem Ja:** Fatih meldet sich bei den Programmen an (Firecrawl, n8n, Make, Apify, Railway; Payrexx und
-   Infomaniak für die Schweiz) und füllt bei US-Programmen das Formular W-8BEN aus. Claude baut Stufe 1 mit
-   Bedingungen 7f, Datenschutz und Tests.
-3. **Ein Nebenentscheid:** bexio neben JOBFLOW auf der Rechnungsseite, ja oder nein. CHF 200 einmal stehen gegen
-   ein eigenes Abo ab CHF 69 im Monat.
-4. **Nach 30 Tagen:** die Zahl ansehen und über Stufe 2 entscheiden.
+1. **Mergen:** [Pull Request 388 in Kula-Labs/jobflow-a2a](https://github.com/Kula-Labs/jobflow-a2a/pull/388). Danach
+   ist Stufe 1 im Server, aber aus: Ohne Partnerlink zeigt PazAIr keinen Verweis.
+2. **Bei den Programmen anmelden,** als Kula Labs, in dieser Reihenfolge:
+   [Firecrawl](https://www.firecrawl.dev/affiliates), [Apify](https://docs.apify.com/legal/affiliate-program-terms-and-conditions),
+   [n8n](https://n8n.io/affiliates/), [Make](https://www.make.com/en/affiliate),
+   [Payrexx](https://payrexx.com/en/partner/solution-partners), [Railway](https://railway.com/affiliate-program),
+   [Infomaniak](https://www.infomaniak.com/en/support/faq/2247/discover-infomaniaks-affiliate-commission-system). Bei
+   Programmen aus den USA verlangt das Steuerformular W-8BEN. Wo ein Programm fragt, wie geworben wird: mit einer
+   gekennzeichneten Seite auf pazair.ch, die ein Mensch öffnet, nie mit Links in automatischen Antworten.
+3. **Die Partnerlinks an Claude geben.** Sie sind nicht geheim (wer klickt, sieht sie). Claude trägt sie mit
+   `VERWEIS = "on"` in die Konfiguration ein; mit dem nächsten Deploy ist der Verweis des Programms live.
+4. **Nach 30 Tagen** die Zahlen unter `/partners.json` und in den Konten der Programme ansehen und über Stufe 2
+   entscheiden.
+5. **Vor Stufe 3** die Fragen oben mit Kanzlei und Steuerberatung klären und bei den Programmen schriftlich anfragen,
+   ob ein Anteil weitergegeben werden darf.
