@@ -89,7 +89,7 @@ Die Seite allein verkauft nichts, solange sie niemand kennt. In dieser Reihenfol
 ### Der Text, per Du, zum Kopieren
 
 Erst senden, wenn der Preis live ist (Schritt 2 unter «Was bei Fatih bleibt»). Jede Aussage steht auf der Seite oder in
-den Bedingungen (2g, 2h, 2l).
+den Bedingungen (2g, 2h, 2l). Ohne Signatur: In eine neue Mail einfügen, Gmail hängt sie an.
 
 ```
 Betreff: Mitgliederbeiträge 2027: alle QR-Rechnungen in einem PDF
@@ -109,7 +109,6 @@ Jede Rechnung hat eine eigene Referenz, und du bekommst eine Kontrollliste dazu.
 Magst du es mit eurer Liste ausprobieren und mir sagen, wo es hakt? Deine ehrliche Antwort hilft mir mehr als ein Kauf.
 
 Liebe Grüsse
-Fatih
 ```
 
 ## Woran wir es messen
