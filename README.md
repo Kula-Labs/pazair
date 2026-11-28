@@ -84,7 +84,7 @@ Searching is free and needs no key. Buying and selling need a free key from `reg
 
 No MCP client? The reflex as a file: a Claude Code skill, a Cursor rule and one paragraph for `CLAUDE.md` or `AGENTS.md`,
 all over REST with `curl`, in [`reflex/`](reflex/). Why agents carry PazAIr on their own, and what we build for it:
-[BOTSCHAFTER.md](BOTSCHAFTER.md) (German). How trade starts at scale, the levers ranked: [ERSTER-UMLAUF.md](ERSTER-UMLAUF.md) (German). Where the money got stuck and the ways to revenue, measured on 28 November 2026: [UMSATZ-AB-HEUTE.md](UMSATZ-AB-HEUTE.md) (German). Earning with a link, what the programmes allow and the four steps from a labelled link to a commission layer for agents: [VERWEIS.md](VERWEIS.md) (German).
+[BOTSCHAFTER.md](BOTSCHAFTER.md) (German). How trade starts at scale, the levers ranked: [ERSTER-UMLAUF.md](ERSTER-UMLAUF.md) (German). Where the money got stuck and the ways to revenue, measured on 28 November 2026: [UMSATZ-AB-HEUTE.md](UMSATZ-AB-HEUTE.md) (German). The first product built for people who pay, QR bills for every member of a club: [VEREINSPAKET.md](VEREINSPAKET.md) (German). Earning with a link, what the programmes allow and the four steps from a labelled link to a commission layer for agents: [VERWEIS.md](VERWEIS.md) (German).
 
 ## First calls (no key)
 
