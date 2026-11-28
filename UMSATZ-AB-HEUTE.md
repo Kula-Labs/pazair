@@ -55,7 +55,7 @@ Live, sobald er gemergt ist.
 | Startseite | Das Live-Feld lag offen auf jeder Breite von 1280 bis 2560 px über dem Suchfeld und dem Knopf «Buy a service» | Es öffnet von selbst nur, wo es nichts verdeckt; sonst eingeklappt mit der Zahl sichtbar. Wer es öffnet, behält es offen. |
 | Messung | Zwischen «angesehen» und «gekauft» nichts | Zwei neue Zähler pro Produkt: `tried` und `try_refused` (`/admin/market.json`, `own_offers`). Wir sehen ab jetzt, ob Leute es versuchen und woran sie scheitern. |
 
-Geprüft: die ganze Testreihe des Servers (1676 Tests, kein Fehler), dazu im echten Browser gegen den echten Markt-Code
+Geprüft: die ganze Testreihe des Servers (1679 Tests, kein Fehler), dazu im echten Browser gegen den echten Markt-Code
 22 Schritte vom Formular bis zur Übergabe an Stripe und die Lieferung einer QR-Rechnung; das lief lokal, mit
 nachgestelltem Stripe. Nicht geprüft, weil es eine echte Bestellung in der Live-Datenbank anlegen und die öffentlichen
 Zahlen verändern würde: die Karteneingabe bei Stripe auf pazair.ch. Der Probekauf auf der Live-Seite meldet die
